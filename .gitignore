@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+venv/
+*.log
+
+# Wrappers - Core IP
+wrappers/*.txt
+
+# Logs - können groß werden
+logs/*.jsonl
+
+# Config
+.env
+*.secret
+
+# IDE
+.vscode/
+.idea/
+*.swp
