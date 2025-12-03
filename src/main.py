@@ -91,6 +91,11 @@ async def health():
         "last_response": last_response
     }
 
+@app.get("/api/chat/health")
+async def chat_health():
+    """Health check at /api/chat/health for compatibility"""
+    return await health()
+
 
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
