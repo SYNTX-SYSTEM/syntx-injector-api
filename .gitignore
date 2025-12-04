@@ -7,14 +7,11 @@ venv/
 
 # Wrappers - Core IP
 wrappers/*.txt
-
 # Logs - können groß werden
 logs/*.jsonl
-
 # Config
 .env
 *.secret
-
 # IDE
 .vscode/
 .idea/
