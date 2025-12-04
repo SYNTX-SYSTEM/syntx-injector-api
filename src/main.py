@@ -155,7 +155,8 @@ async def chat(request: ChatRequest):
         log_stage("5_RESPONSE", {
             "request_id": request_id,
             "response": response_text,
-            "latency_ms": latency_ms
+            "latency_ms": latency_ms,
+            "wrapper_chain": wrapper_chain
         })
         
         return ChatResponse(
