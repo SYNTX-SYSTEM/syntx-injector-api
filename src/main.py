@@ -30,12 +30,18 @@ def log_stage(stage: str, data: dict):
             print(f"{key}: {value}")
     print("🌊" * 40 + "\n")
     
-    # Write to file
+    # Write to field_flow.jsonl
     settings.log_dir.mkdir(parents=True, exist_ok=True)
     log_file = settings.log_dir / "field_flow.jsonl"
     with open(log_file, 'a', encoding='utf-8') as f:
         log_entry = {"stage": stage, "timestamp": get_timestamp(), **data}
         f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
+    
+    # ALSO write complete request/response to wrapper_requests.jsonl
+    if stage == "5_RESPONSE":
+        wrapper_log = settings.log_dir / "wrapper_requests.jsonl"
+        with open(wrapper_log, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(data, ensure_ascii=False) + '\n')
 
 
 @asynccontextmanager
@@ -64,7 +70,6 @@ app.add_middleware(
 @app.get("/health")
 async def health():
     """Health check with last response"""
-    # Read last response from logs
     log_file = settings.log_dir / "field_flow.jsonl"
     last_response = None
     
@@ -72,7 +77,7 @@ async def health():
         try:
             with open(log_file, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
-                for line in reversed(lines[-10:]):  # Last 10 entries
+                for line in reversed(lines[-10:]):
                     entry = json.loads(line)
                     if entry.get("stage") == "5_RESPONSE":
                         last_response = {
