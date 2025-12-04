@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     backend_url: str
     backend_timeout: int
     backend_bearer_token: Optional[str] = None
+    model_name: str  # NEW: For Ollama model selection
     
     # Wrapper
     wrapper_dir: Path

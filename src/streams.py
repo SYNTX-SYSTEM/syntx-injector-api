@@ -1,16 +1,7 @@
 """
 SYNTX Wrapper Service - Stream Functions
 
-This module contains all core stream transformation functions.
-Each function represents one layer in the protocol stack.
-
-Stream Flow:
-    1. load_wrapper_stream() - Loads and combines wrapper files
-    2. wrap_input_stream() - Wraps user input with loaded wrappers
-    3. forward_stream() - Forwards to backend
-    4. log_stream() - Logs request/response (parallel)
-
-No classes, no inheritance - just pure functions that transform data streams.
+Modified for Ollama backend support.
 """
 import httpx
 from pathlib import Path
@@ -21,82 +12,43 @@ import uuid
 from .config import settings
 
 
-# ============================================================================
-# STREAM 1: Wrapper Loading
-# ============================================================================
-
 async def load_wrapper_stream(
     mode: str,
     include_init: bool,
     include_terminology: bool
 ) -> tuple[str, List[str]]:
-    """
-    Load and combine wrapper files based on configuration flags.
-    
-    This is the first transformation in the stream - converts configuration
-    into actual wrapper text that will calibrate the model's field.
-    
-    Args:
-        mode: Wrapper mode (e.g., "cyberdark", "sigma")
-        include_init: Whether to include SYNTX init wrapper
-        include_terminology: Whether to include terminology wrapper
-    
-    Returns:
-        Tuple of (combined_wrapper_text, list_of_loaded_wrapper_names)
-    
-    Example:
-        wrapper, chain = await load_wrapper_stream("cyberdark", True, False)
-        # wrapper = "[syntx_init.txt content]\n\n[cyberdark.txt content]"
-        # chain = ["syntx_init", "cyberdark"]
-    """
+    """Load and combine wrapper files."""
     wrapper_texts: List[str] = []
     wrapper_chain: List[str] = []
     
-    # Layer 1: SYNTX Init (optional)
     if include_init:
         init_text = await _read_wrapper_file("syntx_init")
         if init_text:
             wrapper_texts.append(init_text)
             wrapper_chain.append("syntx_init")
     
-    # Layer 2: Terminology (optional)
     if include_terminology:
         term_text = await _read_wrapper_file("terminology")
         if term_text:
             wrapper_texts.append(term_text)
             wrapper_chain.append("terminology")
     
-    # Layer 3: Mode wrapper (always)
     mode_text = await _read_wrapper_file(mode)
     if mode_text:
         wrapper_texts.append(mode_text)
         wrapper_chain.append(mode)
     elif not wrapper_texts:
-        # Fallback if nothing loaded and mode not found
         fallback_text = await _read_wrapper_file(settings.fallback_mode)
         if fallback_text:
             wrapper_texts.append(fallback_text)
             wrapper_chain.append(f"{settings.fallback_mode} (fallback)")
     
-    # Combine all layers with double newline separator
     combined_wrapper = "\n\n".join(wrapper_texts)
-    
     return combined_wrapper, wrapper_chain
 
 
 async def _read_wrapper_file(wrapper_name: str) -> str:
-    """
-    Read a single wrapper file from disk.
-    
-    This is a helper function - not part of the main stream.
-    Handles file reading with proper error handling.
-    
-    Args:
-        wrapper_name: Name of wrapper (without .txt extension)
-    
-    Returns:
-        Wrapper content as string, or empty string if not found
-    """
+    """Read a single wrapper file from disk."""
     wrapper_path = settings.wrapper_dir / f"{wrapper_name}.txt"
     
     try:
@@ -119,69 +71,37 @@ async def _read_wrapper_file(wrapper_name: str) -> str:
         return ""
 
 
-# ============================================================================
-# STREAM 2: Input Wrapping
-# ============================================================================
-
 def wrap_input_stream(wrapper_text: str, user_input: str) -> str:
-    """
-    Wrap user input with loaded wrapper text.
-    
-    This is the second transformation - combines the calibration field (wrapper)
-    with the actual user query. Simple concatenation, but conceptually this is
-    where field calibration happens.
-    
-    Args:
-        wrapper_text: Combined wrapper text from load_wrapper_stream()
-        user_input: Raw user input
-    
-    Returns:
-        Fully wrapped prompt ready for backend
-    
-    Example:
-        wrapped = wrap_input_stream(wrapper, "Was ist KI?")
-        # wrapped = "[wrapper content]\nWas ist KI?"
-    """
+    """Wrap user input with loaded wrapper text."""
     return f"{wrapper_text}\n{user_input}"
 
-
-# ============================================================================
-# STREAM 3: Backend Forwarding
-# ============================================================================
 
 async def forward_stream(
     wrapped_prompt: str,
     backend_params: Dict[str, Any]
 ) -> str:
     """
-    Forward wrapped prompt to backend and get response.
+    Forward wrapped prompt to Ollama backend and get response.
     
-    This is the third transformation - sends the calibrated field to the
-    actual model backend and retrieves the response.
-    
-    Args:
-        wrapped_prompt: Fully wrapped prompt from wrap_input_stream()
-        backend_params: Parameters to pass to backend (max_tokens, temp, etc.)
-    
-    Returns:
-        Response text from backend
-    
-    Raises:
-        httpx.TimeoutException: If backend doesn't respond in time
-        httpx.HTTPStatusError: If backend returns error status
+    MODIFIED FOR OLLAMA SUPPORT!
     """
-    # Build request payload
+    # Build Ollama-specific payload
     payload = {
+        "model": settings.model_name,
         "prompt": wrapped_prompt,
-        **backend_params
+        "stream": False,
+        "options": {
+            "temperature": backend_params.get("temperature", 0.7),
+            "num_predict": backend_params.get("max_new_tokens", 1000)
+        }
     }
     
-    # Build headers with optional Bearer token
+    # Build headers
     headers = {"Content-Type": "application/json"}
     if settings.backend_bearer_token:
         headers["Authorization"] = f"Bearer {settings.backend_bearer_token}"
     
-    # Forward to backend with timeout and authentication
+    # Forward to Ollama backend
     async with httpx.AsyncClient(timeout=settings.backend_timeout) as client:
         response = await client.post(
             settings.backend_url,
@@ -189,48 +109,28 @@ async def forward_stream(
             headers=headers
         )
         
-        # Raise for HTTP errors (4xx, 5xx)
+        # Raise for HTTP errors
         response.raise_for_status()
         
-        # Parse response
+        # Parse Ollama response format
         response_data = response.json()
         
-        # Extract response text (adjust based on your backend's response format)
+        # Ollama returns: {"model": "...", "response": "text", "done": true}
         if isinstance(response_data, dict) and "response" in response_data:
             return response_data["response"]
-        elif isinstance(response_data, str):
-            return response_data
         else:
             return str(response_data)
 
 
-# ============================================================================
-# STREAM 4: Logging (Parallel Stream)
-# ============================================================================
-
 async def log_stream(log_data: Dict[str, Any]) -> None:
-    """
-    Log request/response data to files.
-    
-    This is a parallel stream - runs independently and doesn't block the main flow.
-    Writes to both JSONL (for training data) and human-readable log.
-    
-    Args:
-        log_data: Dictionary containing all request/response metadata
-    
-    Note:
-        This function should be called with asyncio.create_task() to run in background.
-    """
-    # Ensure log directory exists
+    """Log request/response data to files."""
     settings.log_dir.mkdir(parents=True, exist_ok=True)
     
-    # Write to JSONL (training data)
     jsonl_path = settings.log_dir / "wrapper_requests.jsonl"
     with open(jsonl_path, 'a', encoding='utf-8') as f:
         import json
         f.write(json.dumps(log_data, ensure_ascii=False) + '\n')
     
-    # Write to human log
     if settings.log_to_console:
         log_line = (
             f"[{log_data['timestamp']}] "
@@ -241,35 +141,16 @@ async def log_stream(log_data: Dict[str, Any]) -> None:
         )
         print(log_line)
     
-    # Also write to file
     human_log_path = settings.log_dir / "service.log"
     with open(human_log_path, 'a', encoding='utf-8') as f:
         f.write(f"{log_data}\n")
 
 
-# ============================================================================
-# Helper: Generate Request ID
-# ============================================================================
-
 def generate_request_id() -> str:
-    """
-    Generate unique request ID for tracing.
-    
-    Returns:
-        UUID string
-    """
+    """Generate unique request ID for tracing."""
     return str(uuid.uuid4())
 
 
-# ============================================================================
-# Helper: Current Timestamp
-# ============================================================================
-
 def get_timestamp() -> str:
-    """
-    Get current timestamp in ISO format.
-    
-    Returns:
-        ISO formatted timestamp string
-    """
+    """Get current timestamp in ISO format."""
     return datetime.utcnow().isoformat() + 'Z'
