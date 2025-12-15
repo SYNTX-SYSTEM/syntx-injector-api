@@ -2,7 +2,7 @@
 SYNTX Wrapper Service - Data Models
 """
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List, Dict, Any
 
 class ChatRequest(BaseModel):
     """Request model for /api/chat"""
@@ -18,4 +18,5 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     """Response model"""
     response: str
-    metadata: Optional[dict] = None
+    metadata: Optional[Dict[str, Any]] = None
+    field_flow: Optional[List[Dict[str, Any]]] = None
