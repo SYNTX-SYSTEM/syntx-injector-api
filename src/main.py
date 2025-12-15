@@ -21,6 +21,7 @@ from .streams import (
 from .resonance.wrappers import router as wrappers_router
 from .resonance.streams import router as streams_router
 from .resonance.stats import router as stats_router
+from .resonance.config import router as config_router
 
 
 def log_stage(stage: str, data: dict):
@@ -74,6 +75,7 @@ app.add_middleware(
 app.include_router(wrappers_router)
 app.include_router(streams_router)
 app.include_router(stats_router)
+app.include_router(config_router)
 
 
 @app.get("/health")

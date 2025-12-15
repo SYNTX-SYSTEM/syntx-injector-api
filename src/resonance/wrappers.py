@@ -15,26 +15,47 @@ from ..config import settings
 router = APIRouter(prefix="/resonanz", tags=["resonance-wrappers"])
 
 
+def get_active_wrapper() -> str:
+    """Get currently active default wrapper."""
+    from .config import get_active_wrapper as _get_active
+    return _get_active()
+
+
 @router.get("/wrappers")
-async def list_wrappers() -> Dict[str, List[Dict]]:
-    """List all available wrapper fields."""
+async def list_wrappers(active: bool = False) -> Dict:
+    """
+    List all available wrapper fields.
+    Query param 'active=true' filters to show only active wrapper.
+    """
     wrapper_dir = Path(settings.wrapper_dir)
     wrappers = []
     
     if not wrapper_dir.exists():
-        return {"wrappers": []}
+        return {"wrappers": [], "active_wrapper": None}
+    
+    active_wrapper = get_active_wrapper()
     
     for file in wrapper_dir.glob("*.txt"):
         stat = file.stat()
-        wrappers.append({
+        is_active = (file.stem == active_wrapper)
+        
+        wrapper_info = {
             "name": file.stem,
             "path": str(file),
             "size_bytes": stat.st_size,
             "size_human": f"{stat.st_size / 1024:.1f} KB",
-            "last_modified": datetime.fromtimestamp(stat.st_mtime).isoformat() + 'Z'
-        })
+            "last_modified": datetime.fromtimestamp(stat.st_mtime).isoformat() + 'Z',
+            "is_active": is_active
+        }
+        
+        # Filter: if active=true, only include active wrapper
+        if not active or is_active:
+            wrappers.append(wrapper_info)
     
-    return {"wrappers": sorted(wrappers, key=lambda x: x["name"])}
+    return {
+        "wrappers": sorted(wrappers, key=lambda x: x["name"]),
+        "active_wrapper": active_wrapper
+    }
 
 
 @router.get("/wrapper/{name}")
@@ -50,13 +71,15 @@ async def get_wrapper(name: str) -> Dict:
             content = f.read()
         
         stat = wrapper_path.stat()
+        active_wrapper = get_active_wrapper()
         
         return {
             "name": name,
             "content": content,
             "size_bytes": stat.st_size,
             "size_human": f"{stat.st_size / 1024:.1f} KB",
-            "last_modified": datetime.fromtimestamp(stat.st_mtime).isoformat() + 'Z'
+            "last_modified": datetime.fromtimestamp(stat.st_mtime).isoformat() + 'Z',
+            "is_active": (name == active_wrapper)
         }
         
     except Exception as e:
@@ -164,3 +187,26 @@ async def upload_wrapper_with_metadata(
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/wrappers/{name}/activate")
+async def activate_wrapper(name: str) -> Dict:
+    """
+    Activate a specific wrapper as default.
+    This wrapper will be used when no 'mode' is specified in chat requests.
+    """
+    from .config import set_active_wrapper
+    
+    wrapper_path = settings.wrapper_dir / f"{name}.txt"
+    
+    if not wrapper_path.exists():
+        raise HTTPException(status_code=404, detail=f"Wrapper field '{name}' not found")
+    
+    set_active_wrapper(name)
+    
+    return {
+        "status": "success",
+        "message": f"Wrapper '{name}' activated as default",
+        "active_wrapper": name,
+        "path": str(wrapper_path)
+    }
