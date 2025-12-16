@@ -1,13 +1,14 @@
 #!/bin/bash
 
 # ═══════════════════════════════════════════════════════════════
-# 🌊 SYNTX SERVER API TESTER - ALLE ENDPOINTS
+# 🌊 SYNTX LOCAL API TESTER - ALLE ENDPOINTS
 # ═══════════════════════════════════════════════════════════════
-# Testet ALLE Endpoints auf dem PRODUCTION Server
-# Inkl. Chat-Endpoint (braucht Model)
+# Startet Server automatisch, testet ALLE Endpoints, stoppt Server
+# OHNE Chat-Endpoint (der braucht das Model)
 # ═══════════════════════════════════════════════════════════════
 
-BASE_URL="https://dev.syntx-system.com"
+BASE_URL="http://localhost:8001"
+SERVER_PID=""
 
 # Colors
 CYAN='\033[0;36m'
@@ -22,6 +23,69 @@ BOLD='\033[1m'
 TOTAL=0
 SUCCESS=0
 FAILED=0
+
+# ═══════════════════════════════════════════════════════════════
+#  🚀 SERVER MANAGEMENT
+# ═══════════════════════════════════════════════════════════════
+
+start_server() {
+    echo ""
+    echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
+    echo -e "${CYAN}  🚀 STARTING SYNTX SERVER...${NC}"
+    echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
+    echo ""
+    
+    # Kill any existing server on port 8001
+    pkill -f "uvicorn src.main:app --port 8001" 2>/dev/null
+    sleep 1
+    
+    # Start server in background
+    python -m uvicorn src.main:app --port 8001 > /tmp/syntx_server.log 2>&1 &
+    SERVER_PID=$!
+    
+    echo -e "${YELLOW}▶ Server PID: ${SERVER_PID}${NC}"
+    echo -e "${YELLOW}▶ Waiting for server to start...${NC}"
+    
+    # Wait for server to be ready (max 10 seconds)
+    for i in {1..20}; do
+        if curl -s "${BASE_URL}/health" > /dev/null 2>&1; then
+            echo -e "${GREEN}✓ Server is ready!${NC}"
+            return 0
+        fi
+        sleep 0.5
+    done
+    
+    echo -e "${RED}✕ Server failed to start!${NC}"
+    echo -e "${RED}  Check /tmp/syntx_server.log for details${NC}"
+    cat /tmp/syntx_server.log
+    exit 1
+}
+
+stop_server() {
+    echo ""
+    echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
+    echo -e "${CYAN}  🛑 STOPPING SYNTX SERVER...${NC}"
+    echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
+    echo ""
+    
+    if [ -n "$SERVER_PID" ]; then
+        kill $SERVER_PID 2>/dev/null
+        wait $SERVER_PID 2>/dev/null
+        echo -e "${GREEN}✓ Server stopped (PID: ${SERVER_PID})${NC}"
+    fi
+    
+    # Make sure no orphan processes
+    pkill -f "uvicorn src.main:app --port 8001" 2>/dev/null
+}
+
+# Cleanup on exit (Ctrl+C or error)
+cleanup() {
+    echo ""
+    echo -e "${YELLOW}⚠ Cleaning up...${NC}"
+    stop_server
+    exit 0
+}
+trap cleanup SIGINT SIGTERM
 
 header() {
     echo ""
@@ -95,6 +159,10 @@ test_endpoint() {
     fi
 }
 
+# ═══════════════════════════════════════════════════════════════
+#  🎬 MAIN
+# ═══════════════════════════════════════════════════════════════
+
 clear
 echo -e "${CYAN}"
 echo "   ███████╗██╗   ██╗███╗   ██╗████████╗██╗  ██╗"
@@ -104,9 +172,15 @@ echo "   ╚════██║  ╚██╔╝  ██║╚██╗██�
 echo "   ███████║   ██║   ██║ ╚████║   ██║   ██╔╝ ██╗"
 echo "   ╚══════╝   ╚═╝   ╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝"
 echo -e "${NC}"
-echo -e "${BOLD}   🌊 SERVER API TESTER - ALLE ENDPOINTS${NC}"
+echo -e "${BOLD}   🌊 LOCAL API TESTER - ALLE ENDPOINTS${NC}"
 echo -e "   ${YELLOW}Base: ${BASE_URL}${NC}"
 echo ""
+
+# ═══════════════════════════════════════════════════════════════
+#  🚀 START SERVER
+# ═══════════════════════════════════════════════════════════════
+
+start_server
 
 # ═══════════════════════════════════════════════════════════════
 #  🏥 HEALTH & CONFIG
@@ -120,7 +194,7 @@ test_endpoint "GET" "/resonanz/config/default-wrapper" "" "Get Default Wrapper"
 test_endpoint "PUT" "/resonanz/config/default-wrapper?wrapper_name=syntex_wrapper_sigma" "" "Set Default Wrapper"
 
 # ═══════════════════════════════════════════════════════════════
-#  📦 WRAPPERS - LIST & GET
+#  📦 WRAPPERS - BESTEHENDE ENDPOINTS
 # ═══════════════════════════════════════════════════════════════
 
 header "📦 WRAPPERS - LIST & GET"
@@ -137,20 +211,25 @@ test_endpoint "GET" "/resonanz/wrapper/nicht_existent_12345" "" "Get Non-Existen
 header "🌟 FELD GEBURT - CREATE"
 
 test_endpoint "POST" "/resonanz/wrapper" '{
-  "name": "test_feld_server",
-  "content": "═══════════════════════════════════════════\n🌊 SERVER TEST WRAPPER\n═══════════════════════════════════════════\n\nDieses Feld wurde auf dem SERVER erstellt!\n\n💎 SYNTX POWER! 💎",
-  "description": "Server Test Wrapper",
-  "author": "SYNTX Server Tester",
+  "name": "test_feld_crud",
+  "content": "═══════════════════════════════════════════\n🌊 TEST WRAPPER FÜR CRUD OPERATIONS\n═══════════════════════════════════════════\n\nDieses Feld wurde dynamisch erstellt!\n\nEs testet:\n- POST /resonanz/wrapper (CREATE)\n- PUT /resonanz/wrapper/{name} (UPDATE)\n- DELETE /resonanz/wrapper/{name} (DELETE)\n\n💎 SYNTX POWER! 💎",
+  "description": "Test Wrapper für CRUD Operations",
+  "author": "SYNTX Local Tester",
   "version": "1.0",
-  "tags": ["test", "server", "crud"]
+  "tags": ["test", "crud", "dynamisch", "lokal"]
 }' "CREATE: Neues Feld gebären"
 
 test_endpoint "POST" "/resonanz/wrapper" '{
-  "name": "test_feld_server",
+  "name": "test_feld_crud",
   "content": "Duplikat!"
 }' "CREATE: Duplikat (erwartet 409)" "409"
 
-test_endpoint "GET" "/resonanz/wrapper/test_feld_server" "" "GET: Neues Feld verifizieren"
+test_endpoint "POST" "/resonanz/wrapper" '{
+  "name": "test_feld_minimal",
+  "content": "Minimales Feld ohne Metadata"
+}' "CREATE: Minimales Feld (nur name + content)"
+
+test_endpoint "GET" "/resonanz/wrapper/test_feld_crud" "" "GET: Neues Feld verifizieren"
 
 # ═══════════════════════════════════════════════════════════════
 #  🔄 WRAPPERS - UPDATE (NEU!)
@@ -158,13 +237,13 @@ test_endpoint "GET" "/resonanz/wrapper/test_feld_server" "" "GET: Neues Feld ver
 
 header "🔄 FELD MODULATION - UPDATE"
 
-test_endpoint "PUT" "/resonanz/wrapper/test_feld_server" '{
-  "content": "═══════════════════════════════════════════\n🔥 MODULIERTES SERVER FELD! 🔥\n═══════════════════════════════════════════\n\nDieses Feld wurde per PUT aktualisiert!\n\n⚡ RESONANZ VERSCHOBEN! ⚡",
-  "description": "Aktualisierter Server Wrapper v2",
+test_endpoint "PUT" "/resonanz/wrapper/test_feld_crud" '{
+  "content": "═══════════════════════════════════════════\n🔥 MODULIERTES FELD! 🔥\n═══════════════════════════════════════════\n\nDieses Feld wurde per PUT aktualisiert!\n\nNeue Features:\n- Modulation erfolgreich\n- Version 2.0\n- Mehr Power!\n\n⚡ DIE RESONANZ HAT SICH VERSCHOBEN! ⚡",
+  "description": "Aktualisierter Test Wrapper v2",
   "version": "2.0"
 }' "UPDATE: Feld modulieren"
 
-test_endpoint "GET" "/resonanz/wrapper/test_feld_server" "" "GET: Moduliertes Feld verifizieren"
+test_endpoint "GET" "/resonanz/wrapper/test_feld_crud" "" "GET: Moduliertes Feld verifizieren"
 
 test_endpoint "PUT" "/resonanz/wrapper/nicht_existent_xyz" '{
   "content": "Should fail"
@@ -176,7 +255,7 @@ test_endpoint "PUT" "/resonanz/wrapper/nicht_existent_xyz" '{
 
 header "🎯 FELD AKTIVIERUNG"
 
-test_endpoint "POST" "/resonanz/wrappers/test_feld_server/activate" "" "ACTIVATE: Test-Feld aktivieren"
+test_endpoint "POST" "/resonanz/wrappers/test_feld_crud/activate" "" "ACTIVATE: Test-Feld aktivieren"
 test_endpoint "GET" "/resonanz/config/default-wrapper" "" "GET: Prüfen ob aktiviert"
 test_endpoint "POST" "/resonanz/wrappers/syntex_wrapper_sigma/activate" "" "ACTIVATE: Sigma wieder aktivieren"
 test_endpoint "POST" "/resonanz/wrappers/nicht_existent/activate" "" "ACTIVATE: Non-existent (erwartet 404)" "404"
@@ -195,28 +274,14 @@ test_endpoint "GET" "/resonanz/stats" "" "System Stats"
 test_endpoint "GET" "/resonanz/stats/wrapper/syntex_wrapper_sigma" "" "Wrapper Stats (Sigma)"
 
 # ═══════════════════════════════════════════════════════════════
-#  💬 CHAT & HISTORY
-# ═══════════════════════════════════════════════════════════════
-
-header "💬 CHAT & HISTORY"
-
-echo -e "${YELLOW}⏳ Chat dauert 15-30 Sekunden...${NC}"
-test_endpoint "POST" "/resonanz/chat" '{"prompt":"Was ist SYNTX?","mode":"syntex_wrapper_sigma","max_new_tokens":100}' "Chat Request"
-
-# Extract request_id for history test
-REQUEST_ID=$(echo "$BODY" | jq -r '.metadata.request_id' 2>/dev/null)
-if [ -n "$REQUEST_ID" ] && [ "$REQUEST_ID" != "null" ]; then
-    test_endpoint "GET" "/resonanz/history/${REQUEST_ID}" "" "Request History"
-fi
-
-# ═══════════════════════════════════════════════════════════════
 #  💀 WRAPPERS - DELETE (NEU!)
 # ═══════════════════════════════════════════════════════════════
 
 header "💀 FELD FREIGABE - DELETE"
 
-test_endpoint "DELETE" "/resonanz/wrapper/test_feld_server" "" "DELETE: Test-Feld freigeben"
-test_endpoint "GET" "/resonanz/wrapper/test_feld_server" "" "GET: Gelöscht? (erwartet 404)" "404"
+test_endpoint "DELETE" "/resonanz/wrapper/test_feld_crud" "" "DELETE: Test-Feld freigeben"
+test_endpoint "GET" "/resonanz/wrapper/test_feld_crud" "" "GET: Gelöscht? (erwartet 404)" "404"
+test_endpoint "DELETE" "/resonanz/wrapper/test_feld_minimal" "" "DELETE: Minimales Feld freigeben"
 test_endpoint "DELETE" "/resonanz/wrapper/nicht_existent_xyz" "" "DELETE: Non-existent (erwartet 404)" "404"
 
 # ═══════════════════════════════════════════════════════════════
@@ -225,8 +290,14 @@ test_endpoint "DELETE" "/resonanz/wrapper/nicht_existent_xyz" "" "DELETE: Non-ex
 
 header "✅ FINAL CHECK"
 
-test_endpoint "GET" "/resonanz/wrappers" "" "List All (Test-Feld sollte weg sein)"
+test_endpoint "GET" "/resonanz/wrappers" "" "List All (Test-Felder sollten weg sein)"
 test_endpoint "GET" "/resonanz/config/default-wrapper" "" "Default Wrapper Check"
+
+# ═══════════════════════════════════════════════════════════════
+#  🛑 STOP SERVER
+# ═══════════════════════════════════════════════════════════════
+
+stop_server
 
 # ═══════════════════════════════════════════════════════════════
 #  📊 SUMMARY
@@ -279,7 +350,7 @@ echo -e "   GET    /resonanz/training"
 echo -e "   GET    /resonanz/stats"
 echo -e "   GET    /resonanz/stats/wrapper/{name}"
 echo ""
-echo -e "   ${BOLD}CHAT:${NC}"
+echo -e "   ${BOLD}NICHT GETESTET (braucht Model):${NC}"
 echo -e "   POST   /resonanz/chat"
 echo -e "   GET    /resonanz/history/{request_id}"
 echo ""
