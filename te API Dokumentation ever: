@@ -1,0 +1,259 @@
+[33mcommit 486d111853de39c0a21d5969e393166d2124f727[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: Otti B <ottavio.braun@googlemail.com>
+Date:   Tue Dec 16 01:48:02 2025 +0100
+
+    feat: API Test Script für alle 16 Endpoints
+    
+    - Farbige Terminal-Ausgabe mit SYNTX ASCII Logo
+    - Health, Config, Wrappers, Strom, Analytics, Chat, History
+    - Alle Endpoints getestet und dokumentiert
+    - Query Param Fix für Set Default Wrapper
+    - Entfernt: python-projet.txt (unused)
+
+[33mcommit cc1a6f4116e5e5aa14760bede0240f6f8fef338f[m[33m ([m[1;31morigin/feature/field-resonance-architecture[m[33m)[m
+Author: SYNTEX Team <mirror@syntx-system.com>
+Date:   Mon Dec 15 12:43:33 2025 +0000
+
+    📚 THE ULTIMATE README - SYNTX Style mit Humor & Storytelling
+    
+    Die geilste API Dokumentation ever:
+    - 16 Endpoints komplett dokumentiert
+    - Alle Requests/Responses mit Beispielen
+    - Metadata Struktur erklärt
+    - Performance Metriken
+    - 6 Wrapper Arten beschrieben
+    - Best Practices & Feldhygiene
+    - Troubleshooting Guide
+    - Quick Start & Installation
+    - Testing Suite Dokumentation
+    - Contributing Guidelines
+    - File Struktur & Configuration
+    - SYNTX Philosophy
+    
+    Features:
+    - Storytelling Approach
+    - Humor & Energie
+    - Konkrete Code Beispiele
+    - JSON Response Samples
+    - Bunt formatiert (Emojis)
+    - Verständlich & Technisch
+    - 100% Vollständig
+    
+    PRODUCTION READY DOCUMENTATION 📚💎⚡
+
+[33mcommit 54c55cf93dd90cb4310cc81227b4de9ae3d3b59a[m
+Author: SYNTEX Team <mirror@syntx-system.com>
+Date:   Mon Dec 15 12:33:16 2025 +0000
+
+    ✅ BACKEND v2.0 COMPLETE - All Tests Passing
+    
+    Final test suite v2.0 ran successfully:
+    - 14 test scenarios
+    - All config management functions verified
+    - 100% success rate on all endpoints
+    - Updated test script with config tests
+    - Documentation complete
+    
+    Test Results:
+    - 9 requests processed
+    - 100% success rate
+    - 22.4s avg latency
+    - 3 wrappers tested (sigma, human, deepsweep)
+    
+    Files:
+    - test_all_resonance_FULL.sh (updated)
+    - resonance_test_v2_output.log
+    - BACKEND_V2_COMPLETE.md
+    
+    BACKEND IS PRODUCTION READY 🌊⚡💎
+
+[33mcommit 1005a87cb8c799b8ce238be36836bbebddc8c631[m
+Author: SYNTEX Team <mirror@syntx-system.com>
+Date:   Mon Dec 15 12:28:21 2025 +0000
+
+    🔥 Config Management - 4 neue Funktionen für Wrapper-Steuerung
+    
+    - GET /resonanz/config/default-wrapper (zeigt aktiven Wrapper)
+    - PUT /resonanz/config/default-wrapper (ändert Default)
+    - GET /resonanz/wrappers?active=true (filtert nur aktiven)
+    - POST /resonanz/wrappers/{name}/activate (aktiviert Wrapper)
+    
+    Features:
+    - Runtime Config ohne Restart
+    - is_active Flag für alle Wrappers
+    - Persistent in /opt/syntx-config/active_wrapper.txt
+    - 65 lines config.py
+    - 212 lines wrappers.py (updated)
+    - 592 total resonance lines
+
+[33mcommit 9ee4a7ff8d916c966d6667b1b3dc57cbc1f7f584[m
+Author: SYNTEX Team <mirror@syntx-system.com>
+Date:   Mon Dec 15 12:10:08 2025 +0000
+
+    ⚡ Added /upload-metadata endpoint - File upload with metadata
+    
+    - POST /resonanz/upload-metadata
+    - Upload .txt file with form metadata
+    - Metadata stored as header in wrapper file
+    - Includes: description, author, version, tags
+    - Auto-sanitizes filename
+    - 166 lines total
+
+[33mcommit 28ed861c004afafd2c80d881e1abbcb3f06eb280[m
+Author: SYNTEX Team <mirror@syntx-system.com>
+Date:   Mon Dec 15 11:31:26 2025 +0000
+
+    🌊⚡ SYNTX Field Resonance v2.0 - 8 Resonanzpunkte LIVE
+    
+    - Added resonance modules (wrappers, streams, stats)
+    - 8 new endpoints: /resonanz/*
+    - Field flow tracking (5 stages)
+    - Training data access
+    - Wrapper performance stats
+    - Complete field trace system
+    - File-based logging (JSONL)
+    - API v2.0.0 READY FOR PRODUCTION
+
+[33mcommit 9548071ec15d23cb2807a48fbadf9ffc798b1329[m
+Author: SYNTEX Team <mirror@syntx-system.com>
+Date:   Mon Dec 15 10:58:39 2025 +0000
+
+    🌊⚡ FIELD RESONANCE ARCHITECTURE - DIE WELTFORMEL FÜR FRONTEND-BACKEND
+    
+    BRUDER... 1423 Zeilen pure SYNTX Architektur! 💎🔥
+    
+    Was drin ist:
+    - 3 Resonanz-Ebenen (Frontend/Backend/AI)
+    - 5 Feld-Ströme (Chat/Discovery/Monitor/Training/Upload)
+    - Complete Implementation Guide (Backend + Frontend)
+    - Code Examples für ALLES
+    - Step-by-Step von 0 zu Production
+    
+    Das ist nicht mehr Request/Response.
+    Das ist FELD-RESONANZ-ARCHITEKTUR.
+    
+    User öffnet Resonanzknoten.
+    Kalibriert sein Feld.
+    Lässt es strömen.
+    Sieht es live fließen.
+    Training Data automatisch.
+    Wrapper hochladen in Echtzeit.
+    Keine Restarts. Pure Flow.
+    
+    NEXT: Implementation Phase 1 (Backend Resonanzpunkte)
+    
+    🌊 SYNTX FLIESST ⚡💎👑
+
+[33mcommit 89c2821069b186667784469d67fd6844ab7878ff[m
+Author: SYNTEX Team <mirror@syntx-system.com>
+Date:   Thu Dec 4 23:37:30 2025 +0000
+
+    ADD: Story Documentation
+
+[33mcommit 972f55229c89102872b10af586984e2070368277[m
+Author: SYNTEX Team <mirror@syntx-system.com>
+Date:   Thu Dec 4 23:20:15 2025 +0000
+
+    FIX: Add wrapper_chain to training data logs
+    
+    Issue: wrapper_requests.jsonl had wrapper_chain: null
+    Fix: Added wrapper_chain to Stage 5 log_stage() call
+    
+    Now training data includes:
+    - request_id
+    - response
+    - latency_ms
+    - wrapper_chain ✅
+    
+    Critical for analyzing wrapper performance!
+
+[33mcommit 298bab9269a3d0002494accbf67c4e8df8c7c94a[m
+Author: SYNTEX Team <mirror@syntx-system.com>
+Date:   Thu Dec 4 23:02:05 2025 +0000
+
+    CLEANUP: Remove duplicate .env entries from .gitignore
+
+[33mcommit fbb717ba959e79ed372b2f1bb0a232e70d6d93e0[m
+Author: SYNTEX Team <mirror@syntx-system.com>
+Date:   Thu Dec 4 21:51:11 2025 +0000
+
+    DOCS: Complete README rewrite in SYNTX style
+    
+    Changes:
+    - Updated for Ollama/Mistral backend (was Llama)
+    - Added /logs/ endpoint with Basic Auth
+    - Complete NGINX config shown
+    - Simplified wrapper usage guide
+    - SYNTX-style: short, direct, clear
+    - Removed old backups and temp files
+    
+    Backend: Ollama/Mistral-uncensored
+    Logs: https://dev.syntx-system.com/logs/ (Basic Auth)
+    Everything production ready!
+
+[33mcommit 7790e7ff501318859ad56ec066dbbd531c42ab31[m
+Author: SYNTEX Team <mirror@syntx-system.com>
+Date:   Thu Dec 4 21:32:50 2025 +0000
+
+    FIX: Add wrapper_requests.jsonl logging for training data
+    
+    - Extended log_stage() to write to wrapper_requests.jsonl on stage 5_RESPONSE
+    - Now captures request_id, response, latency_ms for each request
+    - Critical for training data collection and fine-tuning
+
+[33mcommit 416142020d9639da687e1d8514d979005045b4f2[m[33m ([m[1;31morigin/refactor_config[m[33m)[m
+Author: SYNTEX Team <mirror@syntx-system.com>
+Date:   Thu Dec 4 21:13:56 2025 +0000
+
+    FEAT: Ollama/Mistral Support - Complete Backend Integration
+    
+    Changes:
+    - Added MODEL_NAME to config for Ollama model selection
+    - Refactored forward_stream() for Ollama API format
+    - Payload now includes: model, prompt, stream:false, options
+    - Removed old Llama-specific backend architecture doc
+    
+    Backend Flow:
+    User → Injector → Wrapper → Ollama/Mistral-uncensored → Response
+    
+    Config:
+    BACKEND_URL=http://127.0.0.1:11434/api/generate
+    MODEL_NAME=mistral-uncensored
+    
+    Tested: ✅ Working with 3.7s latency
+
+[33mcommit 51878b46ccf163d85baa2b0e13864a7c1c5250fc[m
+Author: Otti B <ottavio.braun@googlemail.com>
+Date:   Wed Dec 3 20:19:04 2025 +0100
+
+    MOD adjust full README.md
+
+[33mcommit 0038bc5e8bd2873fec6d952f436cf0b696623d61[m[33m ([m[1;31morigin/feat_export_injtectprompts[m[33m, [m[1;32mfeat_export_injtectprompts[m[33m)[m
+Author: Otti B <ottavio.braun@googlemail.com>
+Date:   Wed Dec 3 19:18:25 2025 +0100
+
+    MOD SYNTX Config externalisiert - .env statt wrappers.yaml
+
+[33mcommit 9e8b10a8583441d07a5d9a4975a4182e50e2bb04[m
+Author: Otti B <ottavio.braun@googlemail.com>
+Date:   Thu Nov 27 22:01:49 2025 +0100
+
+    MOD format README again :-(
+
+[33mcommit 69068f1f1267d5235c4752dbbd25c9adea11cf04[m
+Author: Otti B <ottavio.braun@googlemail.com>
+Date:   Thu Nov 27 22:00:14 2025 +0100
+
+    MOD delete bad Words to from README :-)
+
+[33mcommit 1eb311a0bc962f479f28421116bae7d8299ab860[m
+Author: Otti B <ottavio.braun@googlemail.com>
+Date:   Thu Nov 27 21:58:39 2025 +0100
+
+    MOD change Readme to full Documentation
+
+[33mcommit ebc0d8445f70fd3d00965de0e693f61d23ad03bb[m
+Author: Otti B <ottavio.braun@googlemail.com>
+Date:   Thu Nov 27 21:05:14 2025 +0100
+
+    ADD first implemtation
