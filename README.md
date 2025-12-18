@@ -981,3 +981,159 @@ curl -X POST https://dev.syntx-system.com/resonanz/chat \
 ```
 
 **ZERO HARDCODING. ZERO RESTART. INSTANT DEPLOY.** ⚡💎🌊
+
+---
+
+## 🧠 FORMAT SELF-DIAGNOSTICS (NEU!)
+
+**Das Format als operative Einheit.** Es kann sich selbst bewerten, diagnostizieren und klonen.
+```
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│   FORMAT = NICHT MEHR TEMPLATE                              │
+│   FORMAT = STEUEREINHEIT                                    │
+│                                                             │
+│   Es kann:                                                  │
+│   ├── sich selbst bewerten    → /formats/score             │
+│   ├── sich selbst scannen     → /formats/scan              │
+│   ├── sich selbst klonen      → /formats/clone             │
+│   └── sich selbst modifizieren → CRUD                      │
+│                                                             │
+│   SYNTX DENKT IM FORMAT.                                    │
+│   DAS FORMAT DENKT IN SICH SELBST.                          │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 🔍 FORMAT-SCAN - Response validieren
+
+Scannt eine Model-Response gegen ein Format. Findet fehlende Felder, Low-Quality, Inkohärenz.
+```bash
+curl -X POST https://dev.syntx-system.com/resonanz/formats/scan \
+  -H "Content-Type: application/json" \
+  -d '{
+    "format": "sigma",
+    "response": "### SIGMA_DRIFT:\nDie KI bewegt sich...\n\n### SIGMA_MECHANISMUS:\nNeuronale Netze..."
+  }'
+```
+
+**Response:**
+```json
+{
+  "format": "sigma",
+  "fields_expected": 6,
+  "fields_found": 2,
+  "missing_fields": ["SIGMA_FREQUENZ", "SIGMA_DICHTE", "SIGMA_STRÖME", "SIGMA_EXTRAKT"],
+  "low_quality_fields": [
+    {"field": "SIGMA_DRIFT", "score": 65.0, "reasons": ["low_keyword_match"]}
+  ],
+  "coherence_score": 18.3,
+  "recommendations": [
+    "❌ Feld 'SIGMA_FREQUENZ' fehlt komplett",
+    "⚠️ Feld 'SIGMA_DRIFT' hat wenig relevante Keywords",
+    "🔴 Gesamtkohärenz kritisch niedrig - Response neu generieren"
+  ]
+}
+```
+
+---
+
+### 🧬 FORMAT-CLONE - Variante erstellen
+
+Klont ein Format unter neuem Namen mit optionalen Modifikationen.
+```bash
+curl -X POST https://dev.syntx-system.com/resonanz/formats/clone \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source": "sigma",
+    "target": "sigma_lite",
+    "modifications": {
+      "fields": ["sigma_drift", "sigma_mechanismus", "sigma_extrakt"],
+      "wrapper": "syntex_wrapper_deepsweep"
+    }
+  }'
+```
+
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "Format 'sigma_lite' geklont von 'sigma' 🧬",
+  "modifications_applied": ["fields", "wrapper"],
+  "fields_count": 3
+}
+```
+
+**Sofort nutzbar:**
+```bash
+curl -X POST .../resonanz/chat -d '{"prompt": "...", "format": "sigma_lite"}'
+```
+
+---
+
+### 📊 FORMAT-SCORE - Meta-Bewertung
+
+Bewertet das Format selbst (nicht die Response). Prüft Qualität der Definition.
+```bash
+curl -X POST https://dev.syntx-system.com/resonanz/formats/score \
+  -H "Content-Type: application/json" \
+  -d '{"format": "sigma"}'
+```
+
+**Response:**
+```json
+{
+  "format": "sigma",
+  "semantic_clarity": 100.0,
+  "redundancy": 0,
+  "field_balance": "EXCELLENT",
+  "i18n_score": 100.0,
+  "risk_zones": [],
+  "overall": 100,
+  "meta": {
+    "fields_analyzed": 6,
+    "languages": ["de", "en"]
+  }
+}
+```
+
+| Metrik | Beschreibung |
+|--------|--------------|
+| `semantic_clarity` | Wie sprechend sind die Feldnamen? |
+| `redundancy` | Keyword-Überlappung zwischen Feldern |
+| `field_balance` | Gewichtungs-Verteilung (EXCELLENT/OK/CRITICAL) |
+| `i18n_score` | Internationalisierungs-Vollständigkeit |
+| `risk_zones` | Felder mit vager Description/wenig Keywords |
+| `overall` | Gewichteter Gesamtscore |
+
+---
+
+## 📋 ALLE FORMAT ENDPOINTS
+
+| Method | Endpoint | Beschreibung |
+|--------|----------|--------------|
+| GET | `/resonanz/formats` | Alle Formate listen |
+| GET | `/resonanz/formats/{name}` | Format Details |
+| POST | `/resonanz/formats` | Format erstellen (Full) |
+| POST | `/resonanz/formats/quick` | ⚡ Schnell-Format |
+| PUT | `/resonanz/formats/{name}` | Format updaten |
+| DELETE | `/resonanz/formats/{name}` | Format löschen |
+| POST | `/resonanz/formats/scan` | 🔍 Response scannen |
+| POST | `/resonanz/formats/clone` | 🧬 Format klonen |
+| POST | `/resonanz/formats/score` | 📊 Format bewerten |
+
+---
+
+## 📁 LOGGING
+
+Alle Format-Operationen werden geloggt:
+```
+/opt/syntx-config/logs/format_ops.jsonl
+```
+```json
+{"operation": "score", "format": "sigma", "timestamp": "...", "overall_score": 100}
+{"operation": "clone", "source": "sigma", "target": "sigma_v2", "modifications": ["fields"]}
+{"operation": "scan", "format": "sigma", "coherence_score": 18.3, "missing_fields": 3}
+```
