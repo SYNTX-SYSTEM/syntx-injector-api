@@ -4,7 +4,7 @@
 # 🌊 SYNTX LOCAL API TESTER - ALLE ENDPOINTS
 # ═══════════════════════════════════════════════════════════════
 # Startet Server automatisch, testet ALLE Endpoints, stoppt Server
-# OHNE Chat-Endpoint (der braucht das Model)
+# INKL. FORMAT-ENDPOINTS! 🔥
 # ═══════════════════════════════════════════════════════════════
 
 BASE_URL="http://localhost:8001"
@@ -172,7 +172,7 @@ echo "   ╚════██║  ╚██╔╝  ██║╚██╗██�
 echo "   ███████║   ██║   ██║ ╚████║   ██║   ██╔╝ ██╗"
 echo "   ╚══════╝   ╚═╝   ╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝"
 echo -e "${NC}"
-echo -e "${BOLD}   🌊 LOCAL API TESTER - ALLE ENDPOINTS${NC}"
+echo -e "${BOLD}   🌊 LOCAL API TESTER v2.1 - MIT FORMAT SUPPORT! 🔥${NC}"
 echo -e "   ${YELLOW}Base: ${BASE_URL}${NC}"
 echo ""
 
@@ -192,6 +192,19 @@ test_endpoint "GET" "/health" "" "Health Check (Root)"
 test_endpoint "GET" "/resonanz/health" "" "Health Check (Resonanz)"
 test_endpoint "GET" "/resonanz/config/default-wrapper" "" "Get Default Wrapper"
 test_endpoint "PUT" "/resonanz/config/default-wrapper?wrapper_name=syntex_wrapper_sigma" "" "Set Default Wrapper"
+
+# ═══════════════════════════════════════════════════════════════
+#  🔥 FORMATS - NEU! DAS HERZSTÜCK!
+# ═══════════════════════════════════════════════════════════════
+
+header "🔥 FORMATS - DAS NEUE HERZSTÜCK!"
+
+test_endpoint "GET" "/resonanz/formats" "" "LIST: Alle Formate"
+test_endpoint "GET" "/resonanz/formats/syntex_system" "" "GET: syntex_system Format (DE)"
+test_endpoint "GET" "/resonanz/formats/syntex_system?language=en" "" "GET: syntex_system Format (EN)"
+test_endpoint "GET" "/resonanz/formats/human" "" "GET: human Format"
+test_endpoint "GET" "/resonanz/formats/sigma" "" "GET: sigma Format"
+test_endpoint "GET" "/resonanz/formats/nicht_existent_xyz" "" "GET: Non-existent Format" "404"
 
 # ═══════════════════════════════════════════════════════════════
 #  📦 WRAPPERS - BESTEHENDE ENDPOINTS
@@ -292,6 +305,7 @@ header "✅ FINAL CHECK"
 
 test_endpoint "GET" "/resonanz/wrappers" "" "List All (Test-Felder sollten weg sein)"
 test_endpoint "GET" "/resonanz/config/default-wrapper" "" "Default Wrapper Check"
+test_endpoint "GET" "/resonanz/formats" "" "Formats Final Check"
 
 # ═══════════════════════════════════════════════════════════════
 #  🛑 STOP SERVER
@@ -336,12 +350,16 @@ echo -e "   ${BOLD}CONFIG:${NC}"
 echo -e "   GET    /resonanz/config/default-wrapper"
 echo -e "   PUT    /resonanz/config/default-wrapper"
 echo ""
+echo -e "   ${BOLD}🔥 FORMATS (NEU!):${NC}"
+echo -e "   ${GREEN}GET${NC}    /resonanz/formats              ${GREEN}← NEU!${NC}"
+echo -e "   ${GREEN}GET${NC}    /resonanz/formats/{name}       ${GREEN}← NEU!${NC}"
+echo ""
 echo -e "   ${BOLD}WRAPPERS:${NC}"
 echo -e "   GET    /resonanz/wrappers"
 echo -e "   GET    /resonanz/wrapper/{name}"
-echo -e "   ${GREEN}POST${NC}   /resonanz/wrapper              ${GREEN}← NEU!${NC}"
-echo -e "   ${YELLOW}PUT${NC}    /resonanz/wrapper/{name}       ${YELLOW}← NEU!${NC}"
-echo -e "   ${RED}DELETE${NC} /resonanz/wrapper/{name}       ${RED}← NEU!${NC}"
+echo -e "   ${GREEN}POST${NC}   /resonanz/wrapper              ${GREEN}← CREATE${NC}"
+echo -e "   ${YELLOW}PUT${NC}    /resonanz/wrapper/{name}       ${YELLOW}← UPDATE${NC}"
+echo -e "   ${RED}DELETE${NC} /resonanz/wrapper/{name}       ${RED}← DELETE${NC}"
 echo -e "   POST   /resonanz/wrappers/{name}/activate"
 echo ""
 echo -e "   ${BOLD}ANALYTICS:${NC}"
@@ -353,6 +371,21 @@ echo ""
 echo -e "   ${BOLD}NICHT GETESTET (braucht Model):${NC}"
 echo -e "   POST   /resonanz/chat"
 echo -e "   GET    /resonanz/history/{request_id}"
+echo ""
+echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
+echo ""
+echo -e "${BOLD}   🔥 FORMAT + WRAPPER = ZWEI DIMENSIONEN:${NC}"
+echo ""
+echo -e "   ${YELLOW}mode${NC}   = WIE denkt das Modell? (Wrapper = Stil)"
+echo -e "   ${GREEN}format${NC} = WAS kommt raus? (Format = Felder)"
+echo ""
+echo -e "   ${BOLD}Beispiel Chat-Request:${NC}"
+echo -e '   POST /resonanz/chat'
+echo -e '   {'
+echo -e '       "prompt": "Analysiere das Internet",'
+echo -e '       "mode": "syntex_wrapper_sigma",    ← WIE'
+echo -e '       "format": "syntex_system"          ← WAS (NEU!)'
+echo -e '   }'
 echo ""
 echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
 echo ""

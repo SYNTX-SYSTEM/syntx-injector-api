@@ -1,5 +1,22 @@
 """
-SYNTX Wrapper Service - Main Application
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║    🌊⚡💎 SYNTX FIELD RESONANCE SERVICE 💎⚡🌊                               ║
+║                                                                              ║
+║    Nicht "API Server" - RESONANZ-ORCHESTRATOR.                               ║
+║                                                                              ║
+║    Hier fließen alle Ströme zusammen:                                        ║
+║      - Wrapper (WIE denkt das Modell)                                        ║
+║      - Formate (WAS kommt raus)  ← NEU!                                      ║
+║      - User Input (Die Frage)                                                ║
+║      - Model Response (Die Antwort)                                          ║
+║                                                                              ║
+║    ════════════════════════════════════════════════════════════════════      ║
+║                                                                              ║
+║    "Nicht mehr Token. Nicht mehr Drift.                                      ║
+║     Nur Felder. Nur Ströme. Nur Resonanz."                                  ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
 """
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,7 +31,9 @@ from .streams import (
     wrap_input_stream,
     forward_stream,
     generate_request_id,
-    get_timestamp
+    get_timestamp,
+    build_format_section,  # NEU!
+    FORMAT_LOADER_AVAILABLE  # NEU!
 )
 
 # Import resonance routers
@@ -24,8 +43,24 @@ from .resonance.stats import router as stats_router
 from .resonance.config import router as config_router
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+#  📝 STAGE LOGGING - Feld-Flow Dokumentation
+# ═══════════════════════════════════════════════════════════════════════════════
+
 def log_stage(stage: str, data: dict):
-    """Log each stage with full visibility"""
+    """
+    📝 STAGE LOGGING
+    
+    Nicht "Logging" - FELD-FLOW DOKUMENTATION.
+    
+    Jede Stage des Feld-Flows wird dokumentiert:
+      1_INCOMING       → Request kommt an
+      2_WRAPPERS_LOADED → Wrapper aktiviert
+      2.5_FORMAT_LOADED → Format injiziert (NEU!)
+      3_FIELD_CALIBRATED → Alles zusammengeführt
+      4_BACKEND_FORWARD  → Ab zum Modell
+      5_RESPONSE        → Antwort da
+    """
     print("\n" + "🌊" * 40)
     print(f"📍 STAGE: {stage}")
     print("─" * 80)
@@ -36,32 +71,60 @@ def log_stage(stage: str, data: dict):
             print(f"{key}: {value}")
     print("🌊" * 40 + "\n")
     
+    # Persist to file
     settings.log_dir.mkdir(parents=True, exist_ok=True)
     log_file = settings.log_dir / "field_flow.jsonl"
     with open(log_file, 'a', encoding='utf-8') as f:
         log_entry = {"stage": stage, "timestamp": get_timestamp(), **data}
         f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
     
+    # Response-specific logging
     if stage == "5_RESPONSE":
         wrapper_log = settings.log_dir / "wrapper_requests.jsonl"
         with open(wrapper_log, 'a', encoding='utf-8') as f:
             f.write(json.dumps(data, ensure_ascii=False) + '\n')
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🚀 APP LIFECYCLE
+# ═══════════════════════════════════════════════════════════════════════════════
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """
+    🚀 APP STARTUP
+    
+    Das Resonanz-Feld öffnet sich.
+    """
     print("=" * 80)
-    print("SYNTX FIELD RESONANCE SERVICE")
+    print("🌊⚡💎 SYNTX FIELD RESONANCE SERVICE 💎⚡🌊")
     print("=" * 80)
-    print(f"Backend: {settings.backend_url}")
-    print(f"Wrappers: {settings.wrapper_dir}")
-    print(f"Logs: {settings.log_dir}")
-    print(f"Resonance Endpoints: /resonanz/*")
+    print(f"Backend:    {settings.backend_url}")
+    print(f"Model:      {settings.model_name}")
+    print(f"Wrappers:   {settings.wrapper_dir}")
+    print(f"Formats:    /opt/syntx-config/formats/")
+    print(f"Logs:       {settings.log_dir}")
+    print(f"Format Loader: {'🔥 AKTIV' if FORMAT_LOADER_AVAILABLE else '❌ NICHT VERFÜGBAR'}")
+    print("=" * 80)
+    print("Endpoints:")
+    print("  /resonanz/chat     → Chat mit Wrapper + Format")
+    print("  /resonanz/wrappers → Wrapper Management")
+    print("  /resonanz/formats  → Format Info (NEU!)")
     print("=" * 80)
     yield
+    print("🌊 Resonanz-Feld schließt sich...")
 
 
-app = FastAPI(title="SYNTX Field Resonance", version="2.0.0", lifespan=lifespan)
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🏗️ APP INITIALIZATION
+# ═══════════════════════════════════════════════════════════════════════════════
+
+app = FastAPI(
+    title="🌊 SYNTX Field Resonance",
+    description="Nicht API - RESONANZ-ORCHESTRATOR. Wrapper (WIE) + Format (WAS) = Kalibrierte Antworten.",
+    version="2.1.0",
+    lifespan=lifespan
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -78,9 +141,13 @@ app.include_router(stats_router)
 app.include_router(config_router)
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🏥 HEALTH CHECKS
+# ═══════════════════════════════════════════════════════════════════════════════
+
 @app.get("/health")
 async def health():
-    """Health check with last response"""
+    """🏥 Health Check - Lebt das System?"""
     log_file = settings.log_dir / "field_flow.jsonl"
     last_response = None
     
@@ -92,18 +159,20 @@ async def health():
                     entry = json.loads(line)
                     if entry.get("stage") == "5_RESPONSE":
                         last_response = {
-                            "response": entry.get("response"),
+                            "response": entry.get("response", "")[:200] + "...",
                             "latency_ms": entry.get("latency_ms"),
-                            "timestamp": entry.get("timestamp")
+                            "timestamp": entry.get("timestamp"),
+                            "format": entry.get("format")  # NEU!
                         }
                         break
         except:
             pass
     
     return {
-        "status": "healthy",
+        "status": "🟢 RESONANZ AKTIV",
         "service": "syntx-field-resonance",
-        "version": "2.0.0",
+        "version": "2.1.0",
+        "format_loader": "🔥 AKTIV" if FORMAT_LOADER_AVAILABLE else "❌ NICHT VERFÜGBAR",
         "last_response": last_response
     }
 
@@ -120,18 +189,123 @@ async def resonance_health():
     return await health()
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+#  📋 FORMAT ENDPOINTS (NEU!)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.get("/resonanz/formats")
+async def list_formats():
+    """
+    📋 VERFÜGBARE FORMATE LISTEN
+    
+    Zeigt alle Format-Definitionen die genutzt werden können.
+    """
+    if not FORMAT_LOADER_AVAILABLE:
+        return {
+            "status": "❌ FORMAT_LOADER_NICHT_VERFÜGBAR",
+            "formats": [],
+            "message": "Format Loader konnte nicht geladen werden"
+        }
+    
+    from .formats import list_formats as _list_formats, load_format
+    
+    format_names = _list_formats()
+    formats = []
+    
+    for name in format_names:
+        fmt = load_format(name)
+        if fmt:
+            desc = fmt.get("description", {})
+            formats.append({
+                "name": name,
+                "fields_count": len(fmt.get("fields", [])),
+                "description": desc.get("de", desc) if isinstance(desc, dict) else desc,
+                "languages": fmt.get("languages", ["de"])
+            })
+    
+    return {
+        "status": "🔥 FORMATE GELADEN",
+        "count": len(formats),
+        "formats": formats
+    }
+
+
+@app.get("/resonanz/formats/{format_name}")
+async def get_format_info(format_name: str, language: str = "de"):
+    """
+    📄 FORMAT DETAILS
+    
+    Zeigt alle Felder eines Formats.
+    """
+    if not FORMAT_LOADER_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Format Loader nicht verfügbar")
+    
+    from .formats import load_format, get_format_fields
+    
+    fmt = load_format(format_name)
+    if not fmt:
+        raise HTTPException(status_code=404, detail=f"Format '{format_name}' nicht gefunden")
+    
+    fields = get_format_fields(format_name, language)
+    
+    return {
+        "status": "🔥 FORMAT GELADEN",
+        "format": {
+            "name": format_name,
+            "description": fmt.get("description", {}),
+            "languages": fmt.get("languages", ["de"]),
+            "fields": fields
+        }
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  💬 CHAT ENDPOINT - DAS HERZSTÜCK
+# ═══════════════════════════════════════════════════════════════════════════════
+
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
+    """
+    💬 CHAT - Das Herzstück des Systems
+    
+    ╔═══════════════════════════════════════════════════════════════════════════╗
+    ║                                                                           ║
+    ║   ZWEI DIMENSIONEN:                                                       ║
+    ║                                                                           ║
+    ║   mode   = WIE denkt das Modell? (Wrapper)                               ║
+    ║            → Stil, Tonalität, Persönlichkeit                             ║
+    ║                                                                           ║
+    ║   format = WAS kommt raus? (Format)                                       ║
+    ║            → Felder, Struktur, Analyse-Schema                            ║
+    ║                                                                           ║
+    ╠═══════════════════════════════════════════════════════════════════════════╣
+    ║                                                                           ║
+    ║   BEISPIEL:                                                               ║
+    ║                                                                           ║
+    ║   POST /api/chat                                                          ║
+    ║   {                                                                       ║
+    ║       "prompt": "Analysiere das Internet",                                ║
+    ║       "mode": "syntex_wrapper_sigma",    ← WIE (systemisch)              ║
+    ║       "format": "syntex_system"          ← WAS (3 Felder)                ║
+    ║   }                                                                       ║
+    ║                                                                           ║
+    ╚═══════════════════════════════════════════════════════════════════════════╝
+    """
     request_id = generate_request_id()
     start_time = time.time()
     field_flow = []
+    format_info = {}
     
     try:
-        # STAGE 1: Incoming
+        # ══════════════════════════════════════════════════════════════════════
+        #  STAGE 1: INCOMING
+        # ══════════════════════════════════════════════════════════════════════
         stage_1_data = {
             "request_id": request_id,
             "prompt": request.prompt,
             "mode": request.mode,
+            "format": request.format,  # NEU!
+            "language": request.language,  # NEU!
             "include_init": request.include_init
         }
         log_stage("1_INCOMING", stage_1_data)
@@ -141,7 +315,9 @@ async def chat(request: ChatRequest):
             "data": stage_1_data
         })
         
-        # STAGE 2: Load Wrappers
+        # ══════════════════════════════════════════════════════════════════════
+        #  STAGE 2: LOAD WRAPPERS (WIE)
+        # ══════════════════════════════════════════════════════════════════════
         wrapper_text, wrapper_chain = await load_wrapper_stream(
             request.mode,
             request.include_init,
@@ -150,29 +326,61 @@ async def chat(request: ChatRequest):
         stage_2_data = {
             "request_id": request_id,
             "chain": wrapper_chain,
-            "wrapper_text": wrapper_text
+            "wrapper_preview": wrapper_text[:300] + "..." if len(wrapper_text) > 300 else wrapper_text
         }
         log_stage("2_WRAPPERS_LOADED", stage_2_data)
         field_flow.append({
             "stage": "2_WRAPPERS_LOADED",
             "timestamp": get_timestamp(),
-            "data": {"request_id": request_id, "chain": wrapper_chain}
+            "data": {"chain": wrapper_chain}
         })
         
-        # STAGE 3: Calibrate Field
-        wrapped_prompt = wrap_input_stream(wrapper_text, request.prompt)
+        # ══════════════════════════════════════════════════════════════════════
+        #  STAGE 2.5: LOAD FORMAT (WAS) - NEU!
+        # ══════════════════════════════════════════════════════════════════════
+        format_section = ""
+        if request.format:
+            format_section, format_info = build_format_section(
+                request.format, 
+                request.language
+            )
+            stage_25_data = {
+                "request_id": request_id,
+                "format": request.format,
+                "language": request.language,
+                "format_info": format_info,
+                "format_section_preview": format_section[:500] + "..." if len(format_section) > 500 else format_section
+            }
+            log_stage("2.5_FORMAT_LOADED", stage_25_data)
+            field_flow.append({
+                "stage": "2.5_FORMAT_LOADED",
+                "timestamp": get_timestamp(),
+                "data": format_info
+            })
+        
+        # ══════════════════════════════════════════════════════════════════════
+        #  STAGE 3: CALIBRATE FIELD (Alles zusammen)
+        # ══════════════════════════════════════════════════════════════════════
+        wrapped_prompt = wrap_input_stream(
+            wrapper_text, 
+            request.prompt,
+            format_section  # NEU!
+        )
         stage_3_data = {
             "request_id": request_id,
-            "calibrated_field": wrapped_prompt
+            "calibrated_field_preview": wrapped_prompt[:800] + "..." if len(wrapped_prompt) > 800 else wrapped_prompt,
+            "total_length": len(wrapped_prompt)
         }
         log_stage("3_FIELD_CALIBRATED", stage_3_data)
         field_flow.append({
             "stage": "3_FIELD_CALIBRATED",
             "timestamp": get_timestamp(),
-            "data": {"request_id": request_id, "field_preview": wrapped_prompt[:500]}
+            "data": {"total_length": len(wrapped_prompt)}
         })
         
-        # STAGE 4: Backend Forward
+        # ══════════════════════════════════════════════════════════════════════
+        #  STAGE 4: BACKEND FORWARD
+        # ══════════════════════════════════════════════════════════════════════
         backend_params = {
             "max_new_tokens": request.max_new_tokens,
             "temperature": request.temperature,
@@ -182,37 +390,48 @@ async def chat(request: ChatRequest):
         stage_4_data = {
             "request_id": request_id,
             "backend_url": settings.backend_url,
+            "model": settings.model_name,
             "params": backend_params
         }
         log_stage("4_BACKEND_FORWARD", stage_4_data)
         field_flow.append({
             "stage": "4_BACKEND_FORWARD",
             "timestamp": get_timestamp(),
-            "data": stage_4_data
+            "data": {"backend": settings.backend_url, "model": settings.model_name}
         })
         
+        # 🚀 FORWARD TO MODEL!
         response_text = await forward_stream(wrapped_prompt, backend_params)
         
-        # STAGE 5: Response
+        # ══════════════════════════════════════════════════════════════════════
+        #  STAGE 5: RESPONSE
+        # ══════════════════════════════════════════════════════════════════════
         latency_ms = int((time.time() - start_time) * 1000)
         stage_5_data = {
             "request_id": request_id,
             "response": response_text,
             "latency_ms": latency_ms,
-            "wrapper_chain": wrapper_chain
+            "wrapper_chain": wrapper_chain,
+            "format": request.format,  # NEU!
+            "format_fields": format_info.get("fields", [])  # NEU!
         }
         log_stage("5_RESPONSE", stage_5_data)
         field_flow.append({
             "stage": "5_RESPONSE",
             "timestamp": get_timestamp(),
-            "data": {"request_id": request_id, "latency_ms": latency_ms}
+            "data": {"latency_ms": latency_ms}
         })
         
+        # ══════════════════════════════════════════════════════════════════════
+        #  RETURN RESPONSE
+        # ══════════════════════════════════════════════════════════════════════
         return ChatResponse(
             response=response_text,
             metadata={
                 "request_id": request_id,
                 "wrapper_chain": wrapper_chain,
+                "format": request.format,  # NEU!
+                "format_fields": format_info.get("fields", []),  # NEU!
                 "latency_ms": latency_ms
             },
             field_flow=field_flow
@@ -229,5 +448,9 @@ async def chat(request: ChatRequest):
 
 @app.post("/resonanz/chat", response_model=ChatResponse)
 async def resonance_chat(request: ChatRequest):
-    """Resonance chat endpoint - alias to /api/chat"""
+    """
+    💬 RESONANZ CHAT - Alias zu /api/chat
+    
+    Gleiche Funktionalität, anderer Pfad.
+    """
     return await chat(request)
