@@ -330,3 +330,233 @@ async def quick_create_format(data: QuickFormatCreate):
             "path": str(format_path)
         }
     }
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🔍 SCAN - Response gegen Format validieren
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class FormatScanRequest(BaseModel):
+    format: str
+    response: str
+    language: str = "de"
+
+
+@router.post("/scan")
+async def scan_format_response(data: FormatScanRequest):
+    """
+    🔍 FORMAT-SCAN - Response gegen Format validieren
+    
+    Scannt eine Model-Response und prüft:
+    - Fehlende Felder
+    - Low-Quality Felder (zu kurz, keine Keywords)
+    - Feldlängen
+    - Kohärenz-Score
+    - Empfehlungen
+    """
+    from ..formats import scan_response
+    
+    result = scan_response(data.format, data.response, data.language)
+    
+    if "error" in result:
+        raise HTTPException(status_code=404, detail=result["error"])
+    
+    # Logging
+    log_entry = {
+        "operation": "scan",
+        "format": data.format,
+        "timestamp": datetime.now().isoformat(),
+        "coherence_score": result.get("coherence_score"),
+        "missing_fields": len(result.get("missing_fields", []))
+    }
+    _log_format_operation(log_entry)
+    
+    return result
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🧬 CLONE - Format klonen mit Modifikationen
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class FormatCloneRequest(BaseModel):
+    source: str
+    target: str
+    modifications: Optional[Dict[str, Any]] = None
+
+
+@router.post("/clone")
+async def clone_format(data: FormatCloneRequest):
+    """
+    🧬 FORMAT-CLONE - Variante erstellen
+    
+    Klont ein bestehendes Format unter neuem Namen.
+    
+    Optionale Modifikationen:
+    - fields: Liste von Feldnamen (filtert/ordnet)
+    - description: Neue Beschreibung
+    - wrapper: Neuer empfohlener Wrapper
+    - scoring: Neue Scoring-Thresholds
+    """
+    import copy
+    
+    # Source laden
+    source_path = FORMATS_DIR / f"{data.source}.json"
+    if not source_path.exists():
+        raise HTTPException(status_code=404, detail=f"Source-Format '{data.source}' nicht gefunden")
+    
+    # Target prüfen
+    safe_target = "".join(c if c.isalnum() or c in "-_" else "_" for c in data.target.lower())
+    target_path = FORMATS_DIR / f"{safe_target}.json"
+    
+    if target_path.exists():
+        raise HTTPException(status_code=409, detail=f"Target-Format '{safe_target}' existiert bereits!")
+    
+    # Source laden und kopieren
+    with open(source_path, 'r', encoding='utf-8') as f:
+        format_json = json.load(f)
+    
+    cloned = copy.deepcopy(format_json)
+    
+    # Basis-Updates
+    now = datetime.now().strftime("%Y-%m-%d")
+    cloned["name"] = safe_target
+    cloned["created"] = now
+    cloned["updated"] = now
+    cloned["cloned_from"] = data.source
+    
+    modifications_applied = []
+    
+    # Modifikationen anwenden
+    if data.modifications:
+        mods = data.modifications
+        
+        # Fields filtern/ordnen
+        if "fields" in mods and mods["fields"]:
+            field_names = mods["fields"]
+            original_fields = {f["name"]: f for f in cloned.get("fields", [])}
+            new_fields = []
+            for name in field_names:
+                if name in original_fields:
+                    new_fields.append(original_fields[name])
+                else:
+                    # Neues Feld mit Defaults
+                    new_fields.append({
+                        "name": name,
+                        "weight": 100 // len(field_names),
+                        "description": {"de": f"Beschreibung für {name}", "en": f"Description for {name}"},
+                        "keywords": {"de": [name], "en": [name]},
+                        "headers": {"de": [name.upper()], "en": [name.upper()]},
+                        "validation": {"min_length": 30, "max_length": 3000, "required": True}
+                    })
+            cloned["fields"] = new_fields
+            cloned["expected_structure"]["min_fields"] = len(new_fields)
+            cloned["expected_structure"]["max_fields"] = len(new_fields)
+            modifications_applied.append("fields")
+        
+        # Description
+        if "description" in mods:
+            cloned["description"] = mods["description"]
+            modifications_applied.append("description")
+        
+        # Wrapper
+        if "wrapper" in mods:
+            cloned["wrapper"] = mods["wrapper"]
+            modifications_applied.append("wrapper")
+        
+        # Scoring
+        if "scoring" in mods:
+            cloned["scoring"].update(mods["scoring"])
+            modifications_applied.append("scoring")
+        
+        # Tags
+        if "tags" in mods:
+            cloned["tags"] = mods["tags"]
+            modifications_applied.append("tags")
+    
+    # Speichern
+    with open(target_path, 'w', encoding='utf-8') as f:
+        json.dump(cloned, f, indent=2, ensure_ascii=False)
+    
+    # Cache leeren
+    try:
+        from ..formats import clear_format_cache
+        clear_format_cache()
+    except:
+        pass
+    
+    # Logging
+    log_entry = {
+        "operation": "clone",
+        "source": data.source,
+        "target": safe_target,
+        "timestamp": datetime.now().isoformat(),
+        "modifications": modifications_applied
+    }
+    _log_format_operation(log_entry)
+    
+    return {
+        "status": "success",
+        "message": f"Format '{safe_target}' geklont von '{data.source}' 🧬",
+        "source": data.source,
+        "target": safe_target,
+        "modifications_applied": modifications_applied,
+        "fields_count": len(cloned.get("fields", [])),
+        "path": str(target_path)
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  📊 SCORE - Format-Qualität bewerten
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class FormatScoreRequest(BaseModel):
+    format: str
+    language: str = "de"
+
+
+@router.post("/score")
+async def score_format_endpoint(data: FormatScoreRequest):
+    """
+    📊 FORMAT-SCORE - Format-Qualität bewerten
+    
+    Bewertet das Format selbst (nicht die Response):
+    - Semantische Klarheit der Feldnamen
+    - Redundanz zwischen Feldern
+    - Balance der Gewichtungen
+    - i18n-Vollständigkeit
+    - Risikozonen
+    """
+    from ..formats import score_format
+    
+    result = score_format(data.format, data.language)
+    
+    if "error" in result:
+        raise HTTPException(status_code=404, detail=result["error"])
+    
+    # Logging
+    log_entry = {
+        "operation": "score",
+        "format": data.format,
+        "timestamp": datetime.now().isoformat(),
+        "overall_score": result.get("overall")
+    }
+    _log_format_operation(log_entry)
+    
+    return result
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  📝 LOGGING HELPER
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _log_format_operation(entry: Dict):
+    """Loggt Format-Operationen nach format_ops.jsonl"""
+    log_dir = Path("/opt/syntx-config/logs")
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_file = log_dir / "format_ops.jsonl"
+    
+    try:
+        with open(log_file, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(entry, ensure_ascii=False) + '\n')
+    except Exception as e:
+        print(f"⚠️ Logging failed: {e}")
