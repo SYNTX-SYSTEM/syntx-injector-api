@@ -1,14 +1,12 @@
 """
-🌊 SYNTX FORMAT LOADER - Rapper Edition
-
+🌊 SYNTX FORMAT LOADER v2.0 - Rapper Edition
 Nicht "File Loading" - FELD-DEFINITION AKTIVIERUNG.
-
 Lädt Format-JSONs und baut daraus die Prompt-Struktur,
-die das Modell ausfüllen soll.
+die das Modell ausfüllen MUSS.
 """
 import json
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from functools import lru_cache
 
 # Format Config Directory
@@ -77,47 +75,136 @@ def get_format_fields(format_name: str, language: str = "de") -> List[Dict]:
     return fields
 
 
+def get_recommended_wrapper(format_name: str) -> Optional[str]:
+    """
+    🎯 EMPFOHLENEN WRAPPER HOLEN
+    
+    Liest "wrapper" Feld aus Format-JSON.
+    """
+    format_data = load_format(format_name)
+    if not format_data:
+        return None
+    return format_data.get("wrapper")
+
+
 def build_format_prompt(format_name: str, language: str = "de") -> str:
     """
-    🔥 FORMAT-PROMPT BAUEN
+    🔥 FORMAT-PROMPT BAUEN - v2.0 MIT ANWEISUNG!
     
     DAS IST DIE MAGIE!
     
-    Baut aus dem JSON die Prompt-Struktur:
+    Baut aus dem JSON die Prompt-Struktur MIT Anweisung:
     
-    ### Driftkörperanalyse:
-    WAS ist das analysierte Objekt?...
+    ════════════════════════════════════════
+    📋 ANALYSE-FORMAT - Bitte fülle folgende Felder aus:
     
-    ### Kalibrierung:
-    WIE verändert sich das System?...
+    ### SIGMA_DRIFT:
+    Signal-Verschiebung im System...
     
-    ### Strömung:
-    WIE fließt Energie?...
+    ### SIGMA_MECHANISMUS:
+    Wie funktioniert der Mechanismus?...
+    ════════════════════════════════════════
     """
     fields = get_format_fields(format_name, language)
     
     if not fields:
         return ""
     
-    sections = []
+    # 🔥 ANWEISUNG bauen
+    field_names = [f["header"] for f in fields]
+    field_list = "\n".join([f"  – {name}" for name in field_names])
     
+    if language == "de":
+        instruction = f"""
+📋 ANALYSE-FORMAT - Bitte fülle folgende Felder aus:
+
+════════════════════════════════════════════════════════════
+
+{field_list}
+
+Strukturiere deine Antwort mit ### FELDNAME: als Header.
+════════════════════════════════════════════════════════════
+"""
+    else:
+        instruction = f"""
+📋 ANALYSIS FORMAT - Please fill in the following fields:
+
+════════════════════════════════════════════════════════════
+
+{field_list}
+
+Structure your response with ### FIELDNAME: as headers.
+════════════════════════════════════════════════════════════
+"""
+    
+    # Feld-Definitionen bauen
+    sections = []
     for field in fields:
         header = field["header"]
         description = field["description"]
-        
-        # Baue Section
         section = f"### {header}:\n{description}"
         sections.append(section)
     
-    # Intro hinzufügen
+    # Format-Intro
     format_data = load_format(format_name)
+    format_intro = ""
     if format_data:
         desc = format_data.get("description", {})
         intro = desc.get(language, desc.get("de", ""))
         if intro:
-            sections.insert(0, f"[Format: {format_name}]\n{intro}\n")
+            format_intro = f"\n[Format: {format_name}]\n{intro}\n"
     
-    return "\n\n".join(sections)
+    # Alles zusammenbauen
+    full_prompt = instruction + format_intro + "\n\n".join(sections)
+    
+    return full_prompt
+
+
+def build_dynamic_prompt(
+    user_prompt: str,
+    format_name: str,
+    language: str = "de"
+) -> Tuple[str, Dict]:
+    """
+    🚀 DYNAMISCHER PROMPT BUILDER
+    
+    Kombiniert User-Prompt + Format zu einem kalibrierten Feld.
+    
+    Returns:
+        (combined_prompt, metadata)
+    """
+    format_section = build_format_prompt(format_name, language)
+    fields = get_format_fields(format_name, language)
+    recommended_wrapper = get_recommended_wrapper(format_name)
+    
+    if not format_section:
+        return user_prompt, {"error": f"Format '{format_name}' nicht gefunden"}
+    
+    # User-Prompt + Format kombinieren
+    if language == "de":
+        combined = f"""AUFGABE: {user_prompt}
+
+{format_section}
+
+💡 INSIGHT: Fasse am Ende die wichtigste Erkenntnis in 1-2 Sätzen zusammen.
+"""
+    else:
+        combined = f"""TASK: {user_prompt}
+
+{format_section}
+
+💡 INSIGHT: Summarize the key insight in 1-2 sentences at the end.
+"""
+    
+    metadata = {
+        "format": format_name,
+        "language": language,
+        "fields_count": len(fields),
+        "fields": [f["name"] for f in fields],
+        "recommended_wrapper": recommended_wrapper
+    }
+    
+    return combined, metadata
 
 
 def list_formats() -> List[str]:

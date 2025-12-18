@@ -41,6 +41,7 @@ from .resonance.wrappers import router as wrappers_router
 from .resonance.streams import router as streams_router
 from .resonance.stats import router as stats_router
 from .resonance.config import router as config_router
+from .resonance.formats import router as formats_router
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -139,6 +140,7 @@ app.include_router(wrappers_router)
 app.include_router(streams_router)
 app.include_router(stats_router)
 app.include_router(config_router)
+app.include_router(formats_router)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
