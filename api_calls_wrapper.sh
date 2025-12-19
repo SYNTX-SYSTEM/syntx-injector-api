@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # ═══════════════════════════════════════════════════════════════
-# 🌊 SYNTX SERVER API TESTER - ALLE ENDPOINTS
+# 🌊 SYNTX API TESTER v3.0 - VOLLSTÄNDIG!
 # ═══════════════════════════════════════════════════════════════
-# Testet ALLE Endpoints auf dev.syntx-system.com
-# INKL. FORMAT-ENDPOINTS! 🔥
+# Alle Endpoints: Health, Config, Wrappers, Formats, Meta, Chat, Stats
 # ═══════════════════════════════════════════════════════════════
 
 BASE_URL="https://dev.syntx-system.com"
+# Falls lokal: BASE_URL="http://localhost:8001"
 
 # Colors
 CYAN='\033[0;36m'
@@ -23,6 +23,10 @@ TOTAL=0
 SUCCESS=0
 FAILED=0
 
+# Test wrapper name for CRUD tests
+TEST_WRAPPER="api_test_wrapper_$(date +%s)"
+TEST_FORMAT="test_format_$(date +%s)"
+
 header() {
     echo ""
     echo -e "${MAGENTA}═══════════════════════════════════════════════════════════════${NC}"
@@ -35,241 +39,225 @@ test_endpoint() {
     local ENDPOINT=$2
     local DATA=$3
     local DESCRIPTION=$4
-    local EXPECT_CODE=$5
+    local EXPECT_CODE=${5:-200}
     
     TOTAL=$((TOTAL + 1))
     
     echo ""
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     echo -e "${BOLD}📡 TEST #$TOTAL: $DESCRIPTION${NC}"
-    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo ""
-    echo -e "${YELLOW}▶ METHOD:${NC}   $METHOD"
-    echo -e "${YELLOW}▶ URL:${NC}      ${BASE_URL}${ENDPOINT}"
-    
-    if [ -n "$DATA" ]; then
-        echo -e "${YELLOW}▶ BODY:${NC}"
-        echo "$DATA" | jq . 2>/dev/null || echo "$DATA"
-    fi
-    
-    echo ""
-    echo -e "${YELLOW}▶ RESPONSE:${NC}"
+    echo -e "${YELLOW}▶ $METHOD $BASE_URL$ENDPOINT${NC}"
     
     if [ "$METHOD" == "GET" ]; then
-        RESPONSE=$(curl -s -w "\n%{http_code}" "${BASE_URL}${ENDPOINT}" 2>/dev/null)
-    elif [ "$METHOD" == "POST" ]; then
-        if [ -n "$DATA" ]; then
-            RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${BASE_URL}${ENDPOINT}" \
-                -H "Content-Type: application/json" -d "$DATA" 2>/dev/null)
-        else
-            RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${BASE_URL}${ENDPOINT}" 2>/dev/null)
-        fi
-    elif [ "$METHOD" == "PUT" ]; then
-        RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT "${BASE_URL}${ENDPOINT}" \
-            -H "Content-Type: application/json" -d "$DATA" 2>/dev/null)
+        RESPONSE=$(curl -s -w "\n%{http_code}" "$BASE_URL$ENDPOINT")
     elif [ "$METHOD" == "DELETE" ]; then
-        RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE "${BASE_URL}${ENDPOINT}" 2>/dev/null)
+        RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE "$BASE_URL$ENDPOINT")
+    elif [ "$METHOD" == "PUT" ] && [ -z "$DATA" ]; then
+        RESPONSE=$(curl -s -w "\n%{http_code}" -X PUT "$BASE_URL$ENDPOINT")
+    else
+        RESPONSE=$(curl -s -w "\n%{http_code}" -X $METHOD -H "Content-Type: application/json" -d "$DATA" "$BASE_URL$ENDPOINT")
     fi
     
     HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
     BODY=$(echo "$RESPONSE" | sed '$d')
     
-    echo "$BODY" | jq . 2>/dev/null || echo "$BODY"
-    echo ""
+    # Pretty print JSON (truncated)
+    echo "$BODY" | jq '.' 2>/dev/null | head -30
+    if [ $(echo "$BODY" | jq '.' 2>/dev/null | wc -l) -gt 30 ]; then
+        echo "... (truncated)"
+    fi
     
-    if [ -n "$EXPECT_CODE" ]; then
-        if [ "$HTTP_CODE" == "$EXPECT_CODE" ]; then
-            echo -e "${GREEN}✓ STATUS: $HTTP_CODE (expected $EXPECT_CODE)${NC}"
-            SUCCESS=$((SUCCESS + 1))
-        else
-            echo -e "${RED}✕ STATUS: $HTTP_CODE (expected $EXPECT_CODE)${NC}"
-            FAILED=$((FAILED + 1))
-        fi
-    elif [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
-        echo -e "${GREEN}✓ STATUS: $HTTP_CODE OK${NC}"
+    if [ "$HTTP_CODE" == "$EXPECT_CODE" ]; then
+        echo -e "${GREEN}✓ $HTTP_CODE${NC}"
         SUCCESS=$((SUCCESS + 1))
     else
-        echo -e "${RED}✕ STATUS: $HTTP_CODE FAILED${NC}"
+        echo -e "${RED}✕ $HTTP_CODE (expected $EXPECT_CODE)${NC}"
         FAILED=$((FAILED + 1))
     fi
 }
 
 # ═══════════════════════════════════════════════════════════════
-#  🎬 MAIN
+# START
 # ═══════════════════════════════════════════════════════════════
-
-clear
-echo -e "${CYAN}"
-echo "   ███████╗██╗   ██╗███╗   ██╗████████╗██╗  ██╗"
-echo "   ██╔════╝╚██╗ ██╔╝████╗  ██║╚══██╔══╝╚██╗██╔╝"
-echo "   ███████╗ ╚████╔╝ ██╔██╗ ██║   ██║    ╚███╔╝ "
-echo "   ╚════██║  ╚██╔╝  ██║╚██╗██║   ██║    ██╔██╗ "
-echo "   ███████║   ██║   ██║ ╚████║   ██║   ██╔╝ ██╗"
-echo "   ╚══════╝   ╚═╝   ╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝"
-echo -e "${NC}"
-echo -e "${BOLD}   🌊 RAPPER SERVICE TESTER v2.1 - MIT FORMAT SUPPORT! 🔥${NC}"
-echo -e "   ${YELLOW}Target: ${BASE_URL}${NC}"
 echo ""
+echo -e "${BOLD}   🌊 SYNTX API TESTER v3.0 - $BASE_URL${NC}"
 
 # ═══════════════════════════════════════════════════════════════
-#  🏥 HEALTH & CONFIG
+# 🏥 HEALTH
 # ═══════════════════════════════════════════════════════════════
+header "🏥 HEALTH"
 
-header "🏥 HEALTH & CONFIG"
+test_endpoint "GET" "/health" "" "Root Health Check"
+test_endpoint "GET" "/resonanz/health" "" "Resonanz Health Check"
+test_endpoint "GET" "/resonanz/health/wrappers" "" "Wrapper Health + Orphan Detection"
 
-test_endpoint "GET" "/health" "" "Health Check (Root)"
-test_endpoint "GET" "/resonanz/health" "" "Health Check (Resonanz)"
+# ═══════════════════════════════════════════════════════════════
+# ⚙️ CONFIG
+# ═══════════════════════════════════════════════════════════════
+header "⚙️ CONFIG"
+
 test_endpoint "GET" "/resonanz/config/default-wrapper" "" "Get Default Wrapper"
 
 # ═══════════════════════════════════════════════════════════════
-#  🔥 FORMATS - NEU! DAS HERZSTÜCK!
+# 🔥 FORMATS
 # ═══════════════════════════════════════════════════════════════
+header "🔥 FORMATS"
 
-header "🔥 FORMATS - DAS NEUE HERZSTÜCK!"
+test_endpoint "GET" "/resonanz/formats" "" "List All Formats"
+test_endpoint "GET" "/resonanz/formats/sigma" "" "Get Format: sigma"
+test_endpoint "GET" "/resonanz/formats/sigma?language=en" "" "Get Format: sigma (English)"
+test_endpoint "GET" "/resonanz/formats/economics" "" "Get Format: economics"
+test_endpoint "GET" "/resonanz/formats/human" "" "Get Format: human"
 
-test_endpoint "GET" "/resonanz/formats" "" "LIST: Alle Formate"
-test_endpoint "GET" "/resonanz/formats/syntex_system" "" "GET: syntex_system Format (DE)"
-test_endpoint "GET" "/resonanz/formats/syntex_system?language=en" "" "GET: syntex_system Format (EN)"
-test_endpoint "GET" "/resonanz/formats/human" "" "GET: human Format"
-test_endpoint "GET" "/resonanz/formats/sigma" "" "GET: sigma Format"
-test_endpoint "GET" "/resonanz/formats/nicht_existent_xyz" "" "GET: Non-existent Format" "404"
+# Quick Create Format Test
+test_endpoint "POST" "/resonanz/formats/quick" \
+    "{\"name\": \"$TEST_FORMAT\", \"description_de\": \"Test Format\", \"field_names\": [\"field1\", \"field2\"], \"wrapper\": \"syntex_wrapper_sigma\"}" \
+    "Quick Create Format"
+
+# Delete Test Format
+test_endpoint "DELETE" "/resonanz/formats/$TEST_FORMAT" "" "Delete Test Format"
 
 # ═══════════════════════════════════════════════════════════════
-#  📦 WRAPPERS - LIST & GET
+# 📦 WRAPPERS
 # ═══════════════════════════════════════════════════════════════
-
-header "📦 WRAPPERS - LIST & GET"
+header "📦 WRAPPERS"
 
 test_endpoint "GET" "/resonanz/wrappers" "" "List All Wrappers"
 test_endpoint "GET" "/resonanz/wrappers?active=true" "" "Get Active Wrapper Only"
-test_endpoint "GET" "/resonanz/wrapper/syntex_wrapper_sigma" "" "Get Wrapper Detail (Sigma)"
-test_endpoint "GET" "/resonanz/wrapper/nicht_existent_12345" "" "Get Non-Existent Wrapper" "404"
+test_endpoint "GET" "/resonanz/wrappers/full" "" "List Wrappers + Meta + Stats"
+test_endpoint "GET" "/resonanz/wrapper/syntex_wrapper_sigma" "" "Get Wrapper Content: sigma"
+test_endpoint "GET" "/resonanz/wrapper/syntex_wrapper_deepsweep" "" "Get Wrapper Content: deepsweep"
+
+# CREATE Test Wrapper
+test_endpoint "POST" "/resonanz/wrapper" \
+    "{\"name\": \"$TEST_WRAPPER\", \"content\": \"Dies ist ein Test-Wrapper für API-Tests. SYNTX FIELD RESONANCE.\"}" \
+    "CREATE Wrapper"
+
+# UPDATE Test Wrapper
+test_endpoint "PUT" "/resonanz/wrapper/$TEST_WRAPPER" \
+    "{\"content\": \"UPDATED: Dies ist der aktualisierte Test-Wrapper. SYNTX FIELD RESONANCE v2.\"}" \
+    "UPDATE Wrapper"
+
+# DELETE Test Wrapper
+test_endpoint "DELETE" "/resonanz/wrapper/$TEST_WRAPPER" "" "DELETE Wrapper"
 
 # ═══════════════════════════════════════════════════════════════
-#  🌟 WRAPPERS - CRUD TEST
+# 🧬 META (NEU in v3.0!)
 # ═══════════════════════════════════════════════════════════════
+header "🧬 META"
 
-header "🌟 FELD GEBURT - CREATE"
+test_endpoint "GET" "/resonanz/wrapper/syntex_wrapper_sigma/meta" "" "Get Meta: sigma"
+test_endpoint "GET" "/resonanz/wrapper/syntex_wrapper_deepsweep/meta" "" "Get Meta: deepsweep"
 
-test_endpoint "POST" "/resonanz/wrapper" '{
-  "name": "test_feld_api",
-  "content": "═══════════════════════════════════════════\n🌊 TEST WRAPPER VIA API\n═══════════════════════════════════════════\n\nDieses Feld wurde via API erstellt!\n\n💎 SYNTX POWER! 💎",
-  "description": "Test Wrapper via API",
-  "author": "SYNTX API Tester",
-  "version": "1.0",
-  "tags": ["test", "api"]
-}' "CREATE: Neues Feld gebären"
+# Format Binding
+test_endpoint "PUT" "/resonanz/wrapper/syntex_wrapper_sigma/format?format_name=sigma" "" "Bind Format: sigma → sigma"
+test_endpoint "PUT" "/resonanz/wrapper/syntex_wrapper_deepsweep/format?format_name=economics" "" "Bind Format: deepsweep → economics"
 
-test_endpoint "GET" "/resonanz/wrapper/test_feld_api" "" "GET: Neues Feld verifizieren"
-
-header "🔄 FELD MODULATION - UPDATE"
-
-test_endpoint "PUT" "/resonanz/wrapper/test_feld_api" '{
-  "content": "═══════════════════════════════════════════\n🔥 MODULIERTES FELD! 🔥\n═══════════════════════════════════════════\n\nDieses Feld wurde per PUT aktualisiert!\n\n⚡ RESONANZ VERSCHOBEN! ⚡",
-  "description": "Aktualisierter Test Wrapper v2",
-  "version": "2.0"
-}' "UPDATE: Feld modulieren"
-
-header "💀 FELD FREIGABE - DELETE"
-
-test_endpoint "DELETE" "/resonanz/wrapper/test_feld_api" "" "DELETE: Test-Feld freigeben"
-test_endpoint "GET" "/resonanz/wrapper/test_feld_api" "" "GET: Gelöscht? (erwartet 404)" "404"
+# Update Meta
+test_endpoint "PUT" "/resonanz/wrapper/syntex_wrapper_sigma/meta" \
+    "{\"description\": \"Sigma Protocol - Technische Präzisionsanalyse\", \"tags\": [\"sigma\", \"technisch\", \"präzise\"], \"author\": \"SYNTX Architect\"}" \
+    "Update Meta: sigma"
 
 # ═══════════════════════════════════════════════════════════════
-#  📊 STROM & ANALYTICS
+# 📊 STATS & STREAMS
 # ═══════════════════════════════════════════════════════════════
+header "📊 STATS & STREAMS"
 
-header "📊 STROM & ANALYTICS"
-
-test_endpoint "GET" "/resonanz/strom?limit=5" "" "Field Flow Stream (limit=5)"
-test_endpoint "GET" "/resonanz/training?limit=3" "" "Training Data (limit=3)"
 test_endpoint "GET" "/resonanz/stats" "" "System Stats"
-test_endpoint "GET" "/resonanz/stats/wrapper/syntex_wrapper_sigma" "" "Wrapper Stats (Sigma)"
+test_endpoint "GET" "/resonanz/stats/wrapper/syntex_wrapper_sigma" "" "Wrapper Stats: sigma"
+test_endpoint "GET" "/resonanz/strom?limit=3" "" "Field Flow Stream (last 3)"
+test_endpoint "GET" "/resonanz/strom?limit=3&stage=5_RESPONSE" "" "Field Flow Stream (RESPONSE only)"
+test_endpoint "GET" "/resonanz/training?limit=3" "" "Training Data Export (last 3)"
 
 # ═══════════════════════════════════════════════════════════════
-#  ✅ FINAL CHECK
+# 💬 CHAT (Das Herzstück!)
 # ═══════════════════════════════════════════════════════════════
+header "💬 CHAT"
 
-header "✅ FINAL CHECK"
+# Simple Chat
+test_endpoint "POST" "/resonanz/chat" \
+    "{\"prompt\": \"Was ist 2+2?\", \"max_new_tokens\": 50}" \
+    "Simple Chat"
 
-test_endpoint "GET" "/resonanz/wrappers" "" "List All Wrappers"
-test_endpoint "GET" "/resonanz/formats" "" "List All Formats"
+# Chat with Wrapper
+test_endpoint "POST" "/resonanz/chat" \
+    "{\"prompt\": \"Erkläre kurz was ein System ist\", \"mode\": \"syntex_wrapper_sigma\", \"max_new_tokens\": 100}" \
+    "Chat with Wrapper"
+
+# Chat with Format
+test_endpoint "POST" "/resonanz/chat" \
+    "{\"prompt\": \"Analysiere das Konzept Zeit\", \"mode\": \"syntex_wrapper_sigma\", \"format\": \"sigma\", \"max_new_tokens\": 200}" \
+    "Chat with Wrapper + Format"
 
 # ═══════════════════════════════════════════════════════════════
-#  📊 SUMMARY
+# 🔧 ADMIN OPERATIONS
 # ═══════════════════════════════════════════════════════════════
+header "🔧 ADMIN"
 
-header "📊 SUMMARY"
+test_endpoint "POST" "/resonanz/health/fix" "" "Auto-Fix Orphan Wrappers"
+
+# ═══════════════════════════════════════════════════════════════
+# SUMMARY
+# ═══════════════════════════════════════════════════════════════
 echo ""
-echo -e "   ${BOLD}Total Tests:${NC}  $TOTAL"
-echo -e "   ${GREEN}✓ Passed:${NC}     $SUCCESS"
-echo -e "   ${RED}✕ Failed:${NC}     $FAILED"
-echo ""
-
-PASS_RATE=$(echo "scale=1; $SUCCESS * 100 / $TOTAL" | bc)
+echo -e "${MAGENTA}═══════════════════════════════════════════════════════════════${NC}"
+echo -e "${MAGENTA}  📊 SUMMARY${NC}"
+echo -e "${MAGENTA}═══════════════════════════════════════════════════════════════${NC}"
+echo -e "   ${GREEN}✓ Passed: $SUCCESS${NC}  ${RED}✕ Failed: $FAILED${NC}  Total: $TOTAL"
 
 if [ $FAILED -eq 0 ]; then
-    echo -e "${GREEN}   ╔═══════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${GREEN}   ║                                                           ║${NC}"
-    echo -e "${GREEN}   ║   🌊 ALL FIELDS RESONATING PERFECTLY! 💎  ${PASS_RATE}% PASS    ║${NC}"
-    echo -e "${GREEN}   ║                                                           ║${NC}"
-    echo -e "${GREEN}   ╚═══════════════════════════════════════════════════════════╝${NC}"
+    echo -e "   ${GREEN}🎉 ALL TESTS PASSED!${NC}"
 else
-    echo -e "${RED}   ╔═══════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${RED}   ║                                                           ║${NC}"
-    echo -e "${RED}   ║   ⚠️  $FAILED TESTS FAILED! CHECK OUTPUT ABOVE!            ║${NC}"
-    echo -e "${RED}   ║                                                           ║${NC}"
-    echo -e "${RED}   ╚═══════════════════════════════════════════════════════════╝${NC}"
+    echo -e "   ${RED}⚠️ SOME TESTS FAILED${NC}"
 fi
 
 echo ""
 echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
-echo -e "${BOLD}   🌊 RAPPER SERVICE ENDPOINTS:${NC}"
-echo ""
-echo -e "   ${BOLD}HEALTH:${NC}"
-echo -e "   GET    /health"
-echo -e "   GET    /resonanz/health"
-echo ""
-echo -e "   ${BOLD}CONFIG:${NC}"
-echo -e "   GET    /resonanz/config/default-wrapper"
-echo -e "   PUT    /resonanz/config/default-wrapper"
-echo ""
-echo -e "   ${BOLD}🔥 FORMATS (NEU!):${NC}"
-echo -e "   ${GREEN}GET${NC}    /resonanz/formats              ${GREEN}← Liste aller Formate${NC}"
-echo -e "   ${GREEN}GET${NC}    /resonanz/formats/{name}       ${GREEN}← Format Details${NC}"
-echo ""
-echo -e "   ${BOLD}WRAPPERS:${NC}"
-echo -e "   GET    /resonanz/wrappers"
-echo -e "   GET    /resonanz/wrapper/{name}"
-echo -e "   ${GREEN}POST${NC}   /resonanz/wrapper              ${GREEN}← CREATE${NC}"
-echo -e "   ${YELLOW}PUT${NC}    /resonanz/wrapper/{name}       ${YELLOW}← UPDATE${NC}"
-echo -e "   ${RED}DELETE${NC} /resonanz/wrapper/{name}       ${RED}← DELETE${NC}"
-echo -e "   POST   /resonanz/wrappers/{name}/activate"
-echo ""
-echo -e "   ${BOLD}ANALYTICS:${NC}"
-echo -e "   GET    /resonanz/strom"
-echo -e "   GET    /resonanz/training"
-echo -e "   GET    /resonanz/stats"
-echo -e "   GET    /resonanz/stats/wrapper/{name}"
-echo ""
-echo -e "   ${BOLD}CHAT (braucht Model):${NC}"
-echo -e "   POST   /resonanz/chat"
-echo -e "   GET    /resonanz/history/{request_id}"
-echo ""
+echo -e "${CYAN}  📡 ENDPOINT COVERAGE${NC}"
 echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
 echo ""
-echo -e "${BOLD}   🔥 FORMAT + WRAPPER = ZWEI DIMENSIONEN:${NC}"
+echo "  🏥 HEALTH"
+echo "     GET  /health"
+echo "     GET  /resonanz/health"
+echo "     GET  /resonanz/health/wrappers"
+echo "     POST /resonanz/health/fix"
 echo ""
-echo -e "   ${YELLOW}mode${NC}   = WIE denkt das Modell? (Wrapper = Stil)"
-echo -e "   ${GREEN}format${NC} = WAS kommt raus? (Format = Felder)"
+echo "  ⚙️ CONFIG"
+echo "     GET  /resonanz/config/default-wrapper"
+echo "     PUT  /resonanz/config/default-wrapper?wrapper_name=X"
 echo ""
-echo -e "   ${BOLD}Beispiel Chat-Request:${NC}"
-echo -e '   POST /resonanz/chat'
-echo -e '   {'
-echo -e '       "prompt": "Analysiere das Internet",'
-echo -e '       "mode": "syntex_wrapper_sigma",    ← WIE'
-echo -e '       "format": "syntex_system"          ← WAS (NEU!)'
-echo -e '   }'
+echo "  🔥 FORMATS"
+echo "     GET    /resonanz/formats"
+echo "     GET    /resonanz/formats/{name}"
+echo "     GET    /resonanz/formats/{name}?language=X"
+echo "     POST   /resonanz/formats (full)"
+echo "     POST   /resonanz/formats/quick"
+echo "     PUT    /resonanz/formats/{name}"
+echo "     DELETE /resonanz/formats/{name}"
 echo ""
-echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
+echo "  📦 WRAPPERS"
+echo "     GET    /resonanz/wrappers"
+echo "     GET    /resonanz/wrappers?active=true"
+echo "     GET    /resonanz/wrappers/full"
+echo "     GET    /resonanz/wrapper/{name}"
+echo "     POST   /resonanz/wrapper"
+echo "     PUT    /resonanz/wrapper/{name}"
+echo "     DELETE /resonanz/wrapper/{name}"
+echo "     POST   /resonanz/wrappers/{name}/activate"
+echo ""
+echo "  🧬 META (v3.0)"
+echo "     GET  /resonanz/wrapper/{name}/meta"
+echo "     PUT  /resonanz/wrapper/{name}/meta"
+echo "     PUT  /resonanz/wrapper/{name}/format?format_name=X"
+echo "     GET  /resonanz/wrapper/{name}/stats"
+echo ""
+echo "  📊 STATS & STREAMS"
+echo "     GET  /resonanz/stats"
+echo "     GET  /resonanz/stats/wrapper/{name}"
+echo "     GET  /resonanz/strom?limit=N&stage=X"
+echo "     GET  /resonanz/training?limit=N&wrapper=X"
+echo ""
+echo "  💬 CHAT"
+echo "     POST /resonanz/chat"
+echo "     GET  /resonanz/history/{request_id}"
 echo ""

@@ -1,4 +1,5 @@
 """
+from pathlib import Path
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                                                                              ║
 ║    🌊⚡💎 SYNTX FIELD RESONANCE SERVICE 💎⚡🌊                               ║
@@ -19,6 +20,8 @@
 ╚══════════════════════════════════════════════════════════════════════════════╝
 """
 from fastapi import FastAPI, HTTPException
+from typing import Optional
+from pathlib import Path
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import time
@@ -456,3 +459,163 @@ async def resonance_chat(request: ChatRequest):
     Gleiche Funktionalität, anderer Pfad.
     """
     return await chat(request)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🏥 WRAPPER HEALTH CHECK ENDPOINTS (NEU!)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.get("/resonanz/health/wrappers")
+async def wrapper_health():
+    """
+    🏥 WRAPPER HEALTH CHECK
+    
+    Zeigt:
+    - Wrapper ohne Meta (orphan_txt)
+    - Meta ohne Wrapper (orphan_meta)
+    - Broken Format Bindings
+    - Ungenutzte Formate
+    """
+    from .resonance.wrapper_meta import check_health
+    return check_health()
+
+
+@app.post("/resonanz/health/fix")
+async def fix_wrapper_health():
+    """
+    🔧 AUTO-FIX ORPHANS
+    
+    - Erstellt .meta.json für Wrapper ohne Meta
+    - Löscht .meta.json ohne Wrapper
+    """
+    from .resonance.wrapper_meta import auto_fix_orphans
+    return auto_fix_orphans()
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🔗 FORMAT BINDING ENDPOINTS (NEU!)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.get("/resonanz/wrapper/{name}/meta")
+async def get_wrapper_meta(name: str):
+    """
+    📖 WRAPPER META LADEN
+    """
+    from .resonance.wrapper_meta import load_meta_or_default, load_stats
+    
+    wrapper_path = Path(f"/opt/syntx-config/wrappers/{name}.txt")
+    if not wrapper_path.exists():
+        raise HTTPException(status_code=404, detail=f"Wrapper '{name}' nicht gefunden")
+    
+    meta = load_meta_or_default(name)
+    stats = load_stats(name)
+    
+    return {
+        "status": "success",
+        "wrapper": name,
+        "meta": meta,
+        "stats": stats
+    }
+
+
+@app.put("/resonanz/wrapper/{name}/meta")
+async def update_wrapper_meta(name: str, meta_update: dict):
+    """
+    💾 WRAPPER META UPDATEN
+    """
+    from .resonance.wrapper_meta import load_meta_or_default, save_meta
+    
+    wrapper_path = Path(f"/opt/syntx-config/wrappers/{name}.txt")
+    if not wrapper_path.exists():
+        raise HTTPException(status_code=404, detail=f"Wrapper '{name}' nicht gefunden")
+    
+    meta = load_meta_or_default(name)
+    
+    # Update nur die übergebenen Felder
+    for key, value in meta_update.items():
+        if key not in ["created", "updated"]:  # Diese nicht überschreiben
+            meta[key] = value
+    
+    meta["auto_generated"] = False
+    
+    if save_meta(name, meta):
+        return {
+            "status": "success",
+            "message": f"Meta für '{name}' aktualisiert",
+            "meta": meta
+        }
+    else:
+        raise HTTPException(status_code=500, detail="Meta konnte nicht gespeichert werden")
+
+
+@app.put("/resonanz/wrapper/{name}/format")
+async def set_wrapper_format(name: str, format_name: Optional[str] = None):
+    """
+    🔗 FORMAT BINDING SETZEN
+    
+    Bindet ein Format an einen Wrapper.
+    format_name=None oder "" entfernt die Bindung.
+    """
+    from .resonance.wrapper_meta import set_format_binding
+    
+    wrapper_path = Path(f"/opt/syntx-config/wrappers/{name}.txt")
+    if not wrapper_path.exists():
+        raise HTTPException(status_code=404, detail=f"Wrapper '{name}' nicht gefunden")
+    
+    # Prüfe ob Format existiert (wenn angegeben)
+    if format_name:
+        format_path = Path(f"/opt/syntx-config/formats/{format_name}.json")
+        if not format_path.exists():
+            raise HTTPException(status_code=404, detail=f"Format '{format_name}' nicht gefunden")
+    
+    if set_format_binding(name, format_name if format_name else None):
+        return {
+            "status": "success",
+            "message": f"Format '{format_name or 'None'}' an Wrapper '{name}' gebunden",
+            "wrapper": name,
+            "format": format_name
+        }
+    else:
+        raise HTTPException(status_code=500, detail="Format-Binding konnte nicht gespeichert werden")
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  📊 WRAPPER STATS ENDPOINTS (NEU!)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.get("/resonanz/wrapper/{name}/stats")
+async def get_wrapper_stats(name: str):
+    """
+    📊 WRAPPER STATS LADEN
+    """
+    from .resonance.wrapper_meta import load_stats
+    
+    stats = load_stats(name)
+    return {
+        "status": "success",
+        "wrapper": name,
+        "stats": stats
+    }
+
+
+@app.get("/resonanz/wrappers/full")
+async def list_wrappers_full():
+    """
+    🔍 ALLE WRAPPER MIT META + STATS
+    """
+    from .resonance.wrapper_meta import list_wrappers_with_meta
+    from .resonance.config import get_active_wrapper
+    
+    wrappers = list_wrappers_with_meta()
+    active = get_active_wrapper()
+    
+    # Add is_active flag
+    for w in wrappers:
+        w["is_active"] = (w["name"] == active)
+    
+    return {
+        "status": "success",
+        "count": len(wrappers),
+        "active_wrapper": active,
+        "wrappers": wrappers
+    }
