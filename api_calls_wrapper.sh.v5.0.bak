@@ -5,7 +5,7 @@
 #  ╚═╝ ╩ ╝╚╝ ╩ ╩ ╚═  ╚  ╚═╝╩═╝═╩╝  ╩╚═╚═╝╚═╝╚═╝╝╚╝╩ ╩╝╚╝╚═╝╚═╝
 # ═══════════════════════════════════════════════════════════════════════════════
 #
-#  🔥 SYNTX FIELD RESONANCE TESTER v5.3 - DER ULTIMATIVE STROM-PRÜFER
+#  🔥 SYNTX FIELD RESONANCE TESTER v5.0 - DER ULTIMATIVE STROM-PRÜFER
 #
 #  ══════════════════════════════════════════════════════════════════════════════
 #  ARCHITEKTUR:
@@ -35,7 +35,7 @@
 #  💬 CHAT (6)        - Das Herzstück mit allen Kombinationen
 #  🔧 ADMIN (1)       - Auto-Fix, Maintenance
 #
-#  GESAMT: 37 Endpoints | 53+ Test-Szenarien
+#  GESAMT: 33 Endpoints | 45+ Test-Szenarien
 #  ══════════════════════════════════════════════════════════════════════════════
 #
 #  USAGE:
@@ -237,7 +237,7 @@ cat << 'ASCIIART'
    ███████║   ██║   ██║ ╚████║   ██║   ██╔╝ ██╗    ██║     ███████╗╚██████╔╝╚███╔███╔╝
    ╚══════╝   ╚═╝   ╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝    ╚═╝     ╚══════╝ ╚═════╝  ╚══╝╚══╝
                                                                                      
-              🔥 FIELD RESONANCE API TESTER v5.3 🔥
+              🔥 FIELD RESONANCE API TESTER v5.0 🔥
                  Der ultimative Strom-Prüfer
 
 ASCIIART
@@ -920,169 +920,6 @@ test_endpoint "POST" "/resonanz/styles/crud_test_style/forbidden/schlecht" "" \
 test_endpoint "DELETE" "/resonanz/styles/crud_test_style" "" \
     "DELETE Style - Soft Delete" "200" \
     "Backup erstellt" "Kann wiederhergestellt werden"
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  🔀 DIFF ENDPOINTS - Wrapper-Parallelwelt-Vergleich (NEU!)
-# ═══════════════════════════════════════════════════════════════════════════════
-#
-#  ARCHITEKTUR:
-#    Der Diff-Endpoint sendet den GLEICHEN Prompt an VERSCHIEDENE Wrapper.
-#    Zeigt Side-by-Side wie sich das DENKEN unterscheidet.
-#
-#    ┌─────────────────────────────────────────────────────────────────────────┐
-#    │  POST /resonanz/chat/diff                                              │
-#    │                                                                        │
-#    │  {                                                                     │
-#    │    "prompt": "Was ist Macht?",                                        │
-#    │    "wrappers": ["syntex_wrapper_sigma", "syntex_wrapper_human"],      │
-#    │    "format": "sigma"                                                   │
-#    │  }                                                                     │
-#    │                                                                        │
-#    │  RESPONSE:                                                             │
-#    │  {                                                                     │
-#    │    "comparisons": [                                                   │
-#    │      { "wrapper": "sigma", "response": "...", "latency_ms": 32000 }, │
-#    │      { "wrapper": "human", "response": "...", "latency_ms": 28000 }  │
-#    │    ],                                                                  │
-#    │    "diff_analysis": { "similarity": 0.34, ... }                       │
-#    │  }                                                                     │
-#    └─────────────────────────────────────────────────────────────────────────┘
-#
-# ═══════════════════════════════════════════════════════════════════════════════
-
-section "🔀 DIFF - Wrapper-Parallelwelt-Vergleich (NEU!)" \
-        "Gleicher Prompt, verschiedene Wrapper, Side-by-Side Analyse" \
-        "2"
-
-test_endpoint "POST" "/resonanz/chat/diff" \
-    "{\"prompt\": \"Was ist System?\", \"wrappers\": [\"syntex_wrapper_sigma\", \"syntex_wrapper_human\"], \"max_new_tokens\": 100}" \
-    "Wrapper Diff - sigma vs human" \
-    "200" \
-    "Wrapper: sigma + human parallel" \
-    "Zeigt: Wie DERSELBE Prompt in verschiedenen Denkweisen beantwortet wird"
-
-test_endpoint "POST" "/resonanz/chat/diff" \
-    "{\"prompt\": \"Erkläre Liebe\", \"wrappers\": [\"syntex_wrapper_human\", \"syntex_wrapper_sigma\", \"syntex_wrapper_raw\"], \"format\": \"sigma\", \"max_new_tokens\": 80}" \
-    "Multi-Wrapper Diff - 3 Wrapper parallel" \
-    "200" \
-    "Wrapper: human + sigma + raw (3 parallel)" \
-    "Zeigt: diff_analysis mit similarity, divergence_points"
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  📼 SESSION ENDPOINTS - Strom-Replay (NEU!)
-# ═══════════════════════════════════════════════════════════════════════════════
-#
-#  ARCHITEKTUR:
-#    Jede Session ist eine Strom-Einheit. Sessions können:
-#    - Gelistet werden (mit Pagination)
-#    - Im Detail angezeigt werden (alle Stages)
-#    - Replayed werden (Parameter zurückbekommen)
-#
-#    SESSION = {
-#      request_id: "res_1234567890_abc",
-#      timestamp: "2024-12-21T10:00:00",
-#      prompt: "...",
-#      wrapper: "sigma",
-#      format: "sigma",
-#      stages: ["1_INCOMING", "2_WRAPPERS", ..., "5_RESPONSE"],
-#      latency_ms: 32000
-#    }
-#
-# ═══════════════════════════════════════════════════════════════════════════════
-
-section "📼 SESSIONS - Strom-Replay (NEU!)" \
-        "Session-Liste, Field-Flow Details, Replay-Parameter" \
-        "3"
-
-test_endpoint "GET" "/resonanz/sessions?limit=5" "" \
-    "List Sessions - Letzte 5 Sessions" \
-    "200" \
-    "Keine (Read-Only)" \
-    "Zeigt: request_id, timestamp, prompt (preview), wrapper, format, latency"
-
-test_endpoint "GET" "/resonanz/sessions?limit=10&offset=0" "" \
-    "Paginated Sessions - Mit Offset" \
-    "200" \
-    "Pagination: limit + offset" \
-    "Für Frontend-Tabellen und unendliches Scrollen"
-
-# Wir brauchen eine echte Session-ID, also holen wir uns eine
-echo -e "${GRAY}   📍 Hole letzte Session-ID für Detail-Test...${NC}"
-SESSION_ID=$(curl -s "$BASE_URL/resonanz/sessions?limit=1" | jq -r '.sessions[0].request_id // empty' 2>/dev/null)
-
-if [ -n "$SESSION_ID" ] && [ "$SESSION_ID" != "null" ]; then
-    test_endpoint "GET" "/resonanz/session/$SESSION_ID" "" \
-        "Session Details - Vollständiger Field-Flow" \
-        "200" \
-        "Keine (Read-Only)" \
-        "Zeigt: Alle Stages mit Timestamps, prompt, response, latency"
-    
-    test_endpoint "GET" "/resonanz/session/$SESSION_ID/replay" "" \
-        "Session Replay - Parameter für Re-Execution" \
-        "200" \
-        "Keine (Read-Only)" \
-        "Liefert: replay_params (prompt, mode, format, language)"
-else
-    echo -e "${YELLOW}   ⚠️  Keine Sessions gefunden - Detail-Tests übersprungen${NC}"
-    SKIPPED_TESTS=$((SKIPPED_TESTS + 2))
-fi
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  ⚗️ ALCHEMY PREVIEW ENDPOINTS - Live Wort-Transmutation (NEU!)
-# ═══════════════════════════════════════════════════════════════════════════════
-#
-#  ARCHITEKTUR:
-#    Alchemy Preview zeigt LIVE wie ein Style den Text transformiert.
-#    Mit Position-Mapping für Frontend-Highlighting.
-#
-#    ┌─────────────────────────────────────────────────────────────────────────┐
-#    │  POST /resonanz/alchemy/preview                                        │
-#    │                                                                        │
-#    │  { "text": "Das ist wichtig", "style": "wissenschaftlich" }           │
-#    │                                                                        │
-#    │  RESPONSE:                                                             │
-#    │  {                                                                     │
-#    │    "original": "Das ist wichtig",                                     │
-#    │    "transformed": "Das ist signifikant",                              │
-#    │    "transformations": [                                                │
-#    │      { "original": "wichtig", "replacement": "signifikant",           │
-#    │        "start_pos": 8, "end_pos": 15, "type": "alchemy" }             │
-#    │    ]                                                                   │
-#    │  }                                                                     │
-#    └─────────────────────────────────────────────────────────────────────────┘
-#
-# ═══════════════════════════════════════════════════════════════════════════════
-
-section "⚗️ ALCHEMY PREVIEW - Live Wort-Transmutation (NEU!)" \
-        "Echtzeit Wort-Transformation mit Position-Mapping" \
-        "4"
-
-test_endpoint "POST" "/resonanz/alchemy/preview" \
-    "{\"text\": \"Das ist wirklich sehr wichtig und nachhaltig\", \"style\": \"wissenschaftlich\"}" \
-    "Alchemy: wissenschaftlich - wichtig→signifikant" \
-    "200" \
-    "Style: wissenschaftlich" \
-    "Zeigt: transformations[] mit start_pos, end_pos für Highlighting"
-
-test_endpoint "POST" "/resonanz/alchemy/preview" \
-    "{\"text\": \"Dieses innovative Projekt ist nachhaltig und wichtig für die Experten\", \"style\": \"zynisch\"}" \
-    "Alchemy: zynisch - Der Augenroll-Transformer" \
-    "200" \
-    "Style: zynisch" \
-    "Transmutiert: innovativ, nachhaltig, wichtig, Experten"
-
-test_endpoint "POST" "/resonanz/alchemy/preview" \
-    "{\"text\": \"Der Prozess im System zeigt die Daten\", \"style\": \"poetisch\"}" \
-    "Alchemy: poetisch - Wortwebstuhl" \
-    "200" \
-    "Style: poetisch" \
-    "Transmutiert: Prozess→Tanz, System→Gewebe, Daten→Tropfen"
-
-test_endpoint "GET" "/resonanz/alchemy/styles" "" \
-    "Alchemy Styles - Übersicht aller Transmutationen" \
-    "200" \
-    "Keine (Read-Only)" \
-    "Zeigt: alchemy_count, forbidden_count, has_suffix, has_tone pro Style"
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  🏁 ENDE

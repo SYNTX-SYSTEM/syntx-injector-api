@@ -1,102 +1,25 @@
 """
-from pathlib import Path
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                                                                              ║
-║    🌊⚡💎 SYNTX FIELD RESONANCE SERVICE 💎⚡🌊                               ║
+║    🌊⚡💎 SYNTX FIELD RESONANCE SERVICE v3.3 💎⚡🌊                          ║
 ║                                                                              ║
-║    Nicht "API Server" - RESONANZ-ORCHESTRATOR.                               ║
+║    DER RESONANZ-ORCHESTRATOR                                                 ║
 ║                                                                              ║
-║    Hier fließen alle Ströme zusammen:                                        ║
-║      - Wrapper (WIE denkt das Modell)                                        ║
-║      - Formate (WAS kommt raus)  ← NEU!                                      ║
-║      - User Input (Die Frage)                                                ║
-║      - Model Response (Die Antwort)                                          ║
+║    Diese Datei ist NUR für:                                                  ║
+║      - App Initialization                                                    ║
+║      - Router Loading                                                        ║
+║      - Middleware                                                            ║
 ║                                                                              ║
-║    ════════════════════════════════════════════════════════════════════      ║
-║                                                                              ║
-║    "Nicht mehr Token. Nicht mehr Drift.                                      ║
-║     Nur Felder. Nur Ströme. Nur Resonanz."                                  ║
+║    Alles andere lebt in eigenen Strömen.                                    ║
 ║                                                                              ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 """
-from fastapi import FastAPI, HTTPException
-from typing import Optional
-from pathlib import Path
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-import time
-import json
 
 from .config import settings
-from .models import ChatRequest, ChatResponse
-from .streams import (
-    load_wrapper_stream,
-    wrap_input_stream,
-    forward_stream,
-    generate_request_id,
-    get_timestamp,
-    build_format_section,  # NEU!
-    FORMAT_LOADER_AVAILABLE  # NEU!
-)
-
-# 🎨 STYLE ALCHEMIST - Post-Processing Magic
-try:
-    from .styles import apply_style_magic, get_tone_injection, list_available_styles
-    STYLE_ALCHEMIST_AVAILABLE = True
-    print("🎨 STYLE ALCHEMIST AKTIVIERT!")
-except ImportError:
-    STYLE_ALCHEMIST_AVAILABLE = False
-
-
-# Import resonance routers
-from .resonance.wrappers import router as wrappers_router
-from .resonance.streams import router as streams_router
-from .resonance.stats import router as stats_router
-from .resonance.config import router as config_router
-from .resonance.formats import router as formats_router
-from .resonance.styles import router as styles_router
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  📝 STAGE LOGGING - Feld-Flow Dokumentation
-# ═══════════════════════════════════════════════════════════════════════════════
-
-def log_stage(stage: str, data: dict):
-    """
-    📝 STAGE LOGGING
-    
-    Nicht "Logging" - FELD-FLOW DOKUMENTATION.
-    
-    Jede Stage des Feld-Flows wird dokumentiert:
-      1_INCOMING       → Request kommt an
-      2_WRAPPERS_LOADED → Wrapper aktiviert
-      2.5_FORMAT_LOADED → Format injiziert (NEU!)
-      3_FIELD_CALIBRATED → Alles zusammengeführt
-      4_BACKEND_FORWARD  → Ab zum Modell
-      5_RESPONSE        → Antwort da
-    """
-    print("\n" + "🌊" * 40)
-    print(f"📍 STAGE: {stage}")
-    print("─" * 80)
-    for key, value in data.items():
-        if isinstance(value, str) and len(value) > 500:
-            print(f"{key}: {value[:500]}... ({len(value)} chars total)")
-        else:
-            print(f"{key}: {value}")
-    print("🌊" * 40 + "\n")
-    
-    # Persist to file
-    settings.log_dir.mkdir(parents=True, exist_ok=True)
-    log_file = settings.log_dir / "field_flow.jsonl"
-    with open(log_file, 'a', encoding='utf-8') as f:
-        log_entry = {"stage": stage, "timestamp": get_timestamp(), **data}
-        f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
-    
-    # Response-specific logging
-    if stage == "5_RESPONSE":
-        wrapper_log = settings.log_dir / "wrapper_requests.jsonl"
-        with open(wrapper_log, 'a', encoding='utf-8') as f:
-            f.write(json.dumps(data, ensure_ascii=False) + '\n')
+from .streams import FORMAT_LOADER_AVAILABLE
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -105,25 +28,22 @@ def log_stage(stage: str, data: dict):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    🚀 APP STARTUP
-    
-    Das Resonanz-Feld öffnet sich.
-    """
+    """Das Resonanz-Feld öffnet sich."""
     print("=" * 80)
-    print("🌊⚡💎 SYNTX FIELD RESONANCE SERVICE 💎⚡🌊")
+    print("🌊⚡💎 SYNTX FIELD RESONANCE SERVICE v3.3 💎⚡🌊")
     print("=" * 80)
-    print(f"Backend:    {settings.backend_url}")
-    print(f"Model:      {settings.model_name}")
-    print(f"Wrappers:   {settings.wrapper_dir}")
-    print(f"Formats:    /opt/syntx-config/formats/")
-    print(f"Logs:       {settings.log_dir}")
+    print(f"Backend:      {settings.backend_url}")
+    print(f"Model:        {settings.model_name}")
+    print(f"Wrappers:     {settings.wrapper_dir}")
+    print(f"Formats:      /opt/syntx-config/formats/")
+    print(f"Styles:       /opt/syntx-config/styles/")
+    print(f"Logs:         {settings.log_dir}")
     print(f"Format Loader: {'🔥 AKTIV' if FORMAT_LOADER_AVAILABLE else '❌ NICHT VERFÜGBAR'}")
     print("=" * 80)
-    print("Endpoints:")
-    print("  /resonanz/chat     → Chat mit Wrapper + Format")
-    print("  /resonanz/wrappers → Wrapper Management")
-    print("  /resonanz/formats  → Format Info (NEU!)")
+    print("🆕 NEUE STRÖME:")
+    print("  /resonanz/chat/diff       → Wrapper-Vergleich")
+    print("  /resonanz/sessions        → Session-Replay")
+    print("  /resonanz/alchemy/preview → Live Wort-Transmutation")
     print("=" * 80)
     yield
     print("🌊 Resonanz-Feld schließt sich...")
@@ -135,8 +55,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="🌊 SYNTX Field Resonance",
-    description="Nicht API - RESONANZ-ORCHESTRATOR. Wrapper (WIE) + Format (WAS) = Kalibrierte Antworten.",
-    version="2.1.0",
+    description="Nicht API - RESONANZ-ORCHESTRATOR. Wrapper (WIE) + Format (WAS) + Style (FINISH) = Kalibrierte Antworten.",
+    version="3.3.0",
     lifespan=lifespan
 )
 
@@ -148,553 +68,41 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include resonance routers
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🔌 ROUTER LOADING - Alle Ströme zusammenführen
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Local Routers
+from .health import router as health_router
+from .chat import router as chat_router
+from .endpoints import router as endpoints_router
+
+# Core Resonance Routers
+from .resonance.wrappers import router as wrappers_router
+from .resonance.streams import router as streams_router
+from .resonance.stats import router as stats_router
+from .resonance.config import router as config_router
+from .resonance.formats import router as formats_router
+from .resonance.styles import router as styles_router
+
+# 🆕 Neue Ströme
+from .resonance.diff import router as diff_router
+from .resonance.sessions import router as sessions_router
+from .resonance.alchemy import router as alchemy_router
+
+# Include all routers
+app.include_router(health_router)
+app.include_router(chat_router)
+app.include_router(endpoints_router)
 app.include_router(wrappers_router)
 app.include_router(streams_router)
 app.include_router(stats_router)
 app.include_router(config_router)
 app.include_router(formats_router)
 app.include_router(styles_router)
+app.include_router(diff_router)
+app.include_router(sessions_router)
+app.include_router(alchemy_router)
 
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  🏥 HEALTH CHECKS
-# ═══════════════════════════════════════════════════════════════════════════════
-
-@app.get("/health")
-async def health():
-    """🏥 Health Check - Lebt das System?"""
-    log_file = settings.log_dir / "field_flow.jsonl"
-    last_response = None
-    
-    if log_file.exists():
-        try:
-            with open(log_file, 'r', encoding='utf-8') as f:
-                lines = f.readlines()
-                for line in reversed(lines[-10:]):
-                    entry = json.loads(line)
-                    if entry.get("stage") == "5_RESPONSE":
-                        last_response = {
-                            "response": entry.get("response", "")[:200] + "...",
-                            "latency_ms": entry.get("latency_ms"),
-                            "timestamp": entry.get("timestamp"),
-                            "format": entry.get("format")  # NEU!
-                        }
-                        break
-        except:
-            pass
-    
-    return {
-        "status": "🟢 RESONANZ AKTIV",
-        "service": "syntx-field-resonance",
-        "version": "2.1.0",
-        "format_loader": "🔥 AKTIV" if FORMAT_LOADER_AVAILABLE else "❌ NICHT VERFÜGBAR",
-        "last_response": last_response
-    }
-
-
-@app.get("/api/chat/health")
-async def chat_health():
-    """Health check at /api/chat/health for compatibility"""
-    return await health()
-
-
-@app.get("/resonanz/health")
-async def resonance_health():
-    """Health check at /resonanz/health"""
-    return await health()
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  📋 FORMAT ENDPOINTS (NEU!)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-@app.get("/resonanz/formats")
-async def list_formats():
-    """
-    📋 VERFÜGBARE FORMATE LISTEN
-    
-    Zeigt alle Format-Definitionen die genutzt werden können.
-    """
-    if not FORMAT_LOADER_AVAILABLE:
-        return {
-            "status": "❌ FORMAT_LOADER_NICHT_VERFÜGBAR",
-            "formats": [],
-            "message": "Format Loader konnte nicht geladen werden"
-        }
-    
-    from .formats import list_formats as _list_formats, load_format
-    
-    format_names = _list_formats()
-    formats = []
-    
-    for name in format_names:
-        fmt = load_format(name)
-        if fmt:
-            desc = fmt.get("description", {})
-            formats.append({
-                "name": name,
-                "fields_count": len(fmt.get("fields", [])),
-                "description": desc.get("de", desc) if isinstance(desc, dict) else desc,
-                "languages": fmt.get("languages", ["de"])
-            })
-    
-    return {
-        "status": "🔥 FORMATE GELADEN",
-        "count": len(formats),
-        "formats": formats
-    }
-
-
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  🎨 STYLE ALCHEMY ENDPOINTS
-# ═══════════════════════════════════════════════════════════════════════════════
-
-@app.get("/resonanz/styles")
-async def list_styles():
-    """
-    🎨 ALLE STYLES IM GRIMOIRE
-    
-    Zeigt verfügbare Style-Alchemien.
-    """
-    if not STYLE_ALCHEMIST_AVAILABLE:
-        return {"status": "❌ STYLE_ALCHEMIST_NICHT_VERFÜGBAR", "styles": []}
-    
-    from .styles import list_available_styles, get_style_info
-    
-    style_names = list_available_styles()
-    styles = []
-    
-    for name in style_names:
-        info = get_style_info(name)
-        if info:
-            styles.append(info)
-    
-    return {
-        "status": "🎨 GRIMOIRE GEÖFFNET",
-        "count": len(styles),
-        "styles": styles
-    }
-
-
-@app.get("/resonanz/styles/{style_name}")
-async def get_style_details(style_name: str):
-    """
-    🔮 STYLE DETAILS
-    
-    Zeigt alle Transmutationen eines Styles.
-    """
-    if not STYLE_ALCHEMIST_AVAILABLE:
-        raise HTTPException(status_code=503, detail="Style Alchemist nicht verfügbar")
-    
-    from .styles import summon_style
-    
-    style = summon_style(style_name)
-    if not style:
-        raise HTTPException(status_code=404, detail=f"Style '{style_name}' nicht im Grimoire")
-    
-    return {
-        "status": "🔮 STYLE BESCHWOREN",
-        "style": {
-            "name": style_name,
-            "vibe": style.get("vibe", ""),
-            "description": style.get("description", ""),
-            "word_alchemy": style.get("word_alchemy", {}),
-            "forbidden_words": style.get("forbidden_words", []),
-            "has_tone_injection": bool(style.get("tone_injection")),
-            "has_suffix": bool(style.get("suffix"))
-        }
-    }
-
-
-@app.get("/resonanz/formats/{format_name}")
-async def get_format_info(format_name: str, language: str = "de"):
-    """
-    📄 FORMAT DETAILS
-    
-    Zeigt alle Felder eines Formats.
-    """
-    if not FORMAT_LOADER_AVAILABLE:
-        raise HTTPException(status_code=503, detail="Format Loader nicht verfügbar")
-    
-    from .formats import load_format, get_format_fields
-    
-    fmt = load_format(format_name)
-    if not fmt:
-        raise HTTPException(status_code=404, detail=f"Format '{format_name}' nicht gefunden")
-    
-    fields = get_format_fields(format_name, language)
-    
-    return {
-        "status": "🔥 FORMAT GELADEN",
-        "format": {
-            "name": format_name,
-            "description": fmt.get("description", {}),
-            "languages": fmt.get("languages", ["de"]),
-            "fields": fields
-        }
-    }
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  💬 CHAT ENDPOINT - DAS HERZSTÜCK
-# ═══════════════════════════════════════════════════════════════════════════════
-
-@app.post("/api/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
-    """
-    💬 CHAT - Das Herzstück des Systems
-    
-    ╔═══════════════════════════════════════════════════════════════════════════╗
-    ║                                                                           ║
-    ║   ZWEI DIMENSIONEN:                                                       ║
-    ║                                                                           ║
-    ║   mode   = WIE denkt das Modell? (Wrapper)                               ║
-    ║            → Stil, Tonalität, Persönlichkeit                             ║
-    ║                                                                           ║
-    ║   format = WAS kommt raus? (Format)                                       ║
-    ║            → Felder, Struktur, Analyse-Schema                            ║
-    ║                                                                           ║
-    ╠═══════════════════════════════════════════════════════════════════════════╣
-    ║                                                                           ║
-    ║   BEISPIEL:                                                               ║
-    ║                                                                           ║
-    ║   POST /api/chat                                                          ║
-    ║   {                                                                       ║
-    ║       "prompt": "Analysiere das Internet",                                ║
-    ║       "mode": "syntex_wrapper_sigma",    ← WIE (systemisch)              ║
-    ║       "format": "syntex_system"          ← WAS (3 Felder)                ║
-    ║   }                                                                       ║
-    ║                                                                           ║
-    ╚═══════════════════════════════════════════════════════════════════════════╝
-    """
-    request_id = generate_request_id()
-    start_time = time.time()
-    field_flow = []
-    format_info = {}
-    
-    try:
-        # ══════════════════════════════════════════════════════════════════════
-        #  STAGE 1: INCOMING
-        # ══════════════════════════════════════════════════════════════════════
-        stage_1_data = {
-            "request_id": request_id,
-            "prompt": request.prompt,
-            "mode": request.mode,
-            "format": request.format,  # NEU!
-            "language": request.language,  # NEU!
-            "include_init": request.include_init
-        }
-        log_stage("1_INCOMING", stage_1_data)
-        field_flow.append({
-            "stage": "1_INCOMING",
-            "timestamp": get_timestamp(),
-            "data": stage_1_data
-        })
-        
-        # ══════════════════════════════════════════════════════════════════════
-        #  STAGE 2: LOAD WRAPPERS (WIE)
-        # ══════════════════════════════════════════════════════════════════════
-        wrapper_text, wrapper_chain = await load_wrapper_stream(
-            request.mode,
-            request.include_init,
-            request.include_terminology
-        )
-        stage_2_data = {
-            "request_id": request_id,
-            "chain": wrapper_chain,
-            "wrapper_preview": wrapper_text[:300] + "..." if len(wrapper_text) > 300 else wrapper_text
-        }
-        log_stage("2_WRAPPERS_LOADED", stage_2_data)
-        field_flow.append({
-            "stage": "2_WRAPPERS_LOADED",
-            "timestamp": get_timestamp(),
-            "data": {"chain": wrapper_chain}
-        })
-        
-        # ══════════════════════════════════════════════════════════════════════
-        #  STAGE 2.5: LOAD FORMAT (WAS) - NEU!
-        # ══════════════════════════════════════════════════════════════════════
-        format_section = ""
-        if request.format:
-            format_section, format_info = build_format_section(
-                request.format, 
-                request.language
-            )
-            stage_25_data = {
-                "request_id": request_id,
-                "format": request.format,
-                "language": request.language,
-                "format_info": format_info,
-                "format_section_preview": format_section[:500] + "..." if len(format_section) > 500 else format_section
-            }
-            log_stage("2.5_FORMAT_LOADED", stage_25_data)
-            field_flow.append({
-                "stage": "2.5_FORMAT_LOADED",
-                "timestamp": get_timestamp(),
-                "data": format_info
-            })
-        
-        # ══════════════════════════════════════════════════════════════════════
-        #  STAGE 3: CALIBRATE FIELD (Alles zusammen)
-        # ══════════════════════════════════════════════════════════════════════
-        wrapped_prompt = wrap_input_stream(
-            wrapper_text, 
-            request.prompt,
-            format_section  # NEU!
-        )
-        stage_3_data = {
-            "request_id": request_id,
-            "calibrated_field_preview": wrapped_prompt[:800] + "..." if len(wrapped_prompt) > 800 else wrapped_prompt,
-            "total_length": len(wrapped_prompt)
-        }
-        log_stage("3_FIELD_CALIBRATED", stage_3_data)
-        field_flow.append({
-            "stage": "3_FIELD_CALIBRATED",
-            "timestamp": get_timestamp(),
-            "data": {"total_length": len(wrapped_prompt)}
-        })
-        
-        # ══════════════════════════════════════════════════════════════════════
-        #  STAGE 4: BACKEND FORWARD
-        # ══════════════════════════════════════════════════════════════════════
-        backend_params = {
-            "max_new_tokens": request.max_new_tokens,
-            "temperature": request.temperature,
-            "top_p": request.top_p,
-            "do_sample": request.do_sample
-        }
-        stage_4_data = {
-            "request_id": request_id,
-            "backend_url": settings.backend_url,
-            "model": settings.model_name,
-            "params": backend_params
-        }
-        log_stage("4_BACKEND_FORWARD", stage_4_data)
-        field_flow.append({
-            "stage": "4_BACKEND_FORWARD",
-            "timestamp": get_timestamp(),
-            "data": {"backend": settings.backend_url, "model": settings.model_name}
-        })
-        
-        # 🚀 FORWARD TO MODEL!
-        response_text = await forward_stream(wrapped_prompt, backend_params)
-        
-        # ══════════════════════════════════════════════════════════════════════
-        #  STAGE 5: RESPONSE
-        # ══════════════════════════════════════════════════════════════════════
-        latency_ms = int((time.time() - start_time) * 1000)
-        stage_5_data = {
-            "request_id": request_id,
-            "response": response_text,
-            "latency_ms": latency_ms,
-            "wrapper_chain": wrapper_chain,
-            "format": request.format,  # NEU!
-            "format_fields": format_info.get("fields", [])  # NEU!
-        }
-        log_stage("5_RESPONSE", stage_5_data)
-        field_flow.append({
-            "stage": "5_RESPONSE",
-            "timestamp": get_timestamp(),
-            "data": {"latency_ms": latency_ms}
-        })
-        
-        # 🎨 STAGE 5.5: STYLE ALCHEMY
-        alchemized_response = response_text
-        style_info = None
-        if request.style and STYLE_ALCHEMIST_AVAILABLE:
-            alchemized_response, style_info = apply_style_magic(response_text, request.style)
-        
-        # 🔍 DEBUG GRIMOIRE
-        debug_grimoire = None
-        if request.debug:
-            debug_grimoire = {"wrapper_chain": wrapper_chain, "format": request.format, "style": request.style, "prompt_len": len(wrapped_prompt)}
-        
-        # 🚀 RETURN
-        return ChatResponse(
-            response=alchemized_response,
-            metadata={"request_id": request_id, "wrapper_chain": wrapper_chain, "format": request.format, "format_fields": format_info.get("fields", []), "style": request.style, "latency_ms": latency_ms},
-            field_flow=field_flow,
-            debug_info=debug_grimoire,
-            style_info=style_info
-        )
-        
-    except Exception as e:
-        log_stage("ERROR", {
-            "request_id": request_id,
-            "error": str(e),
-            "error_type": type(e).__name__
-        })
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/resonanz/chat", response_model=ChatResponse)
-async def resonance_chat(request: ChatRequest):
-    """
-    💬 RESONANZ CHAT - Alias zu /api/chat
-    
-    Gleiche Funktionalität, anderer Pfad.
-    """
-    return await chat(request)
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  🏥 WRAPPER HEALTH CHECK ENDPOINTS (NEU!)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-@app.get("/resonanz/health/wrappers")
-async def wrapper_health():
-    """
-    🏥 WRAPPER HEALTH CHECK
-    
-    Zeigt:
-    - Wrapper ohne Meta (orphan_txt)
-    - Meta ohne Wrapper (orphan_meta)
-    - Broken Format Bindings
-    - Ungenutzte Formate
-    """
-    from .resonance.wrapper_meta import check_health
-    return check_health()
-
-
-@app.post("/resonanz/health/fix")
-async def fix_wrapper_health():
-    """
-    🔧 AUTO-FIX ORPHANS
-    
-    - Erstellt .meta.json für Wrapper ohne Meta
-    - Löscht .meta.json ohne Wrapper
-    """
-    from .resonance.wrapper_meta import auto_fix_orphans
-    return auto_fix_orphans()
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  🔗 FORMAT BINDING ENDPOINTS (NEU!)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-@app.get("/resonanz/wrapper/{name}/meta")
-async def get_wrapper_meta(name: str):
-    """
-    📖 WRAPPER META LADEN
-    """
-    from .resonance.wrapper_meta import load_meta_or_default, load_stats
-    
-    wrapper_path = Path(f"/opt/syntx-config/wrappers/{name}.txt")
-    if not wrapper_path.exists():
-        raise HTTPException(status_code=404, detail=f"Wrapper '{name}' nicht gefunden")
-    
-    meta = load_meta_or_default(name)
-    stats = load_stats(name)
-    
-    return {
-        "status": "success",
-        "wrapper": name,
-        "meta": meta,
-        "stats": stats
-    }
-
-
-@app.put("/resonanz/wrapper/{name}/meta")
-async def update_wrapper_meta(name: str, meta_update: dict):
-    """
-    💾 WRAPPER META UPDATEN
-    """
-    from .resonance.wrapper_meta import load_meta_or_default, save_meta
-    
-    wrapper_path = Path(f"/opt/syntx-config/wrappers/{name}.txt")
-    if not wrapper_path.exists():
-        raise HTTPException(status_code=404, detail=f"Wrapper '{name}' nicht gefunden")
-    
-    meta = load_meta_or_default(name)
-    
-    # Update nur die übergebenen Felder
-    for key, value in meta_update.items():
-        if key not in ["created", "updated"]:  # Diese nicht überschreiben
-            meta[key] = value
-    
-    meta["auto_generated"] = False
-    
-    if save_meta(name, meta):
-        return {
-            "status": "success",
-            "message": f"Meta für '{name}' aktualisiert",
-            "meta": meta
-        }
-    else:
-        raise HTTPException(status_code=500, detail="Meta konnte nicht gespeichert werden")
-
-
-@app.put("/resonanz/wrapper/{name}/format")
-async def set_wrapper_format(name: str, format_name: Optional[str] = None):
-    """
-    🔗 FORMAT BINDING SETZEN
-    
-    Bindet ein Format an einen Wrapper.
-    format_name=None oder "" entfernt die Bindung.
-    """
-    from .resonance.wrapper_meta import set_format_binding
-    
-    wrapper_path = Path(f"/opt/syntx-config/wrappers/{name}.txt")
-    if not wrapper_path.exists():
-        raise HTTPException(status_code=404, detail=f"Wrapper '{name}' nicht gefunden")
-    
-    # Prüfe ob Format existiert (wenn angegeben)
-    if format_name:
-        format_path = Path(f"/opt/syntx-config/formats/{format_name}.json")
-        if not format_path.exists():
-            raise HTTPException(status_code=404, detail=f"Format '{format_name}' nicht gefunden")
-    
-    if set_format_binding(name, format_name if format_name else None):
-        return {
-            "status": "success",
-            "message": f"Format '{format_name or 'None'}' an Wrapper '{name}' gebunden",
-            "wrapper": name,
-            "format": format_name
-        }
-    else:
-        raise HTTPException(status_code=500, detail="Format-Binding konnte nicht gespeichert werden")
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  📊 WRAPPER STATS ENDPOINTS (NEU!)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-@app.get("/resonanz/wrapper/{name}/stats")
-async def get_wrapper_stats(name: str):
-    """
-    📊 WRAPPER STATS LADEN
-    """
-    from .resonance.wrapper_meta import load_stats
-    
-    stats = load_stats(name)
-    return {
-        "status": "success",
-        "wrapper": name,
-        "stats": stats
-    }
-
-
-@app.get("/resonanz/wrappers/full")
-async def list_wrappers_full():
-    """
-    🔍 ALLE WRAPPER MIT META + STATS
-    """
-    from .resonance.wrapper_meta import list_wrappers_with_meta
-    from .resonance.config import get_active_wrapper
-    
-    wrappers = list_wrappers_with_meta()
-    active = get_active_wrapper()
-    
-    # Add is_active flag
-    for w in wrappers:
-        w["is_active"] = (w["name"] == active)
-    
-    return {
-        "status": "success",
-        "count": len(wrappers),
-        "active_wrapper": active,
-        "wrappers": wrappers
-    }
+print("✅ 12 Router geladen - DER STROM FLIESST!")
