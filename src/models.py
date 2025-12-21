@@ -20,6 +20,7 @@ class ChatRequest(BaseModel):
     do_sample: bool = Field(default=True, description="Sampling aktivieren?")
     language: str = Field(default="de", description="Sprache: de oder en")
     debug: bool = Field(default=False, description="Debug-Modus: Zeigt kalibrierten Prompt")
+    style: Optional[str] = Field(default=None, description="Style-Alchemie: wissenschaftlich, zynisch, poetisch, berlin_slang")
 
 
 class ChatResponse(BaseModel):
@@ -29,6 +30,7 @@ class ChatResponse(BaseModel):
     metadata: Optional[Dict[str, Any]] = Field(default=None, description="Request ID, Wrapper Chain, Latency, Format")
     field_flow: Optional[List[Dict[str, Any]]] = Field(default=None, description="Kompletter Feld-Flow")
     debug_info: Optional[Dict[str, Any]] = Field(default=None, description="Debug: calibrated_prompt, wrapper_content, format_section")
+    style_info: Optional[Dict[str, Any]] = Field(default=None, description="Style-Alchemie Info: welche Transformationen wurden angewendet")
 
 
 class FormatInfo(BaseModel):

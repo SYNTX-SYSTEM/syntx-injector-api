@@ -39,6 +39,15 @@ from .streams import (
     FORMAT_LOADER_AVAILABLE  # NEU!
 )
 
+# 🎨 STYLE ALCHEMIST - Post-Processing Magic
+try:
+    from .styles import apply_style_magic, get_tone_injection, list_available_styles
+    STYLE_ALCHEMIST_AVAILABLE = True
+    print("🎨 STYLE ALCHEMIST AKTIVIERT!")
+except ImportError:
+    STYLE_ALCHEMIST_AVAILABLE = False
+
+
 # Import resonance routers
 from .resonance.wrappers import router as wrappers_router
 from .resonance.streams import router as streams_router
@@ -199,17 +208,22 @@ async def resonance_health():
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @app.get("/resonanz/formats")
-async def list_formats(domain: str = None):
+async def list_formats():
     """
     📋 VERFÜGBARE FORMATE LISTEN
-    Optional gefiltert nach ?domain=technical
+    
+    Zeigt alle Format-Definitionen die genutzt werden können.
     """
     if not FORMAT_LOADER_AVAILABLE:
-        return {"status": "❌ FORMAT_LOADER_NICHT_VERFÜGBAR", "formats": []}
+        return {
+            "status": "❌ FORMAT_LOADER_NICHT_VERFÜGBAR",
+            "formats": [],
+            "message": "Format Loader konnte nicht geladen werden"
+        }
     
-    from .formats import list_formats as _list_formats, load_format, get_all_domains
+    from .formats import list_formats as _list_formats, load_format
     
-    format_names = _list_formats(domain)
+    format_names = _list_formats()
     formats = []
     
     for name in format_names:
@@ -218,7 +232,6 @@ async def list_formats(domain: str = None):
             desc = fmt.get("description", {})
             formats.append({
                 "name": name,
-                "domain": fmt.get("domain"),
                 "fields_count": len(fmt.get("fields", [])),
                 "description": desc.get("de", desc) if isinstance(desc, dict) else desc,
                 "languages": fmt.get("languages", ["de"])
@@ -227,8 +240,6 @@ async def list_formats(domain: str = None):
     return {
         "status": "🔥 FORMATE GELADEN",
         "count": len(formats),
-        "domain_filter": domain,
-        "available_domains": get_all_domains(),
         "formats": formats
     }
 
@@ -255,13 +266,13 @@ async def get_format_info(format_name: str, language: str = "de"):
         "status": "🔥 FORMAT GELADEN",
         "format": {
             "name": format_name,
-            "domain": fmt.get("domain"),
             "description": fmt.get("description", {}),
             "languages": fmt.get("languages", ["de"]),
-            "wrapper": fmt.get("wrapper"),
             "fields": fields
         }
     }
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 #  💬 CHAT ENDPOINT - DAS HERZSTÜCK
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -425,34 +436,26 @@ async def chat(request: ChatRequest):
             "data": {"latency_ms": latency_ms}
         })
         
-        # ══════════════════════════════════════════════════════════════════════
-        #  RETURN RESPONSE
-        # ══════════════════════════════════════════════════════════════════════
-        # DEBUG INFO BAUEN
-        debug_info = None
-        if request.debug:
-            debug_info = {
-                "wrapper_content": wrapper_text,
-                "wrapper_chain": wrapper_chain,
-                "format_name": request.format,
-                "format_section": format_section,
-                "format_fields": format_info.get("fields", []),
-                "calibrated_prompt": wrapped_prompt,
-                "prompt_length": len(wrapped_prompt)
-            }
+        # 🎨 STAGE 5.5: STYLE ALCHEMY
+        alchemized_response = response_text
+        style_info = None
+        if request.style and STYLE_ALCHEMIST_AVAILABLE:
+            alchemized_response, style_info = apply_style_magic(response_text, request.style)
         
+        # 🔍 DEBUG GRIMOIRE
+        debug_grimoire = None
+        if request.debug:
+            debug_grimoire = {"wrapper_chain": wrapper_chain, "format": request.format, "style": request.style, "prompt_len": len(wrapped_prompt)}
+        
+        # 🚀 RETURN
         return ChatResponse(
-            response=response_text,
-            metadata={
-                "request_id": request_id,
-                "wrapper_chain": wrapper_chain,
-                "format": request.format,
-                "format_fields": format_info.get("fields", []),
-                "latency_ms": latency_ms
-            },
+            response=alchemized_response,
+            metadata={"request_id": request_id, "wrapper_chain": wrapper_chain, "format": request.format, "format_fields": format_info.get("fields", []), "style": request.style, "latency_ms": latency_ms},
             field_flow=field_flow,
-            debug_info=debug_info
+            debug_info=debug_grimoire,
+            style_info=style_info
         )
+        
     except Exception as e:
         log_stage("ERROR", {
             "request_id": request_id,
