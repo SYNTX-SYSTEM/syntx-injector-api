@@ -1,562 +1,326 @@
 """
-🔥 SYNTX FORMAT CRUD API
-Erstellen, Lesen, Updaten, Löschen von Format-Definitionen.
-Komplette Modularität - kein Hardcoding mehr!
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║    📄 FORMAT RESONANCE ROUTER - Vollständiger CRUD                          ║
+║                                                                              ║
+║    GET    /formats              → Liste (mit Domain-Filter)                 ║
+║    GET    /formats/{name}       → Details (mit Vererbung)                   ║
+║    POST   /formats              → Vollständiges Format erstellen            ║
+║    POST   /formats/quick        → Schnell-Erstellung                        ║
+║    PUT    /formats/{name}       → Format updaten                            ║
+║    DELETE /formats/{name}       → Soft Delete                               ║
+║                                                                              ║
+║    POST   /formats/{name}/fields           → Feld hinzufügen               ║
+║    PUT    /formats/{name}/fields/{field}   → Feld updaten                  ║
+║    DELETE /formats/{name}/fields/{field}   → Feld entfernen                ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
 """
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from typing import List, Dict, Optional, Any
-from pathlib import Path
-import json
-from datetime import datetime
+from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel, Field
+from typing import Optional, List, Dict, Any
 
-router = APIRouter(prefix="/resonanz/formats", tags=["formats"])
+from .crud import format_crud
 
-FORMATS_DIR = Path("/opt/syntx-config/formats")
+router = APIRouter(prefix="/resonanz/formats", tags=["📄 Formats"])
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  📦 MODELS
+#  📋 PYDANTIC MODELS
 # ═══════════════════════════════════════════════════════════════════════════════
 
-class FieldDefinition(BaseModel):
-    name: str
-    weight: int = 15
-    description: Dict[str, str]  # {"de": "...", "en": "..."}
-    keywords: Dict[str, List[str]] = {}  # {"de": [...], "en": [...]}
-    headers: Dict[str, List[str]] = {}  # {"de": [...], "en": [...]}
-    validation: Dict[str, Any] = {"min_length": 30, "max_length": 3000, "required": True}
+class FieldCreate(BaseModel):
+    """Einzelnes Feld erstellen"""
+    name: str = Field(..., description="Feld-Name (lowercase, underscore)")
+    type: str = Field(default="text", description="text, list, rating, keywords")
+    weight: int = Field(default=10, ge=0, le=100)
+    description: Optional[Dict[str, str]] = Field(default={"de": "", "en": ""})
 
+class FieldUpdate(BaseModel):
+    """Feld updaten"""
+    type: Optional[str] = None
+    weight: Optional[int] = None
+    description: Optional[Dict[str, str]] = None
+    headers: Optional[Dict[str, List[str]]] = None
+    keywords: Optional[Dict[str, List[str]]] = None
 
 class FormatCreate(BaseModel):
-    name: str
-    description: Dict[str, str]  # {"de": "...", "en": "..."}
-    fields: List[FieldDefinition]
-    wrapper: Optional[str] = None  # Recommended wrapper
-    tags: List[str] = []
-    languages: List[str] = ["de", "en"]
-    author: str = "SYNTX"
+    """Vollständiges Format erstellen"""
+    name: str = Field(..., description="Format-Name")
+    domain: Optional[str] = Field(default=None, description="technical, psychology, analysis...")
+    extends: Optional[str] = Field(default=None, description="Parent-Format für Vererbung")
+    description: Optional[Dict[str, str]] = Field(default={"de": "", "en": ""})
+    wrapper: Optional[str] = Field(default=None, description="Empfohlener Wrapper")
+    fields: List[FieldCreate] = Field(..., min_length=1)
 
+class FormatQuickCreate(BaseModel):
+    """Schnell-Erstellung"""
+    name: str
+    description_de: str = ""
+    field_names: List[str] = Field(..., min_length=1)
+    domain: Optional[str] = None
+    wrapper: Optional[str] = None
 
 class FormatUpdate(BaseModel):
+    """Format updaten"""
+    domain: Optional[str] = None
+    extends: Optional[str] = None
     description: Optional[Dict[str, str]] = None
-    fields: Optional[List[FieldDefinition]] = None
     wrapper: Optional[str] = None
-    tags: Optional[List[str]] = None
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  🌟 CREATE - Format gebären
+#  📖 READ ENDPOINTS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("")
+async def list_formats(
+    domain: Optional[str] = Query(None, description="Filter nach Domain")
+):
+    """
+    📋 ALLE FORMATE AUFLISTEN
+    
+    Optional nach Domain filtern.
+    """
+    if domain:
+        names = format_crud.list_by_domain(domain)
+    else:
+        names = format_crud.list_all()
+    
+    formats = []
+    for name in names:
+        fmt = format_crud.get(name)
+        if fmt:
+            formats.append({
+                "name": name,
+                "domain": fmt.get("domain"),
+                "fields_count": len(fmt.get("fields", [])),
+                "extends": fmt.get("extends"),
+                "description": fmt.get("description", {}).get("de", ""),
+                "languages": fmt.get("languages", ["de"])
+            })
+    
+    return {
+        "status": "🔥 FORMATE GELADEN",
+        "count": len(formats),
+        "available_domains": format_crud.get_all_domains(),
+        "formats": formats
+    }
+
+
+@router.get("/{format_name}")
+async def get_format(
+    format_name: str,
+    language: str = Query("de", description="Sprache für Feld-Beschreibungen"),
+    resolve_inheritance: bool = Query(True, description="Vererbung auflösen?")
+):
+    """
+    📖 FORMAT DETAILS
+    
+    Mit aufgelöster Vererbung (wenn extends gesetzt).
+    """
+    if resolve_inheritance:
+        fmt = format_crud.get_with_inheritance(format_name)
+    else:
+        fmt = format_crud.get(format_name)
+    
+    if not fmt:
+        raise HTTPException(status_code=404, detail=f"Format '{format_name}' nicht gefunden")
+    
+    # Feld-Details für gewählte Sprache aufbereiten
+    fields_detailed = []
+    for f in fmt.get("fields", []):
+        fields_detailed.append({
+            "name": f["name"],
+            "type": f.get("type", "text"),
+            "header": f.get("headers", {}).get(language, [f["name"].upper()])[0] if f.get("headers", {}).get(language) else f["name"].upper(),
+            "description": f.get("description", {}).get(language, ""),
+            "weight": f.get("weight", 10),
+            "keywords": f.get("keywords", {}).get(language, [])
+        })
+    
+    return {
+        "status": "🔥 FORMAT GELADEN",
+        "format": {
+            "name": format_name,
+            "domain": fmt.get("domain"),
+            "extends": fmt.get("extends"),
+            "description": fmt.get("description", {}),
+            "languages": fmt.get("languages", ["de"]),
+            "wrapper": fmt.get("wrapper"),
+            "fields": fields_detailed,
+            "_inherited_from": fmt.get("_inherited_from")
+        }
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  ✏️ CREATE ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @router.post("")
-async def create_format(format_data: FormatCreate):
+async def create_format(data: FormatCreate):
     """
-    🌟 NEUES FORMAT GEBÄREN
+    ✏️ VOLLSTÄNDIGES FORMAT ERSTELLEN
     
-    Erstellt ein neues Format-JSON in /opt/syntx-config/formats/
+    Mit allen Feld-Definitionen.
     """
-    # Sanitize name
-    safe_name = "".join(c if c.isalnum() or c in "-_" else "_" for c in format_data.name.lower())
-    format_path = FORMATS_DIR / f"{safe_name}.json"
-    
-    # Check ob existiert
-    if format_path.exists():
-        raise HTTPException(
-            status_code=409,
-            detail=f"Format '{safe_name}' existiert bereits! Nutze PUT zum Updaten."
-        )
-    
-    # Format-JSON bauen
-    now = datetime.now().strftime("%Y-%m-%d")
-    format_json = {
-        "name": safe_name,
-        "version": "1.0",
-        "description": format_data.description,
-        "author": format_data.author,
-        "created": now,
-        "updated": now,
-        "tags": format_data.tags,
-        "languages": format_data.languages,
-        "primary_language": format_data.languages[0] if format_data.languages else "de",
-        "wrapper": format_data.wrapper,
-        "scoring": {
-            "presence_weight": 20,
-            "similarity_weight": 35,
-            "coherence_weight": 25,
-            "depth_weight": 15,
-            "structure_weight": 5,
-            "pass_threshold": 60,
-            "excellent_threshold": 85
-        },
-        "parser": {
-            "header_pattern": "###",
-            "field_separator": "\n\n",
-            "case_sensitive": False
-        },
-        "fields": [f.dict() for f in format_data.fields],
-        "expected_structure": {
-            "format": "markdown",
-            "has_headers": True,
-            "min_fields": len(format_data.fields),
-            "max_fields": len(format_data.fields)
-        }
+    format_data = {
+        "name": data.name,
+        "domain": data.domain,
+        "extends": data.extends,
+        "description": data.description,
+        "wrapper": data.wrapper,
+        "fields": [f.model_dump() for f in data.fields]
     }
     
-    # Speichern
-    FORMATS_DIR.mkdir(parents=True, exist_ok=True)
-    with open(format_path, 'w', encoding='utf-8') as f:
-        json.dump(format_json, f, indent=2, ensure_ascii=False)
+    success, message, result = format_crud.create(format_data)
     
-    # Cache leeren
-    try:
-        from ..formats import clear_format_cache
-        clear_format_cache()
-    except:
-        pass
+    if not success:
+        raise HTTPException(status_code=400, detail=message)
     
     return {
-        "status": "success",
-        "message": f"Format '{safe_name}' wurde geboren 🌟",
+        "status": "✨ FORMAT GEBOREN",
+        "message": message,
+        "format": result
+    }
+
+
+@router.post("/quick")
+async def create_format_quick(data: FormatQuickCreate):
+    """
+    ⚡ SCHNELL-ERSTELLUNG
+    
+    Nur Name und Feldnamen - Rest wird mit Defaults gefüllt.
+    """
+    format_data = {
+        "name": data.name,
+        "domain": data.domain,
+        "description": {"de": data.description_de, "en": ""},
+        "wrapper": data.wrapper,
+        "fields": [{"name": fn} for fn in data.field_names]
+    }
+    
+    success, message, result = format_crud.create(format_data)
+    
+    if not success:
+        raise HTTPException(status_code=400, detail=message)
+    
+    return {
+        "status": "⚡ FORMAT SCHNELL ERSTELLT",
+        "message": message,
         "format": {
-            "name": safe_name,
-            "path": str(format_path),
-            "fields_count": len(format_data.fields),
-            "created": now
+            "name": data.name,
+            "fields": data.field_names,
+            "path": f"/opt/syntx-config/formats/{data.name}.json"
         }
     }
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  🔄 UPDATE - Format modulieren
+#  🔄 UPDATE ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @router.put("/{format_name}")
-async def update_format(format_name: str, update_data: FormatUpdate):
+async def update_format(format_name: str, data: FormatUpdate):
     """
-    🔄 FORMAT MODULIEREN
+    🔄 FORMAT UPDATEN
     
-    Updatet ein bestehendes Format-JSON.
+    Nur die übergebenen Felder werden geändert.
     """
-    format_path = FORMATS_DIR / f"{format_name}.json"
+    updates = {k: v for k, v in data.model_dump().items() if v is not None}
     
-    if not format_path.exists():
-        raise HTTPException(
-            status_code=404,
-            detail=f"Format '{format_name}' nicht gefunden"
-        )
+    if not updates:
+        raise HTTPException(status_code=400, detail="Keine Updates übergeben")
     
-    # Laden
-    with open(format_path, 'r', encoding='utf-8') as f:
-        format_json = json.load(f)
+    success, message, result = format_crud.update(format_name, updates)
     
-    # Updaten
-    if update_data.description:
-        format_json["description"] = update_data.description
-    if update_data.fields:
-        format_json["fields"] = [f.dict() for f in update_data.fields]
-        format_json["expected_structure"]["min_fields"] = len(update_data.fields)
-        format_json["expected_structure"]["max_fields"] = len(update_data.fields)
-    if update_data.wrapper:
-        format_json["wrapper"] = update_data.wrapper
-    if update_data.tags:
-        format_json["tags"] = update_data.tags
-    
-    format_json["updated"] = datetime.now().strftime("%Y-%m-%d")
-    
-    # Speichern
-    with open(format_path, 'w', encoding='utf-8') as f:
-        json.dump(format_json, f, indent=2, ensure_ascii=False)
-    
-    # Cache leeren
-    try:
-        from ..formats import clear_format_cache
-        clear_format_cache()
-    except:
-        pass
+    if not success:
+        raise HTTPException(status_code=400, detail=message)
     
     return {
-        "status": "success",
-        "message": f"Format '{format_name}' moduliert 🔄",
-        "format": {
-            "name": format_name,
-            "fields_count": len(format_json.get("fields", [])),
-            "updated": format_json["updated"]
-        }
+        "status": "🔄 FORMAT AKTUALISIERT",
+        "message": message,
+        "format": result
     }
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  💀 DELETE - Format freigeben
+#  💀 DELETE ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @router.delete("/{format_name}")
 async def delete_format(format_name: str):
     """
-    💀 FORMAT FREIGEBEN
+    💀 FORMAT LÖSCHEN (Soft Delete)
     
-    Löscht ein Format-JSON.
+    Wird als .deleted gespeichert, kann wiederhergestellt werden.
     """
-    format_path = FORMATS_DIR / f"{format_name}.json"
+    success, message = format_crud.delete(format_name)
     
-    if not format_path.exists():
-        raise HTTPException(
-            status_code=404,
-            detail=f"Format '{format_name}' nicht gefunden"
-        )
-    
-    # Backup-Name
-    backup_path = FORMATS_DIR / f".{format_name}.json.deleted"
-    
-    # Move to backup (soft delete)
-    format_path.rename(backup_path)
-    
-    # Cache leeren
-    try:
-        from ..formats import clear_format_cache
-        clear_format_cache()
-    except:
-        pass
+    if not success:
+        raise HTTPException(status_code=404, detail=message)
     
     return {
-        "status": "success",
-        "message": f"Format '{format_name}' freigegeben 💀",
-        "backup": str(backup_path)
+        "status": "💀 FORMAT FREIGEGEBEN",
+        "message": message
     }
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  📋 QUICK CREATE - Schnell-Erstellung mit Feldnamen
+#  🔧 FELD CRUD ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════════════════
 
-class QuickFormatCreate(BaseModel):
-    name: str
-    description_de: str
-    description_en: str = ""
-    field_names: List[str]  # Einfach nur Namen: ["drift", "mechanismus", "extrakt"]
-    wrapper: Optional[str] = None
-
-
-@router.post("/quick")
-async def quick_create_format(data: QuickFormatCreate):
+@router.post("/{format_name}/fields")
+async def add_field(format_name: str, field: FieldCreate):
     """
-    ⚡ SCHNELL-FORMAT ERSTELLEN
-    
-    Für schnelles Prototyping - nur Feldnamen angeben,
-    Rest wird auto-generiert.
+    ➕ FELD HINZUFÜGEN
     """
-    safe_name = "".join(c if c.isalnum() or c in "-_" else "_" for c in data.name.lower())
-    format_path = FORMATS_DIR / f"{safe_name}.json"
+    success, message, result = format_crud.add_field(format_name, field.model_dump())
     
-    if format_path.exists():
-        raise HTTPException(status_code=409, detail=f"Format '{safe_name}' existiert bereits!")
-    
-    # Felder auto-generieren
-    fields = []
-    weight = 100 // len(data.field_names)
-    
-    for field_name in data.field_names:
-        header = field_name.upper().replace(" ", "_")
-        fields.append({
-            "name": field_name.lower().replace(" ", "_"),
-            "weight": weight,
-            "description": {
-                "de": f"Beschreibung für {field_name}",
-                "en": f"Description for {field_name}"
-            },
-            "keywords": {
-                "de": [field_name.lower()],
-                "en": [field_name.lower()]
-            },
-            "headers": {
-                "de": [header],
-                "en": [header]
-            },
-            "validation": {
-                "min_length": 30,
-                "max_length": 3000,
-                "required": True
-            }
-        })
-    
-    now = datetime.now().strftime("%Y-%m-%d")
-    format_json = {
-        "name": safe_name,
-        "version": "1.0",
-        "description": {
-            "de": data.description_de,
-            "en": data.description_en or data.description_de
-        },
-        "author": "SYNTX Quick Create",
-        "created": now,
-        "updated": now,
-        "tags": ["quick", safe_name],
-        "languages": ["de", "en"],
-        "primary_language": "de",
-        "wrapper": data.wrapper,
-        "scoring": {
-            "presence_weight": 20,
-            "similarity_weight": 35,
-            "coherence_weight": 25,
-            "depth_weight": 15,
-            "structure_weight": 5,
-            "pass_threshold": 60,
-            "excellent_threshold": 85
-        },
-        "parser": {
-            "header_pattern": "###",
-            "field_separator": "\n\n",
-            "case_sensitive": False
-        },
-        "fields": fields,
-        "expected_structure": {
-            "format": "markdown",
-            "has_headers": True,
-            "min_fields": len(fields),
-            "max_fields": len(fields)
-        }
-    }
-    
-    FORMATS_DIR.mkdir(parents=True, exist_ok=True)
-    with open(format_path, 'w', encoding='utf-8') as f:
-        json.dump(format_json, f, indent=2, ensure_ascii=False)
+    if not success:
+        raise HTTPException(status_code=400, detail=message)
     
     return {
-        "status": "success",
-        "message": f"Format '{safe_name}' schnell erstellt ⚡",
-        "format": {
-            "name": safe_name,
-            "fields": data.field_names,
-            "path": str(format_path)
-        }
+        "status": "➕ FELD HINZUGEFÜGT",
+        "message": message,
+        "fields_count": len(result.get("fields", []))
     }
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  🔍 SCAN - Response gegen Format validieren
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class FormatScanRequest(BaseModel):
-    format: str
-    response: str
-    language: str = "de"
-
-
-@router.post("/scan")
-async def scan_format_response(data: FormatScanRequest):
+@router.put("/{format_name}/fields/{field_name}")
+async def update_field(format_name: str, field_name: str, updates: FieldUpdate):
     """
-    🔍 FORMAT-SCAN - Response gegen Format validieren
-    
-    Scannt eine Model-Response und prüft:
-    - Fehlende Felder
-    - Low-Quality Felder (zu kurz, keine Keywords)
-    - Feldlängen
-    - Kohärenz-Score
-    - Empfehlungen
+    🔄 FELD UPDATEN
     """
-    from ..formats import scan_response
+    update_data = {k: v for k, v in updates.model_dump().items() if v is not None}
     
-    result = scan_response(data.format, data.response, data.language)
+    if not update_data:
+        raise HTTPException(status_code=400, detail="Keine Updates übergeben")
     
-    if "error" in result:
-        raise HTTPException(status_code=404, detail=result["error"])
+    success, message, result = format_crud.update_field(format_name, field_name, update_data)
     
-    # Logging
-    log_entry = {
-        "operation": "scan",
-        "format": data.format,
-        "timestamp": datetime.now().isoformat(),
-        "coherence_score": result.get("coherence_score"),
-        "missing_fields": len(result.get("missing_fields", []))
-    }
-    _log_format_operation(log_entry)
-    
-    return result
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  🧬 CLONE - Format klonen mit Modifikationen
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class FormatCloneRequest(BaseModel):
-    source: str
-    target: str
-    modifications: Optional[Dict[str, Any]] = None
-
-
-@router.post("/clone")
-async def clone_format(data: FormatCloneRequest):
-    """
-    🧬 FORMAT-CLONE - Variante erstellen
-    
-    Klont ein bestehendes Format unter neuem Namen.
-    
-    Optionale Modifikationen:
-    - fields: Liste von Feldnamen (filtert/ordnet)
-    - description: Neue Beschreibung
-    - wrapper: Neuer empfohlener Wrapper
-    - scoring: Neue Scoring-Thresholds
-    """
-    import copy
-    
-    # Source laden
-    source_path = FORMATS_DIR / f"{data.source}.json"
-    if not source_path.exists():
-        raise HTTPException(status_code=404, detail=f"Source-Format '{data.source}' nicht gefunden")
-    
-    # Target prüfen
-    safe_target = "".join(c if c.isalnum() or c in "-_" else "_" for c in data.target.lower())
-    target_path = FORMATS_DIR / f"{safe_target}.json"
-    
-    if target_path.exists():
-        raise HTTPException(status_code=409, detail=f"Target-Format '{safe_target}' existiert bereits!")
-    
-    # Source laden und kopieren
-    with open(source_path, 'r', encoding='utf-8') as f:
-        format_json = json.load(f)
-    
-    cloned = copy.deepcopy(format_json)
-    
-    # Basis-Updates
-    now = datetime.now().strftime("%Y-%m-%d")
-    cloned["name"] = safe_target
-    cloned["created"] = now
-    cloned["updated"] = now
-    cloned["cloned_from"] = data.source
-    
-    modifications_applied = []
-    
-    # Modifikationen anwenden
-    if data.modifications:
-        mods = data.modifications
-        
-        # Fields filtern/ordnen
-        if "fields" in mods and mods["fields"]:
-            field_names = mods["fields"]
-            original_fields = {f["name"]: f for f in cloned.get("fields", [])}
-            new_fields = []
-            for name in field_names:
-                if name in original_fields:
-                    new_fields.append(original_fields[name])
-                else:
-                    # Neues Feld mit Defaults
-                    new_fields.append({
-                        "name": name,
-                        "weight": 100 // len(field_names),
-                        "description": {"de": f"Beschreibung für {name}", "en": f"Description for {name}"},
-                        "keywords": {"de": [name], "en": [name]},
-                        "headers": {"de": [name.upper()], "en": [name.upper()]},
-                        "validation": {"min_length": 30, "max_length": 3000, "required": True}
-                    })
-            cloned["fields"] = new_fields
-            cloned["expected_structure"]["min_fields"] = len(new_fields)
-            cloned["expected_structure"]["max_fields"] = len(new_fields)
-            modifications_applied.append("fields")
-        
-        # Description
-        if "description" in mods:
-            cloned["description"] = mods["description"]
-            modifications_applied.append("description")
-        
-        # Wrapper
-        if "wrapper" in mods:
-            cloned["wrapper"] = mods["wrapper"]
-            modifications_applied.append("wrapper")
-        
-        # Scoring
-        if "scoring" in mods:
-            cloned["scoring"].update(mods["scoring"])
-            modifications_applied.append("scoring")
-        
-        # Tags
-        if "tags" in mods:
-            cloned["tags"] = mods["tags"]
-            modifications_applied.append("tags")
-    
-    # Speichern
-    with open(target_path, 'w', encoding='utf-8') as f:
-        json.dump(cloned, f, indent=2, ensure_ascii=False)
-    
-    # Cache leeren
-    try:
-        from ..formats import clear_format_cache
-        clear_format_cache()
-    except:
-        pass
-    
-    # Logging
-    log_entry = {
-        "operation": "clone",
-        "source": data.source,
-        "target": safe_target,
-        "timestamp": datetime.now().isoformat(),
-        "modifications": modifications_applied
-    }
-    _log_format_operation(log_entry)
+    if not success:
+        raise HTTPException(status_code=400, detail=message)
     
     return {
-        "status": "success",
-        "message": f"Format '{safe_target}' geklont von '{data.source}' 🧬",
-        "source": data.source,
-        "target": safe_target,
-        "modifications_applied": modifications_applied,
-        "fields_count": len(cloned.get("fields", [])),
-        "path": str(target_path)
+        "status": "🔄 FELD AKTUALISIERT",
+        "message": message
     }
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  📊 SCORE - Format-Qualität bewerten
-# ═══════════════════════════════════════════════════════════════════════════════
-
-class FormatScoreRequest(BaseModel):
-    format: str
-    language: str = "de"
-
-
-@router.post("/score")
-async def score_format_endpoint(data: FormatScoreRequest):
+@router.delete("/{format_name}/fields/{field_name}")
+async def remove_field(format_name: str, field_name: str):
     """
-    📊 FORMAT-SCORE - Format-Qualität bewerten
-    
-    Bewertet das Format selbst (nicht die Response):
-    - Semantische Klarheit der Feldnamen
-    - Redundanz zwischen Feldern
-    - Balance der Gewichtungen
-    - i18n-Vollständigkeit
-    - Risikozonen
+    ➖ FELD ENTFERNEN
     """
-    from ..formats import score_format
+    success, message, result = format_crud.remove_field(format_name, field_name)
     
-    result = score_format(data.format, data.language)
+    if not success:
+        raise HTTPException(status_code=400, detail=message)
     
-    if "error" in result:
-        raise HTTPException(status_code=404, detail=result["error"])
-    
-    # Logging
-    log_entry = {
-        "operation": "score",
-        "format": data.format,
-        "timestamp": datetime.now().isoformat(),
-        "overall_score": result.get("overall")
+    return {
+        "status": "➖ FELD ENTFERNT",
+        "message": message,
+        "fields_count": len(result.get("fields", []))
     }
-    _log_format_operation(log_entry)
-    
-    return result
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  📝 LOGGING HELPER
-# ═══════════════════════════════════════════════════════════════════════════════
-
-def _log_format_operation(entry: Dict):
-    """Loggt Format-Operationen nach format_ops.jsonl"""
-    log_dir = Path("/opt/syntx-config/logs")
-    log_dir.mkdir(parents=True, exist_ok=True)
-    log_file = log_dir / "format_ops.jsonl"
-    
-    try:
-        with open(log_file, 'a', encoding='utf-8') as f:
-            f.write(json.dumps(entry, ensure_ascii=False) + '\n')
-    except Exception as e:
-        print(f"⚠️ Logging failed: {e}")
