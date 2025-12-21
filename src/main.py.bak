@@ -199,17 +199,22 @@ async def resonance_health():
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @app.get("/resonanz/formats")
-async def list_formats(domain: str = None):
+async def list_formats():
     """
     📋 VERFÜGBARE FORMATE LISTEN
-    Optional gefiltert nach ?domain=technical
+    
+    Zeigt alle Format-Definitionen die genutzt werden können.
     """
     if not FORMAT_LOADER_AVAILABLE:
-        return {"status": "❌ FORMAT_LOADER_NICHT_VERFÜGBAR", "formats": []}
+        return {
+            "status": "❌ FORMAT_LOADER_NICHT_VERFÜGBAR",
+            "formats": [],
+            "message": "Format Loader konnte nicht geladen werden"
+        }
     
-    from .formats import list_formats as _list_formats, load_format, get_all_domains
+    from .formats import list_formats as _list_formats, load_format
     
-    format_names = _list_formats(domain)
+    format_names = _list_formats()
     formats = []
     
     for name in format_names:
@@ -218,7 +223,6 @@ async def list_formats(domain: str = None):
             desc = fmt.get("description", {})
             formats.append({
                 "name": name,
-                "domain": fmt.get("domain"),
                 "fields_count": len(fmt.get("fields", [])),
                 "description": desc.get("de", desc) if isinstance(desc, dict) else desc,
                 "languages": fmt.get("languages", ["de"])
@@ -227,8 +231,6 @@ async def list_formats(domain: str = None):
     return {
         "status": "🔥 FORMATE GELADEN",
         "count": len(formats),
-        "domain_filter": domain,
-        "available_domains": get_all_domains(),
         "formats": formats
     }
 
@@ -255,13 +257,13 @@ async def get_format_info(format_name: str, language: str = "de"):
         "status": "🔥 FORMAT GELADEN",
         "format": {
             "name": format_name,
-            "domain": fmt.get("domain"),
             "description": fmt.get("description", {}),
             "languages": fmt.get("languages", ["de"]),
-            "wrapper": fmt.get("wrapper"),
             "fields": fields
         }
     }
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 #  💬 CHAT ENDPOINT - DAS HERZSTÜCK
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -428,31 +430,18 @@ async def chat(request: ChatRequest):
         # ══════════════════════════════════════════════════════════════════════
         #  RETURN RESPONSE
         # ══════════════════════════════════════════════════════════════════════
-        # DEBUG INFO BAUEN
-        debug_info = None
-        if request.debug:
-            debug_info = {
-                "wrapper_content": wrapper_text,
-                "wrapper_chain": wrapper_chain,
-                "format_name": request.format,
-                "format_section": format_section,
-                "format_fields": format_info.get("fields", []),
-                "calibrated_prompt": wrapped_prompt,
-                "prompt_length": len(wrapped_prompt)
-            }
-        
         return ChatResponse(
             response=response_text,
             metadata={
                 "request_id": request_id,
                 "wrapper_chain": wrapper_chain,
-                "format": request.format,
-                "format_fields": format_info.get("fields", []),
+                "format": request.format,  # NEU!
+                "format_fields": format_info.get("fields", []),  # NEU!
                 "latency_ms": latency_ms
             },
-            field_flow=field_flow,
-            debug_info=debug_info
+            field_flow=field_flow
         )
+        
     except Exception as e:
         log_stage("ERROR", {
             "request_id": request_id,
