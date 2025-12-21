@@ -854,14 +854,15 @@ echo -e "${GRAY}   SYNTX FIELD RESONANCE v3.2 - Der Strom kennt keine Grenzen �
 echo -e "${GRAY}════════════════════════════════════════════════════════════════════════════════════${NC}"
 echo ""
 
+exit $FAILED_TESTS
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  🔮 FORMAT CRUD - Vollständige Feld-Verwaltung
+#  🔮 CRUD TESTS - Format + Style + Feld Operationen
 # ═══════════════════════════════════════════════════════════════════════════════
 
 section "🔮 FORMAT CRUD - Vollständige Feld-Verwaltung" \
         "CREATE, READ, UPDATE, DELETE für Formate und Felder" \
-        "6"
+        "9"
 
 # CREATE Format
 test_endpoint "POST" "/resonanz/formats" \
@@ -909,13 +910,9 @@ test_endpoint "DELETE" "/resonanz/formats/crud_test_format" "" \
     "Backup: .{name}.json.{timestamp}.deleted" \
     "Kann wiederhergestellt werden"
 
-# ═══════════════════════════════════════════════════════════════════════════════
-#  🎨 STYLE CRUD - Alchemy Verwaltung
-# ═══════════════════════════════════════════════════════════════════════════════
-
 section "🎨 STYLE CRUD - Alchemy Verwaltung" \
         "Styles, Transmutationen, Verbannte Worte" \
-        "5"
+        "8"
 
 # CREATE Style
 test_endpoint "POST" "/resonanz/styles" \
@@ -954,15 +951,3 @@ test_endpoint "DELETE" "/resonanz/styles/crud_test_style" "" \
     "Backup erstellt" \
     "Kann wiederhergestellt werden"
 
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  📋 SUMMARY
-# ═══════════════════════════════════════════════════════════════════════════════
-
-print_summary
-print_endpoint_reference
-
-echo ""
-echo -e "${GRAY}════════════════════════════════════════════════════════════════════════════════════${NC}"
-echo ""
-exit $FAILED_TESTS
