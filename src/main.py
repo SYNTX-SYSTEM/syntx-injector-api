@@ -244,6 +244,69 @@ async def list_formats():
     }
 
 
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🎨 STYLE ALCHEMY ENDPOINTS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.get("/resonanz/styles")
+async def list_styles():
+    """
+    🎨 ALLE STYLES IM GRIMOIRE
+    
+    Zeigt verfügbare Style-Alchemien.
+    """
+    if not STYLE_ALCHEMIST_AVAILABLE:
+        return {"status": "❌ STYLE_ALCHEMIST_NICHT_VERFÜGBAR", "styles": []}
+    
+    from .styles import list_available_styles, get_style_info
+    
+    style_names = list_available_styles()
+    styles = []
+    
+    for name in style_names:
+        info = get_style_info(name)
+        if info:
+            styles.append(info)
+    
+    return {
+        "status": "🎨 GRIMOIRE GEÖFFNET",
+        "count": len(styles),
+        "styles": styles
+    }
+
+
+@app.get("/resonanz/styles/{style_name}")
+async def get_style_details(style_name: str):
+    """
+    🔮 STYLE DETAILS
+    
+    Zeigt alle Transmutationen eines Styles.
+    """
+    if not STYLE_ALCHEMIST_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Style Alchemist nicht verfügbar")
+    
+    from .styles import summon_style
+    
+    style = summon_style(style_name)
+    if not style:
+        raise HTTPException(status_code=404, detail=f"Style '{style_name}' nicht im Grimoire")
+    
+    return {
+        "status": "🔮 STYLE BESCHWOREN",
+        "style": {
+            "name": style_name,
+            "vibe": style.get("vibe", ""),
+            "description": style.get("description", ""),
+            "word_alchemy": style.get("word_alchemy", {}),
+            "forbidden_words": style.get("forbidden_words", []),
+            "has_tone_injection": bool(style.get("tone_injection")),
+            "has_suffix": bool(style.get("suffix"))
+        }
+    }
+
+
 @app.get("/resonanz/formats/{format_name}")
 async def get_format_info(format_name: str, language: str = "de"):
     """
