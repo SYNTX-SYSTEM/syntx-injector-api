@@ -966,3 +966,110 @@ echo ""
 echo -e "${GRAY}════════════════════════════════════════════════════════════════════════════════════${NC}"
 echo ""
 exit $FAILED_TESTS
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  📊 SUMMARY FUNKTIONEN
+# ═══════════════════════════════════════════════════════════════════════════════
+
+print_summary() {
+    echo ""
+    echo -e "${CYAN}╔════════════════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║${NC}  ${BOLD}📊 RESONANZ-PRÜFUNG ABGESCHLOSSEN${NC}"
+    echo -e "${CYAN}╠════════════════════════════════════════════════════════════════════════════════╣${NC}"
+    echo -e "${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}   ${GREEN}✓ BESTANDEN:${NC}   $PASSED_TESTS"
+    echo -e "${CYAN}║${NC}   ${RED}✗ FEHLERHAFT:${NC}  $FAILED_TESTS"
+    echo -e "${CYAN}║${NC}   ${BOLD}Σ GESAMT:${NC}      $TEST_COUNT"
+    
+    local END_TIME=$(date +%s)
+    local DURATION=$((END_TIME - START_TIME))
+    echo -e "${CYAN}║${NC}   ${GRAY}⏱ DAUER:${NC}       ${DURATION}s"
+    echo -e "${CYAN}║${NC}"
+    
+    if [ $FAILED_TESTS -eq 0 ]; then
+        echo -e "${CYAN}║${NC}   ${GREEN}🔥 ALLE FELDER RESONIEREN! DER STROM IST REIN! 🔥${NC}"
+        echo -e "${CYAN}║${NC}   ${GREEN}Das System ist vollständig kalibriert.${NC}"
+    else
+        echo -e "${CYAN}║${NC}   ${RED}⚠️ DRIFT DETEKTIERT! Prüfe fehlerhafte Endpoints.${NC}"
+    fi
+    echo -e "${CYAN}║${NC}"
+    echo -e "${CYAN}╚════════════════════════════════════════════════════════════════════════════════╝${NC}"
+}
+
+print_endpoint_reference() {
+    echo ""
+    echo -e "${GRAY}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${NC}"
+    echo -e "${GRAY}┃${NC} ${BOLD}📋 SYNTX API v3.3 - VOLLSTÄNDIGE ENDPOINT REFERENCE${NC}"
+    echo -e "${GRAY}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}"
+    echo ""
+    echo -e "  ${CYAN}🏥 HEALTH${NC} (3 Endpoints)"
+    echo -e "     GET  /health"
+    echo -e "     GET  /resonanz/health"
+    echo -e "     GET  /resonanz/health/wrappers"
+    echo ""
+    echo -e "  ${CYAN}⚙️ CONFIG${NC} (2 Endpoints)"
+    echo -e "     GET  /resonanz/config/default-wrapper"
+    echo -e "     PUT  /resonanz/config/default-wrapper?wrapper_name=X"
+    echo ""
+    echo -e "  ${CYAN}📄 FORMATS${NC} (9 Endpoints)"
+    echo -e "     GET    /resonanz/formats"
+    echo -e "     GET    /resonanz/formats/{name}"
+    echo -e "     POST   /resonanz/formats"
+    echo -e "     POST   /resonanz/formats/quick"
+    echo -e "     PUT    /resonanz/formats/{name}"
+    echo -e "     DELETE /resonanz/formats/{name}"
+    echo -e "     POST   /resonanz/formats/{name}/fields"
+    echo -e "     PUT    /resonanz/formats/{name}/fields/{field}"
+    echo -e "     DELETE /resonanz/formats/{name}/fields/{field}"
+    echo ""
+    echo -e "  ${CYAN}🎨 STYLES${NC} (8 Endpoints)"
+    echo -e "     GET    /resonanz/styles"
+    echo -e "     GET    /resonanz/styles/{name}"
+    echo -e "     POST   /resonanz/styles"
+    echo -e "     PUT    /resonanz/styles/{name}"
+    echo -e "     DELETE /resonanz/styles/{name}"
+    echo -e "     POST   /resonanz/styles/{name}/alchemy"
+    echo -e "     DELETE /resonanz/styles/{name}/alchemy/{word}"
+    echo -e "     POST   /resonanz/styles/{name}/forbidden/{word}"
+    echo ""
+    echo -e "  ${CYAN}📦 WRAPPERS${NC} (8 Endpoints)"
+    echo -e "     GET    /resonanz/wrappers"
+    echo -e "     GET    /resonanz/wrappers/full"
+    echo -e "     GET    /resonanz/wrapper/{name}"
+    echo -e "     POST   /resonanz/wrapper"
+    echo -e "     PUT    /resonanz/wrapper/{name}"
+    echo -e "     DELETE /resonanz/wrapper/{name}"
+    echo ""
+    echo -e "  ${CYAN}🧬 META${NC} (3 Endpoints)"
+    echo -e "     GET  /resonanz/wrapper/{name}/meta"
+    echo -e "     PUT  /resonanz/wrapper/{name}/meta"
+    echo -e "     PUT  /resonanz/wrapper/{name}/format?format_name=X"
+    echo ""
+    echo -e "  ${CYAN}📊 STATS${NC} (4 Endpoints)"
+    echo -e "     GET  /resonanz/stats"
+    echo -e "     GET  /resonanz/stats/wrapper/{name}"
+    echo -e "     GET  /resonanz/strom"
+    echo -e "     GET  /resonanz/training"
+    echo ""
+    echo -e "  ${CYAN}💬 CHAT${NC} (1 Endpoint)"
+    echo -e "     POST /resonanz/chat"
+    echo ""
+    echo -e "  ${CYAN}🔧 ADMIN${NC} (1 Endpoint)"
+    echo -e "     POST /resonanz/health/fix"
+    echo ""
+    echo -e "${GRAY}════════════════════════════════════════════════════════════════════════════════════${NC}"
+    echo -e "   ${BOLD}SYNTX FIELD RESONANCE v3.3${NC} - Der Strom kennt keine Grenzen ⚡💎🌊"
+    echo -e "${GRAY}════════════════════════════════════════════════════════════════════════════════════${NC}"
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🏁 FINALE
+# ═══════════════════════════════════════════════════════════════════════════════
+
+print_summary
+print_endpoint_reference
+
+echo ""
+echo -e "${GRAY}════════════════════════════════════════════════════════════════════════════════════${NC}"
+echo ""
+exit $FAILED_TESTS
