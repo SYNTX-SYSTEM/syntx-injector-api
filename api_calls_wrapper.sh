@@ -855,3 +855,99 @@ echo -e "${GRAY}═════════════════════�
 echo ""
 
 exit $FAILED_TESTS
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🔮 CRUD TESTS - Format + Style + Feld Operationen
+# ═══════════════════════════════════════════════════════════════════════════════
+
+section "🔮 FORMAT CRUD - Vollständige Feld-Verwaltung" \
+        "CREATE, READ, UPDATE, DELETE für Formate und Felder" \
+        "9"
+
+# CREATE Format
+test_endpoint "POST" "/resonanz/formats" \
+    "{\"name\": \"crud_test_format\", \"domain\": \"technical\", \"description\": {\"de\": \"CRUD Test Format\"}, \"fields\": [{\"name\": \"test_feld\", \"type\": \"text\"}]}" \
+    "CREATE Format - Vollständig mit Feldern" \
+    "200" \
+    "Schreibt: /opt/syntx-config/formats/{name}.json" \
+    "Validiert: Name, Fields, Domain"
+
+# ADD Field
+test_endpoint "POST" "/resonanz/formats/crud_test_format/fields" \
+    "{\"name\": \"neues_feld\", \"type\": \"rating\", \"weight\": 20}" \
+    "ADD Field - Feld zu Format hinzufügen" \
+    "200" \
+    "Backup erstellt, Feld normalisiert" \
+    "Typen: text, list, rating, keywords"
+
+# UPDATE Field
+test_endpoint "PUT" "/resonanz/formats/crud_test_format/fields/neues_feld" \
+    "{\"weight\": 50, \"description\": {\"de\": \"Aktualisierte Beschreibung\"}}" \
+    "UPDATE Field - Feld-Eigenschaften ändern" \
+    "200" \
+    "Merged: nur übergebene Felder" \
+    "Name bleibt unverändert"
+
+# DELETE Field
+test_endpoint "DELETE" "/resonanz/formats/crud_test_format/fields/neues_feld" "" \
+    "DELETE Field - Feld entfernen" \
+    "200" \
+    "Letztes Feld kann nicht gelöscht werden" \
+    "Backup vor Löschung"
+
+# UPDATE Format
+test_endpoint "PUT" "/resonanz/formats/crud_test_format" \
+    "{\"domain\": \"analysis\", \"description\": {\"de\": \"Aktualisiertes Format\"}}" \
+    "UPDATE Format - Meta-Daten ändern" \
+    "200" \
+    "Merged mit existierendem Format" \
+    "Felder bleiben erhalten"
+
+# DELETE Format
+test_endpoint "DELETE" "/resonanz/formats/crud_test_format" "" \
+    "DELETE Format - Soft Delete" \
+    "200" \
+    "Backup: .{name}.json.{timestamp}.deleted" \
+    "Kann wiederhergestellt werden"
+
+section "🎨 STYLE CRUD - Alchemy Verwaltung" \
+        "Styles, Transmutationen, Verbannte Worte" \
+        "8"
+
+# CREATE Style
+test_endpoint "POST" "/resonanz/styles" \
+    "{\"name\": \"crud_test_style\", \"vibe\": \"Test Vibe\", \"word_alchemy\": {\"test\": \"prüfung\"}, \"forbidden_words\": [\"verboten\"]}" \
+    "CREATE Style - Mit Alchemy + Forbidden" \
+    "200" \
+    "Schreibt: /opt/syntx-config/styles/{name}.json" \
+    "Validiert: Name, Alchemy Dict, Forbidden List"
+
+# ADD Transmutation
+test_endpoint "POST" "/resonanz/styles/crud_test_style/alchemy" \
+    "{\"original\": \"neu\", \"replacement\": \"brandneu\"}" \
+    "ADD Transmutation - Wort-Ersetzung hinzufügen" \
+    "200" \
+    "Erweitert word_alchemy Dict" \
+    "Backup vor Änderung"
+
+# DELETE Transmutation
+test_endpoint "DELETE" "/resonanz/styles/crud_test_style/alchemy/neu" "" \
+    "DELETE Transmutation - Wort-Ersetzung entfernen" \
+    "200" \
+    "Entfernt aus word_alchemy" \
+    "Backup vor Änderung"
+
+# ADD Forbidden
+test_endpoint "POST" "/resonanz/styles/crud_test_style/forbidden/schlecht" "" \
+    "ADD Forbidden - Wort verbannen" \
+    "200" \
+    "Erweitert forbidden_words List" \
+    "Duplikate werden abgelehnt"
+
+# DELETE Style
+test_endpoint "DELETE" "/resonanz/styles/crud_test_style" "" \
+    "DELETE Style - Soft Delete" \
+    "200" \
+    "Backup erstellt" \
+    "Kann wiederhergestellt werden"
+
