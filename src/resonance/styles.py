@@ -20,6 +20,14 @@ class StyleCreate(BaseModel):
     forbidden_words: List[str] = []
     suffix: str = ""
 
+
+class StyleUpdate(BaseModel):
+    """Für PUT - alle Felder optional"""
+    vibe: Optional[str] = None
+    description: Optional[str] = None
+    tone_injection: Optional[str] = None
+    suffix: Optional[str] = None
+
 class TransmutationAdd(BaseModel):
     original: str
     replacement: str
@@ -58,9 +66,9 @@ async def create_style(data: StyleCreate):
     return {"status": "✨ STYLE GEBOREN", "message": msg, "style": result}
 
 @router.put("/{style_name}")
-async def update_style(style_name: str, data: StyleCreate):
+async def update_style(style_name: str, data: StyleUpdate):
     """🔄 STYLE UPDATEN"""
-    updates = {k: v for k, v in data.model_dump().items() if k != "name"}
+    updates = {k: v for k, v in data.model_dump().items() if v is not None}
     success, msg, result = style_crud.update(style_name, updates)
     if not success: raise HTTPException(status_code=400, detail=msg)
     return {"status": "🔄 STYLE AKTUALISIERT", "message": msg}

@@ -897,7 +897,7 @@ test_endpoint "DELETE" "/resonanz/formats/crud_test_format" "" \
 
 section "🎨 STYLE CRUD - Alchemy Verwaltung" \
         "Styles, Transmutationen, Verbannte Worte" \
-        "5"
+        "6"
 
 test_endpoint "POST" "/resonanz/styles" \
     "{\"name\": \"crud_test_style\", \"vibe\": \"Test Vibe\", \"word_alchemy\": {\"test\": \"prüfung\"}, \"forbidden_words\": [\"verboten\"]}" \
@@ -916,6 +916,11 @@ test_endpoint "DELETE" "/resonanz/styles/crud_test_style/alchemy/neu" "" \
 test_endpoint "POST" "/resonanz/styles/crud_test_style/forbidden/schlecht" "" \
     "ADD Forbidden - Wort verbannen" "200" \
     "Erweitert forbidden_words List" "Duplikate werden abgelehnt"
+
+test_endpoint "PUT" "/resonanz/styles/crud_test_style" \
+    '{"vibe": "Updated Test Vibe", "description": "CRUD Update Test"}' \
+    "UPDATE Style - Vibe und Description ändern" "200" \
+    "Merged: nur übergebene Felder" "Name bleibt unverändert"
 
 test_endpoint "DELETE" "/resonanz/styles/crud_test_style" "" \
     "DELETE Style - Soft Delete" "200" \
