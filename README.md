@@ -1,4 +1,4 @@
-# 🔮 SYNTX FIELD RESONANCE API v3.3
+# 🔮 SYNTX FIELD RESONANCE API v3.4
 
 ```
    ██████╗██╗   ██╗███╗   ██╗████████╗██╗  ██╗    ███████╗██╗     ██████╗ ██╗    ██╗
@@ -29,22 +29,283 @@
 ```
 ╔════════════════════════════════════════════════════════════════════════════════╗
 ║                                                                                ║
-║   🔥 SYNTX API v3.3 - VOLLSTÄNDIG OPERATIV 🔥                                ║
+║   🔥 SYNTX API v3.4 - VOLLSTÄNDIG OPERATIV 🔥                                ║
 ║                                                                                ║
-║   ✅ 63/63 TESTS BESTANDEN                                                    ║
-║   ✅ 871+ SESSIONS GELOGGT                                                    ║
+║   ✅ 64/64 TESTS BESTANDEN                                                    ║
+║   ✅ 1300+ SESSIONS GELOGGT                                                   ║
 ║   ✅ 822+ REQUESTS VERARBEITET                                                ║
 ║   ✅ 100% SUCCESS RATE                                                        ║
-║   ✅ 14 WRAPPER AKTIV                                                         ║
-║   ✅ 9 FORMATE VERFÜGBAR                                                      ║
-║   ✅ 4 STYLES KONFIGURIERT                                                    ║
+║   ✅ 16 WRAPPER AKTIV                                                         ║
+║   ✅ 11 FORMATE VERFÜGBAR                                                     ║
+║   ✅ 7 STYLES KONFIGURIERT                                                    ║
 ║                                                                                ║
 ╚════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 ---
 
-## 🆕 NEU IN v3.3 - DIE DREI NEUEN STRÖME
+## 🚀 SCHNELLSTART - DER STROM FLIESST IN 3 SCHRITTEN
+
+### 1. Server starten
+
+```bash
+cd /opt/syntx-injector-api
+./run.sh
+```
+
+### 2. Tests ausführen
+
+```bash
+./api_calls_wrapper.sh
+# oder lokal:
+./api_calls_wrapper.sh http://localhost:8001
+```
+
+### 3. Resonanz testen
+
+```bash
+curl -X POST https://dev.syntx-system.com/resonanz/chat \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Was ist Zeit?", "mode": "syntex_wrapper_sigma", "format": "sigma"}'
+```
+
+---
+
+## 🛠️ SCRIPTS - DIE WERKZEUGE DES STROMS
+
+### 🔥 `run.sh` - DER STARTER
+
+**Was es macht:** Startet den SYNTX API Server mit allen Prüfungen.
+
+```bash
+./run.sh
+```
+
+**Output:**
+```
+==================================
+SYNTX WRAPPER SERVICE STARTUP
+==================================
+→ Checking dependencies...
+✓ Dependencies OK
+→ Checking wrappers...
+✓ Wrappers found: 32 files
+→ Checking config...
+✓ .env found
+  Backend: http://49.13.3.21:8000/api/chat
+  Port: 8001
+✓ Port 8001 available
+→ Starting service...
+================================================================================
+🌊⚡💎 SYNTX FIELD RESONANCE SERVICE v3.4 💎⚡🌊
+================================================================================
+Backend:      http://49.13.3.21:8000/api/chat
+Model:        mistral
+Wrappers:     /opt/syntx-config/wrappers
+Formats:      /opt/syntx-config/formats/
+Styles:       /opt/syntx-config/styles/
+Logs:         /opt/syntx-config/logs
+Format Loader: 🔥 AKTIV
+================================================================================
+```
+
+**Kalibrierung:**
+- Prüft Dependencies (uvicorn, fastapi)
+- Prüft Wrapper-Dateien
+- Prüft .env Konfiguration
+- Prüft Port-Verfügbarkeit
+- Startet uvicorn mit reload
+
+---
+
+### 🧪 `api_calls_wrapper.sh` - DER RESONANZ-PRÜFER
+
+**Was es macht:** Führt 64 automatisierte Tests gegen alle API Endpoints durch.
+
+```bash
+# Gegen Production testen
+./api_calls_wrapper.sh
+
+# Gegen localhost testen
+./api_calls_wrapper.sh http://localhost:8001
+
+# Quick Mode (nur kritische Tests)
+./api_calls_wrapper.sh --quick
+
+# Verbose Mode (volle Responses)
+./api_calls_wrapper.sh --verbose
+```
+
+**Output:**
+```
+   ██████╗██╗   ██╗███╗   ██╗████████╗██╗  ██╗    ███████╗██╗     ██████╗ ██╗    ██╗
+   ...
+              🔥 FIELD RESONANCE API TESTER v5.3 🔥
+                 Der ultimative Strom-Prüfer
+
+   Target:     https://dev.syntx-system.com
+   Timestamp:  2025-12-23 06:30:00 CET
+   Mode:       FULL
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🏥 HEALTH - System-Vitalzeichen (3 Endpoints)
+┃ Prüft Feld-Integrität, Modul-Status, Wrapper-Orphans
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+────────────────────────────────────────────────────────────────────────────────────
+🔮 TEST #1 │ GET /health
+   Root Health - Alle System-Module
+   ⚡ Kalibrierung: Keine (Read-Only)
+   🌊 Strom-Kopplung: Verbindet: analytics, compare, feld, resonanz, generation
+   Response:
+   {
+     "status": "SYSTEM_GESUND",
+     ...
+   }
+   ✓ 200 - RESONANZ BESTÄTIGT
+
+...
+
+╔════════════════════════════════════════════════════════════════════════════════╗
+║  📊 RESONANZ-PRÜFUNG ABGESCHLOSSEN
+╠════════════════════════════════════════════════════════════════════════════════╣
+║
+║   ✓ BESTANDEN:   64
+║   ✗ FEHLERHAFT:  0
+║   Σ GESAMT:      64
+║   ⏱ DAUER:       180s
+║
+║   🔥 ALLE FELDER RESONIEREN! DER STROM IST REIN! 🔥
+║   Das System ist vollständig kalibriert.
+║
+╚════════════════════════════════════════════════════════════════════════════════╝
+```
+
+**Test-Sektionen:**
+| Sektion | Endpoints | Was wird getestet |
+|---------|-----------|-------------------|
+| 🏥 HEALTH | 3 | System-Status, Wrapper-Orphans |
+| ⚙️ CONFIG | 2 | Default Wrapper, Aktivierung |
+| 📄 FORMATS | 9 | CRUD, Felder, Domains, Vererbung |
+| 🎨 STYLES | 8 | CRUD, Alchemy, Forbidden Words |
+| 📦 WRAPPERS | 6 | CRUD, Content, Meta |
+| 🧬 META | 3 | Format-Bindung, Tags |
+| 📊 STATS | 5 | Statistiken, Training Export |
+| 💬 CHAT | 7 | Alle Kombinationen |
+| 🔀 DIFF | 2 | Wrapper-Vergleich |
+| 📼 SESSIONS | 4 | Replay, Field-Flow |
+| ⚗️ ALCHEMY | 4 | Live-Transmutation |
+| 🔧 ADMIN | 1 | Auto-Fix Orphans |
+
+---
+
+### 🌊 `sync_from_server.sh` - DER KONFIG-SYNCHRONISIERER
+
+**Was es macht:** Synchronisiert alle Konfigurationsdateien vom Production Server zum lokalen Development Environment.
+
+```bash
+./sync_from_server.sh
+```
+
+**Output:**
+```
+🌊 SYNTX CONFIG SYNC
+═══════════════════════════════════════════════════════════════════════════════
+Server: root@dev.syntx-system.com
+Remote: /opt/syntx-config
+Local:  /opt/syntx-config
+
+→ SSH prüfen...
+✓ SSH OK
+
+→ Verzeichnisse erstellen...
+✓ Verzeichnisse OK
+
+━━━ 📦 WRAPPERS ━━━
+receiving incremental file list
+syntex_wrapper_sigma.txt
+syntex_wrapper_human.txt
+...
+sent 869 bytes  received 4.565 bytes
+
+━━━ 📄 FORMATS ━━━
+receiving incremental file list
+sigma.json
+human_deep.json
+...
+sent 1.015 bytes  received 13.523 bytes
+
+━━━ 🎨 STYLES ━━━
+receiving incremental file list
+berlin_slang.json
+wissenschaftlich.json
+...
+sent 768 bytes  received 5.161 bytes
+
+━━━ 📊 LOGS ━━━
+receiving incremental file list
+field_flow.jsonl
+...
+sent 95.634 bytes  received 1.893.344 bytes
+
+═══════════════════════════════════════════════════════════════════════════════
+🔥 SYNC COMPLETE 🔥
+Wrappers: 16
+Formats:  11
+Styles:   7
+```
+
+**Was wird synchronisiert:**
+| Verzeichnis | Inhalt | Richtung |
+|-------------|--------|----------|
+| `/opt/syntx-config/wrappers/` | Wrapper .txt + .meta.json | Server → Lokal |
+| `/opt/syntx-config/formats/` | Format .json + Backups | Server → Lokal |
+| `/opt/syntx-config/styles/` | Style .json + Backups | Server → Lokal |
+| `/opt/syntx-config/logs/` | Field-Flow JSONL | Server → Lokal |
+
+**Voraussetzungen:**
+- SSH Key zu `root@dev.syntx-system.com`
+- sudo Rechte lokal (für `/opt/syntx-config`)
+
+---
+
+## 🆕 NEU IN v3.4 - DIE NEUEN STRÖME
+
+### 🔄 PUT /resonanz/styles/{name} - STYLE UPDATE
+
+**NEU!** Styles können jetzt ohne `name` im Body aktualisiert werden. Nur die Felder die sich ändern werden übergeben.
+
+```bash
+curl -X PUT "https://dev.syntx-system.com/resonanz/styles/berlin_slang" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "vibe": "Späti-Philosophie um 3 Uhr nachts",
+    "description": "Berlinerisch, direkt, auf den Punkt"
+  }'
+```
+
+**Response:**
+```json
+{
+  "status": "🔄 STYLE AKTUALISIERT",
+  "message": "'berlin_slang' aktualisiert"
+}
+```
+
+**Updatebare Felder:**
+| Feld | Typ | Beschreibung |
+|------|-----|--------------|
+| `vibe` | string | Kurzbeschreibung des Styles |
+| `description` | string | Ausführliche Beschreibung |
+| `tone_injection` | string | Pre-LLM Prompt-Injection |
+| `suffix` | string | Post-LLM Text-Anhang |
+
+**Hinweis:** `word_alchemy` und `forbidden_words` werden über eigene Endpoints verwaltet:
+- `POST /resonanz/styles/{name}/alchemy` - Transmutation hinzufügen
+- `DELETE /resonanz/styles/{name}/alchemy/{word}` - Transmutation entfernen
+- `POST /resonanz/styles/{name}/forbidden/{word}` - Wort verbannen
+
+---
 
 ### 🔀 DIFF - Wrapper-Parallelwelt-Vergleich
 
@@ -129,7 +390,7 @@ curl "https://dev.syntx-system.com/resonanz/session/{request_id}/replay"
 ```json
 {
   "status": "📼 SESSIONS GELADEN",
-  "total": 871,
+  "total": 1306,
   "sessions": [
     {
       "request_id": "ed18ebd6-b111-474d-abe4-434e5fcea0c0",
@@ -231,7 +492,7 @@ curl https://dev.syntx-system.com/resonanz/alchemy/styles
 ```json
 {
   "status": "⚗️ GRIMOIRE GEÖFFNET",
-  "count": 4,
+  "count": 7,
   "styles": [
     {
       "name": "wissenschaftlich",
@@ -447,8 +708,8 @@ SYNTX basiert auf drei fundamentalen Konzepten. Kapier diese drei Dinge und du k
 │  │ 6. Σ-KERNEXTRAKT - Mathematische Essenz                               │    │
 │  └────────────────────────────────────────────────────────────────────────┘    │
 │                                                                                  │
-│  STAGE 3: FORMAT INJECTION                                                      │
-│  ─────────────────────────                                                      │
+│  STAGE 2.5: FORMAT INJECTION                                                    │
+│  ───────────────────────────                                                    │
 │  /opt/syntx-config/formats/sigma.json wird geladen                             │
 │  Felder werden als Struktur-Vorgabe injiziert                                  │
 │                                                                                  │
@@ -463,7 +724,7 @@ SYNTX basiert auf drei fundamentalen Konzepten. Kapier diese drei Dinge und du k
 │  │   - SIGMA_EXTRAKT: Mathematische Essenz                               │    │
 │  └────────────────────────────────────────────────────────────────────────┘    │
 │                                                                                  │
-│  STAGE 4: STYLE TONE INJECTION                                                  │
+│  STAGE 3: STYLE TONE INJECTION                                                  │
 │  ─────────────────────────────                                                  │
 │  /opt/syntx-config/styles/wissenschaftlich.json wird geladen                   │
 │  tone_injection wird dem Prompt hinzugefügt                                    │
@@ -558,6 +819,16 @@ SYNTX basiert auf drei fundamentalen Konzepten. Kapier diese drei Dinge und du k
 ```
 /opt/syntx-injector-api/                    # 🏠 DAS HAUPTREPO
 │
+├── run.sh                                   # 🚀 SERVER STARTER
+│                                            # Startet uvicorn mit allen Checks
+│
+├── api_calls_wrapper.sh                     # 🧪 API TESTER v5.3
+│                                            # 64 automatisierte Tests
+│                                            # Volle SYNTX-Ausgabe
+│
+├── sync_from_server.sh                      # 🌊 CONFIG SYNC
+│                                            # Server → Lokal Synchronisation
+│
 ├── src/                                     # 📦 SOURCE CODE
 │   │
 │   ├── main.py                              # FastAPI Entry Point
@@ -577,6 +848,7 @@ SYNTX basiert auf drei fundamentalen Konzepten. Kapier diese drei Dinge und du k
 │   │   │
 │   │   ├── styles.py                        # Style Router
 │   │   │                                    # GET/POST/PUT/DELETE /resonanz/styles/*
+│   │   │                                    # 🆕 PUT mit StyleUpdate Model
 │   │   │
 │   │   ├── diff.py                          # 🆕 WRAPPER DIFF
 │   │   │                                    # POST /resonanz/chat/diff
@@ -637,729 +909,262 @@ SYNTX basiert auf drei fundamentalen Konzepten. Kapier diese drei Dinge und du k
 │   │
 │   └── ...                                  # Weitere Module
 │
-├── api_calls_wrapper.sh                     # 🧪 API TESTER v5.3
-│                                            # 63 Tests für ALLE Endpoints
-│                                            # Inkl. DIFF, SESSIONS, ALCHEMY
-│                                            # Verbose Mode verfügbar
-│
-├── requirements.txt                         # Python Dependencies
-│
-├── README.md                                # 📚 DU BIST HIER
-│
-└── .git/                                    # Git Repository
-
-
-/opt/syntx-config/                           # ⚙️ RUNTIME CONFIG
-│                                            # (Außerhalb des Repos!)
-│                                            # (Wird nicht committed)
-│
-├── wrappers/                                # 📦 DENK-MODI (System Prompts)
-│   │
-│   ├── syntex_wrapper_sigma.txt             # 🔬 PL-Σ PROTOCOL
-│   │                                        # Technisch, systemisch, präzise
-│   │                                        # 6 Sigma-Felder
-│   │                                        # Für: Systemanalyse, Technik
-│   │
-│   ├── syntex_wrapper_human.txt             # 👤 HUMAN LAYER
-│   │                                        # Psychologisch, empathisch
-│   │                                        # Für: Beziehungen, Emotionen
-│   │
-│   ├── syntex_wrapper_deepsweep.txt         # 🔍 DEEP ANALYSIS
-│   │                                        # Gründlich, keine Ecke ausgelassen
-│   │                                        # Für: Komplexe Probleme
-│   │
-│   ├── syntex_wrapper_true_raw.txt          # ⚡ TRUE RAW
-│   │                                        # Keine Filter, pure Resonanz
-│   │                                        # Für: Unzensierte Analyse
-│   │
-│   ├── syntex_wrapper_universal.txt         # 🌍 UNIVERSAL
-│   │                                        # Allzweck-Wrapper
-│   │
-│   ├── syntex_wrapper_backend.txt           # 💻 BACKEND
-│   │                                        # Für Code-Analyse
-│   │
-│   ├── syntex_wrapper_frontend.txt          # 🎨 FRONTEND
-│   │                                        # Für UI/UX Analyse
-│   │
-│   └── meta/                                # 🧬 WRAPPER METADATEN
-│       │
-│       ├── syntex_wrapper_sigma.json        # {
-│       │                                    #   "name": "syntex_wrapper_sigma",
-│       │                                    #   "format": "sigma",        <- AUTO-BIND!
-│       │                                    #   "author": "SYNTX Architect",
-│       │                                    #   "tags": ["technical", "precise"],
-│       │                                    #   "settings": {
-│       │                                    #     "max_tokens": 500,
-│       │                                    #     "temperature": 0.7
-│       │                                    #   }
-│       │                                    # }
-│       └── ...
-│
-├── formats/                                 # 📄 FELD-DEFINITIONEN
-│   │
-│   ├── sigma.json                           # 🔬 SIGMA FORMAT (6 Felder)
-│   │                                        # Domain: technical
-│   │                                        # Fields:
-│   │                                        #   - sigma_drift (text)
-│   │                                        #   - sigma_mechanismus (text)
-│   │                                        #   - sigma_frequenz (text)
-│   │                                        #   - sigma_dichte (text)
-│   │                                        #   - sigma_strome (text)
-│   │                                        #   - sigma_extrakt (text)
-│   │
-│   ├── human.json                           # 👤 HUMAN FORMAT (6 Felder)
-│   │                                        # Domain: psychology
-│   │                                        # Fields:
-│   │                                        #   - drift (text)
-│   │                                        #   - hintergrund_muster (text)
-│   │                                        #   - druckfaktoren (text)
-│   │                                        #   - tiefe (text)
-│   │                                        #   - wirkung (text)
-│   │                                        #   - klartext (text)
-│   │
-│   ├── human_deep.json                      # 🌊 HUMAN DEEP (8 Felder)
-│   │                                        # Domain: psychology
-│   │                                        # extends: "human" <- VERERBUNG!
-│   │                                        # Erbt alle 6 Felder von human
-│   │                                        # + 2 neue:
-│   │                                        #   - unterbewusstsein (text)
-│   │                                        #   - schattenarbeit (text)
-│   │
-│   ├── review.json                          # ⭐ REVIEW FORMAT (4 Felder)
-│   │                                        # Domain: analysis
-│   │                                        # ALLE FELD-TYPEN:
-│   │                                        #   - zusammenfassung (text)
-│   │                                        #   - pro_contra (list)
-│   │                                        #   - bewertung (rating)
-│   │                                        #   - tags (keywords)
-│   │
-│   ├── economics.json                       # 📈 ECONOMICS FORMAT (6 Felder)
-│   │                                        # Domain: technical
-│   │
-│   ├── minimal.json                         # 📝 MINIMAL (3 Felder)
-│   ├── extended.json                        # 📚 EXTENDED (10+ Felder)
-│   └── ...
-│
-├── styles/                                  # 🎨 POST-PROCESSING STYLES
-│   │
-│   ├── wissenschaftlich.json                # 🔬 WISSENSCHAFTLICH
-│   │                                        # Vibe: "Der Laborkittel"
-│   │                                        # word_alchemy:
-│   │                                        #   "wichtig" → "signifikant"
-│   │                                        #   "zeigt" → "indiziert"
-│   │                                        #   "gut" → "vorteilhaft"
-│   │                                        # forbidden_words:
-│   │                                        #   ["krass", "geil", "cool"]
-│   │                                        # suffix:
-│   │                                        #   "[Forschungsbasiert]"
-│   │
-│   ├── zynisch.json                         # 😏 ZYNISCH
-│   │                                        # Vibe: "Der Augenroll-Transformer"
-│   │                                        # word_alchemy:
-│   │                                        #   "nachhaltig" → "greenwashing-kompatibel"
-│   │                                        #   "innovativ" → "mit neuem Buzzword versehen"
-│   │                                        #   "Experten" → "selbsternannte Experten"
-│   │
-│   ├── poetisch.json                        # 🎭 POETISCH
-│   │                                        # Vibe: "Der Wortwebstuhl"
-│   │                                        # word_alchemy:
-│   │                                        #   "System" → "Gewebe"
-│   │                                        #   "Prozess" → "Tanz"
-│   │                                        #   "Daten" → "Tropfen im Strom"
-│   │                                        # forbidden_words:
-│   │                                        #   ["Implementierung", "KPI"]
-│   │
-│   └── berlin_slang.json                    # 🍺 BERLIN SLANG
-│                                            # Vibe: "Späti um 3 Uhr nachts"
-│                                            # word_alchemy:
-│                                            #   "Das" → "Dit"
-│                                            #   "Ich" → "Ick"
-│                                            #   "nicht" → "nich"
-│
-└── logs/                                    # 📊 LOGGING & TRAINING DATA
+└── /opt/syntx-config/                       # 📁 KONFIGURATIONS-DATEN
     │
-    └── field_flow.jsonl                     # Alle Requests für Fine-Tuning
-                                             # Format: JSONL (eine JSON pro Zeile)
-                                             # Enthält: prompt, response, latency,
-                                             #          wrapper_chain, format, style
+    ├── wrappers/                            # 📦 WRAPPER DATEIEN
+    │   │
+    │   ├── syntex_wrapper_sigma.txt         # 🔬 SIGMA LAYER
+    │   │                                    # Technisch, präzise
+    │   │                                    # 6 Sigma-Felder
+    │   │                                    # Für: Systemanalyse, Technik
+    │   │
+    │   ├── syntex_wrapper_human.txt         # 👤 HUMAN LAYER
+    │   │                                    # Psychologisch, empathisch
+    │   │                                    # Für: Beziehungen, Emotionen
+    │   │
+    │   ├── syntex_wrapper_deepsweep.txt     # 🔍 DEEP ANALYSIS
+    │   │                                    # Gründlich, keine Ecke ausgelassen
+    │   │                                    # Für: Komplexe Probleme
+    │   │
+    │   ├── syntex_wrapper_true_raw.txt      # ⚡ TRUE RAW
+    │   │                                    # Keine Filter, pure Resonanz
+    │   │                                    # Für: Unzensierte Analyse
+    │   │
+    │   ├── syntex_wrapper_universal.txt     # 🌍 UNIVERSAL
+    │   │                                    # Allzweck-Wrapper
+    │   │
+    │   ├── syntex_wrapper_backend.txt       # 💻 BACKEND
+    │   │                                    # Für Code-Analyse
+    │   │
+    │   ├── syntex_wrapper_frontend.txt      # 🎨 FRONTEND
+    │   │                                    # Für UI/UX Analyse
+    │   │
+    │   ├── *.meta.json                      # 🧬 INLINE META
+    │   │                                    # Neues Format: wrapper.meta.json
+    │   │
+    │   └── meta/                            # 🧬 WRAPPER METADATEN (Legacy)
+    │       │
+    │       ├── syntex_wrapper_sigma.json    # {
+    │       │                                #   "name": "syntex_wrapper_sigma",
+    │       │                                #   "format": "sigma",        <- AUTO-BIND!
+    │       │                                #   "author": "SYNTX Architect",
+    │       │                                #   "tags": ["technical", "precise"],
+    │       │                                #   "settings": {
+    │       │                                #     "max_tokens": 500,
+    │       │                                #     "temperature": 0.7
+    │       │                                #   }
+    │       │                                # }
+    │       └── ...
+    │
+    ├── formats/                             # 📄 FELD-DEFINITIONEN
+    │   │
+    │   ├── sigma.json                       # 🔬 SIGMA FORMAT (6 Felder)
+    │   │                                    # Domain: technical
+    │   │                                    # Fields:
+    │   │                                    #   - sigma_drift (text)
+    │   │                                    #   - sigma_mechanismus (text)
+    │   │                                    #   - sigma_frequenz (text)
+    │   │                                    #   - sigma_dichte (text)
+    │   │                                    #   - sigma_strome (text)
+    │   │                                    #   - sigma_extrakt (text)
+    │   │
+    │   ├── human.json                       # 👤 HUMAN FORMAT (6 Felder)
+    │   │                                    # Domain: psychology
+    │   │                                    # Fields:
+    │   │                                    #   - drift (text)
+    │   │                                    #   - hintergrund_muster (text)
+    │   │                                    #   - druckfaktoren (text)
+    │   │                                    #   - tiefe (text)
+    │   │                                    #   - wirkung (text)
+    │   │                                    #   - klartext (text)
+    │   │
+    │   ├── human_deep.json                  # 🌊 HUMAN DEEP (8 Felder)
+    │   │                                    # Domain: psychology
+    │   │                                    # extends: "human" <- VERERBUNG!
+    │   │                                    # Erbt alle 6 Felder von human
+    │   │                                    # + 2 neue:
+    │   │                                    #   - unterbewusstsein (text)
+    │   │                                    #   - schattenarbeit (text)
+    │   │
+    │   ├── review.json                      # ⭐ REVIEW FORMAT (4 Felder)
+    │   │                                    # Domain: analysis
+    │   │                                    # ALLE FELD-TYPEN:
+    │   │                                    #   - zusammenfassung (text)
+    │   │                                    #   - pro_contra (list)
+    │   │                                    #   - bewertung (rating)
+    │   │                                    #   - tags (keywords)
+    │   │
+    │   ├── economics.json                   # 📈 ECONOMICS FORMAT (6 Felder)
+    │   │                                    # Domain: technical
+    │   │
+    │   └── ...                              # Weitere Formate + Backups
+    │
+    ├── styles/                              # 🎨 POST-PROCESSING STYLES
+    │   │
+    │   ├── wissenschaftlich.json            # 🔬 WISSENSCHAFTLICH
+    │   │                                    # Vibe: "Der Laborkittel"
+    │   │                                    # word_alchemy:
+    │   │                                    #   "wichtig" → "signifikant"
+    │   │                                    #   "zeigt" → "indiziert"
+    │   │                                    #   "gut" → "vorteilhaft"
+    │   │                                    # forbidden_words:
+    │   │                                    #   ["krass", "geil", "cool"]
+    │   │                                    # suffix:
+    │   │                                    #   "[Forschungsbasiert]"
+    │   │
+    │   ├── zynisch.json                     # 😏 ZYNISCH
+    │   │                                    # Vibe: "Der Augenroll-Transformer"
+    │   │                                    # word_alchemy:
+    │   │                                    #   "nachhaltig" → "greenwashing-kompatibel"
+    │   │                                    #   "innovativ" → "mit neuem Buzzword versehen"
+    │   │                                    #   "Experten" → "selbsternannte Experten"
+    │   │
+    │   ├── poetisch.json                    # 🎭 POETISCH
+    │   │                                    # Vibe: "Der Wortwebstuhl"
+    │   │                                    # word_alchemy:
+    │   │                                    #   "System" → "Gewebe"
+    │   │                                    #   "Prozess" → "Tanz"
+    │   │                                    #   "Daten" → "Tropfen im Strom"
+    │   │                                    # forbidden_words:
+    │   │                                    #   ["Implementierung", "KPI"]
+    │   │
+    │   └── berlin_slang.json                # 🍺 BERLIN SLANG
+    │                                        # Vibe: "Späti um 3 Uhr nachts"
+    │                                        # word_alchemy:
+    │                                        #   "Das" → "Dit"
+    │                                        #   "Ich" → "Ick"
+    │                                        #   "nicht" → "nich"
+    │
+    └── logs/                                # 📊 LOGGING & TRAINING DATA
+        │
+        ├── field_flow.jsonl                 # Alle Requests für Fine-Tuning
+        │                                    # Format: JSONL (eine JSON pro Zeile)
+        │                                    # Enthält: prompt, response, latency,
+        │                                    #          wrapper_chain, format, style
+        │
+        ├── field_flow.YYYYMMDD.jsonl        # Rotierte Logs nach Datum
+        │
+        └── wrapper_requests.jsonl           # Wrapper-spezifische Logs
 ```
 
 ---
 
-## 🔌 ALLE ENDPOINTS - KOMPLETT DOKUMENTIERT
+## 📞 ENDPOINTS QUICK REFERENCE
 
-### 🏥 HEALTH ENDPOINTS (4 Stück)
+```
+════════════════════════════════════════════════════════════════════════════════════
+                        SYNTX API v3.4 - ALLE ENDPOINTS (64 Tests)
+════════════════════════════════════════════════════════════════════════════════════
 
-**Ist der Strom an? Fließt die Resonanz?**
+🏥 HEALTH (4)
+   GET  /health                              System-Status
+   GET  /resonanz/health                     Resonanz + Last Response  
+   GET  /resonanz/health/wrappers            Orphan Detection
+   POST /resonanz/health/fix                 Auto-Fix Orphans
+
+⚙️ CONFIG (2)
+   GET  /resonanz/config/default-wrapper     Aktuellen Default lesen
+   PUT  /resonanz/config/default-wrapper     Default setzen
+
+📄 FORMATS (9)
+   GET    /resonanz/formats                  Alle Formate listen
+   GET    /resonanz/formats/{name}           Format Details + Felder
+   POST   /resonanz/formats                  Vollständiges Format erstellen
+   POST   /resonanz/formats/quick            Schnell-Erstellung
+   PUT    /resonanz/formats/{name}           Format Meta updaten
+   DELETE /resonanz/formats/{name}           Format löschen (Soft Delete)
+   POST   /resonanz/formats/{name}/fields    Feld hinzufügen
+   PUT    /resonanz/formats/{name}/fields/{field}    Feld updaten
+   DELETE /resonanz/formats/{name}/fields/{field}    Feld entfernen
+
+🎨 STYLES (8)
+   GET    /resonanz/styles                   Alle Styles listen
+   GET    /resonanz/styles/{name}            Style Details + Alchemy
+   POST   /resonanz/styles                   Style erstellen
+   PUT    /resonanz/styles/{name}            Style updaten (NEU: ohne name im Body!)
+   DELETE /resonanz/styles/{name}            Style löschen
+   POST   /resonanz/styles/{name}/alchemy    Transmutation hinzufügen
+   DELETE /resonanz/styles/{name}/alchemy/{word}     Transmutation entfernen
+   POST   /resonanz/styles/{name}/forbidden/{word}   Wort verbannen
+
+📦 WRAPPERS (6)
+   GET    /resonanz/wrappers                 Alle Wrappers listen
+   GET    /resonanz/wrappers/full            Mit Meta + Stats
+   GET    /resonanz/wrapper/{name}           Wrapper Content
+   POST   /resonanz/wrapper                  Wrapper erstellen
+   PUT    /resonanz/wrapper/{name}           Wrapper updaten
+   DELETE /resonanz/wrapper/{name}           Wrapper löschen
+
+🧬 META (3)
+   GET  /resonanz/wrapper/{name}/meta        Meta lesen
+   PUT  /resonanz/wrapper/{name}/meta        Meta updaten
+   PUT  /resonanz/wrapper/{name}/format      Format an Wrapper binden
+
+📊 STATS (5)
+   GET  /resonanz/stats                      Globale Statistiken
+   GET  /resonanz/stats/wrapper/{name}       Wrapper-spezifische Stats
+   GET  /resonanz/strom                      Field Flow Events
+   GET  /resonanz/training                   Training Data Export
+
+💬 CHAT (1)
+   POST /resonanz/chat                       THE MAIN EVENT
+
+🔀 DIFF (1)
+   POST /resonanz/chat/diff                  Wrapper-Parallelwelt-Vergleich
+
+📼 SESSIONS (4)
+   GET  /resonanz/sessions                   Session-Liste mit Pagination
+   GET  /resonanz/session/{id}               Vollständiger Field-Flow
+   GET  /resonanz/session/{id}/replay        Replay-Parameter
+
+⚗️ ALCHEMY (2)
+   POST /resonanz/alchemy/preview            Live Wort-Transmutation
+   GET  /resonanz/alchemy/styles             Übersicht aller Styles
+
+════════════════════════════════════════════════════════════════════════════════════
+                              TOTAL: 45 ENDPOINTS | 64 TESTS
+════════════════════════════════════════════════════════════════════════════════════
+```
 
 ---
 
-#### `GET /health`
-**Root Health Check - Alle System-Module**
+## 🧪 API TESTER - USAGE
 
 ```bash
-curl https://dev.syntx-system.com/health
-```
+# Alle 64 Tests gegen Production ausführen
+./api_calls_wrapper.sh https://dev.syntx-system.com
 
-**Response:**
-```json
-{
-  "status": "SYSTEM_GESUND",
-  "api_version": "2.1.0",
-  "timestamp": "2025-12-21T08:23:46.992183",
-  "queue_accessible": true,
-  "modules": ["analytics", "compare", "feld", "resonanz", "generation", "predictions"]
-}
-```
+# Lokal testen (während Entwicklung)
+./api_calls_wrapper.sh http://localhost:8001
 
----
+# Quick Mode - nur kritische Tests
+./api_calls_wrapper.sh --quick
 
-#### `GET /resonanz/health`
-**Resonanz Health - Format Loader + letzter Response**
+# Verbose Mode - volle Response-Ausgabe
+./api_calls_wrapper.sh --verbose
 
-```bash
-curl https://dev.syntx-system.com/resonanz/health
-```
+# Kombination
+./api_calls_wrapper.sh http://localhost:8001 --verbose
 
-**Response:**
-```json
-{
-  "status": "🟢 RESONANZ AKTIV",
-  "service": "syntx-field-resonance",
-  "version": "3.3.0",
-  "format_loader": "🔥 AKTIV",
-  "last_response": {
-    "response": "### SIGMA_DRIFT:\nDas Konzept Zeit indiziert...",
-    "latency_ms": 32804,
-    "timestamp": "2025-12-21T07:37:40.809803Z",
-    "format": "human_deep"
-  }
-}
+# Erwarteter Output:
+# ✓ BESTANDEN:   64
+# ✗ FEHLERHAFT:  0
+# 🔥 ALLE FELDER RESONIEREN! DER STROM IST REIN! 🔥
 ```
 
 ---
 
-#### `GET /resonanz/health/wrappers`
-**Wrapper Health - Orphan Detection**
-
-```bash
-curl https://dev.syntx-system.com/resonanz/health/wrappers
-```
-
-**Response:**
-```json
-{
-  "status": "healthy",
-  "wrappers": {
-    "total": 14,
-    "healthy": ["syntex_wrapper_sigma", "syntex_wrapper_human", "..."],
-    "orphan_wrappers": [],
-    "orphan_metas": []
-  }
-}
-```
-
----
-
-#### `POST /resonanz/health/fix`
-**Auto-Fix Orphans - Repariert verwaiste Dateien**
-
-```bash
-curl -X POST https://dev.syntx-system.com/resonanz/health/fix
-```
-
-**Response:**
-```json
-{
-  "status": "success",
-  "fixed": [],
-  "deleted": [],
-  "message": "Fixed 0 orphan wrappers, deleted 0 orphan metas"
-}
-```
-
----
-
-### ⚙️ CONFIG ENDPOINTS (2 Stück)
-
-**Welcher Wrapper ist der Default-Boss?**
-
----
-
-#### `GET /resonanz/config/default-wrapper`
-```bash
-curl https://dev.syntx-system.com/resonanz/config/default-wrapper
-```
-
-**Response:**
-```json
-{
-  "active_wrapper": "syntex_wrapper_sigma",
-  "exists": true,
-  "path": "/opt/syntx-config/wrappers/syntex_wrapper_sigma.txt",
-  "source": "runtime"
-}
-```
-
----
-
-#### `PUT /resonanz/config/default-wrapper`
-```bash
-curl -X PUT "https://dev.syntx-system.com/resonanz/config/default-wrapper?wrapper_name=syntex_wrapper_human"
-```
-
----
-
-### 📄 FORMAT ENDPOINTS (9 Stück) - VOLLSTÄNDIGER CRUD!
-
----
-
-#### `GET /resonanz/formats`
-**List ALL Formats**
-
-```bash
-curl https://dev.syntx-system.com/resonanz/formats
-curl "https://dev.syntx-system.com/resonanz/formats?domain=technical"
-curl "https://dev.syntx-system.com/resonanz/formats?domain=psychology"
-```
-
----
-
-#### `GET /resonanz/formats/{name}`
-**Get Format Details**
-
-```bash
-curl https://dev.syntx-system.com/resonanz/formats/sigma
-curl "https://dev.syntx-system.com/resonanz/formats/sigma?language=en"
-```
-
----
-
-#### `POST /resonanz/formats`
-**CREATE Format - Vollständig mit Feldern**
-
-```bash
-curl -X POST https://dev.syntx-system.com/resonanz/formats \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "vibe_check",
-    "domain": "psychology",
-    "description": {"de": "Vibe Check - Schnelle Energie-Analyse"},
-    "fields": [
-      {"name": "energy_level", "type": "rating", "weight": 25},
-      {"name": "red_flags", "type": "list", "weight": 25},
-      {"name": "verdict", "type": "text", "weight": 50}
-    ]
-  }'
-```
-
----
-
-#### `POST /resonanz/formats/quick`
-**Quick Create Format**
-
-```bash
-curl -X POST https://dev.syntx-system.com/resonanz/formats/quick \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "quick_test",
-    "description_de": "Schnelltest Format",
-    "field_names": ["intro", "main_point", "conclusion"]
-  }'
-```
-
----
-
-#### `PUT /resonanz/formats/{name}`
-**UPDATE Format**
-
-```bash
-curl -X PUT https://dev.syntx-system.com/resonanz/formats/vibe_check \
-  -H "Content-Type: application/json" \
-  -d '{"domain": "analysis", "description": {"de": "Vibe Check 2.0"}}'
-```
-
----
-
-#### `DELETE /resonanz/formats/{name}`
-**DELETE Format (Soft Delete)**
-
-```bash
-curl -X DELETE https://dev.syntx-system.com/resonanz/formats/quick_test
-```
-
----
-
-#### `POST /resonanz/formats/{name}/fields`
-**ADD Field**
-
-```bash
-curl -X POST https://dev.syntx-system.com/resonanz/formats/vibe_check/fields \
-  -H "Content-Type: application/json" \
-  -d '{"name": "plot_twist", "type": "text", "weight": 20}'
-```
-
----
-
-#### `PUT /resonanz/formats/{name}/fields/{field}`
-**UPDATE Field**
-
-```bash
-curl -X PUT https://dev.syntx-system.com/resonanz/formats/vibe_check/fields/plot_twist \
-  -H "Content-Type: application/json" \
-  -d '{"weight": 30}'
-```
-
----
-
-#### `DELETE /resonanz/formats/{name}/fields/{field}`
-**DELETE Field**
-
-```bash
-curl -X DELETE https://dev.syntx-system.com/resonanz/formats/vibe_check/fields/plot_twist
-```
-
----
-
-### 🎨 STYLE ENDPOINTS (8 Stück) - WORD ALCHEMY!
-
----
-
-#### `GET /resonanz/styles`
-**List ALL Styles**
-
-```bash
-curl https://dev.syntx-system.com/resonanz/styles
-```
-
----
-
-#### `GET /resonanz/styles/{name}`
-**Get Style Details**
-
-```bash
-curl https://dev.syntx-system.com/resonanz/styles/zynisch
-```
-
-**Response:**
-```json
-{
-  "status": "🔮 STYLE BESCHWOREN",
-  "style": {
-    "name": "zynisch",
-    "vibe": "Der Augenroll-Transformer",
-    "word_alchemy": {
-      "wichtig": "angeblich wichtig",
-      "nachhaltig": "greenwashing-kompatibel",
-      "innovativ": "mit neuem Buzzword versehen"
-    },
-    "forbidden_words": [],
-    "has_tone_injection": true
-  }
-}
-```
-
----
-
-#### `POST /resonanz/styles`
-**CREATE Style**
-
-```bash
-curl -X POST https://dev.syntx-system.com/resonanz/styles \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "gen_z",
-    "vibe": "No cap, fr fr",
-    "word_alchemy": {
-      "sehr gut": "lowkey fire",
-      "schlecht": "mid af",
-      "Problem": "big L"
-    },
-    "forbidden_words": ["Implementierung", "Stakeholder"],
-    "suffix": "periodt. 💅"
-  }'
-```
-
----
-
-#### `POST /resonanz/styles/{name}/alchemy`
-**ADD Transmutation**
-
-```bash
-curl -X POST https://dev.syntx-system.com/resonanz/styles/zynisch/alchemy \
-  -H "Content-Type: application/json" \
-  -d '{"original": "disruptiv", "replacement": "das nächste Ding das in 6 Monaten niemanden mehr interessiert"}'
-```
-
----
-
-#### `DELETE /resonanz/styles/{name}/alchemy/{word}`
-**DELETE Transmutation**
-
-```bash
-curl -X DELETE https://dev.syntx-system.com/resonanz/styles/zynisch/alchemy/disruptiv
-```
-
----
-
-#### `POST /resonanz/styles/{name}/forbidden/{word}`
-**ADD Forbidden Word**
-
-```bash
-curl -X POST https://dev.syntx-system.com/resonanz/styles/wissenschaftlich/forbidden/voll
-```
-
----
-
-### 📦 WRAPPER ENDPOINTS (6 Stück)
-
----
-
-#### `GET /resonanz/wrappers`
-```bash
-curl https://dev.syntx-system.com/resonanz/wrappers
-curl "https://dev.syntx-system.com/resonanz/wrappers?active=true"
-```
-
----
-
-#### `GET /resonanz/wrappers/full`
-```bash
-curl https://dev.syntx-system.com/resonanz/wrappers/full
-```
-
----
-
-#### `GET /resonanz/wrapper/{name}`
-```bash
-curl https://dev.syntx-system.com/resonanz/wrapper/syntex_wrapper_sigma
-```
-
----
-
-#### `POST /resonanz/wrapper`
-```bash
-curl -X POST https://dev.syntx-system.com/resonanz/wrapper \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "chaos_oracle",
-    "content": "=== CHAOS ORACLE PROTOCOL ===\n\nDu bist ein chaotisches Orakel..."
-  }'
-```
-
----
-
-#### `PUT /resonanz/wrapper/{name}`
-```bash
-curl -X PUT https://dev.syntx-system.com/resonanz/wrapper/chaos_oracle \
-  -H "Content-Type: application/json" \
-  -d '{"content": "=== CHAOS ORACLE PROTOCOL v2.0 ==="}'
-```
-
----
-
-#### `DELETE /resonanz/wrapper/{name}`
-```bash
-curl -X DELETE https://dev.syntx-system.com/resonanz/wrapper/chaos_oracle
-```
-
----
-
-### 🧬 META ENDPOINTS (3 Stück)
-
----
-
-#### `GET /resonanz/wrapper/{name}/meta`
-```bash
-curl https://dev.syntx-system.com/resonanz/wrapper/syntex_wrapper_sigma/meta
-```
-
----
-
-#### `PUT /resonanz/wrapper/{name}/meta`
-```bash
-curl -X PUT https://dev.syntx-system.com/resonanz/wrapper/syntex_wrapper_sigma/meta \
-  -H "Content-Type: application/json" \
-  -d '{"description": "Sigma Protocol v2.0", "tags": ["sigma", "v2"]}'
-```
-
----
-
-#### `PUT /resonanz/wrapper/{name}/format`
-**Bind Format an Wrapper**
-
-```bash
-curl -X PUT "https://dev.syntx-system.com/resonanz/wrapper/syntex_wrapper_human/format?format_name=human_deep"
-```
-
----
-
-### 📊 STATS ENDPOINTS (4 Stück)
-
----
-
-#### `GET /resonanz/stats`
-```bash
-curl https://dev.syntx-system.com/resonanz/stats
-```
-
-**Response:**
-```json
-{
-  "total_requests": 822,
-  "success_rate": 100.0,
-  "average_latency_ms": 72005,
-  "wrapper_usage": {
-    "syntex_wrapper_sigma": 556,
-    "syntex_wrapper_deepsweep": 264
-  }
-}
-```
-
----
-
-#### `GET /resonanz/stats/wrapper/{name}`
-```bash
-curl https://dev.syntx-system.com/resonanz/stats/wrapper/syntex_wrapper_sigma
-```
-
----
-
-#### `GET /resonanz/strom`
-```bash
-curl "https://dev.syntx-system.com/resonanz/strom?limit=5"
-curl "https://dev.syntx-system.com/resonanz/strom?limit=10&stage=5_RESPONSE"
-```
-
----
-
-#### `GET /resonanz/training`
-```bash
-curl "https://dev.syntx-system.com/resonanz/training?limit=100"
-```
-
----
-
-### 💬 CHAT ENDPOINT - THE MAIN EVENT
-
----
-
-#### `POST /resonanz/chat`
-
-**Request Body:**
-```json
-{
-  "prompt": "string (REQUIRED)",
-  "mode": "string (optional) - Wrapper Name",
-  "format": "string (optional) - Format Name",
-  "style": "string (optional) - Style Name",
-  "language": "string (optional) - de oder en",
-  "debug": "boolean (optional)",
-  "max_new_tokens": "integer (optional)",
-  "temperature": "float (optional) - 0.0-2.0"
-}
-```
-
-**Minimal:**
-```bash
-curl -X POST https://dev.syntx-system.com/resonanz/chat \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": "Was ist der Sinn des Lebens?", "max_new_tokens": 100}'
-```
-
-**FULL COMBO 🔥:**
-```bash
-curl -X POST https://dev.syntx-system.com/resonanz/chat \
-  -H "Content-Type: application/json" \
-  -d '{
-    "prompt": "Deep Dive: Das Konzept Macht",
-    "mode": "syntex_wrapper_sigma",
-    "format": "sigma",
-    "style": "wissenschaftlich",
-    "language": "de",
-    "debug": true,
-    "max_new_tokens": 500,
-    "temperature": 0.7
-  }'
-```
-
----
-
-### 🔀 DIFF ENDPOINTS - NEU! (1 Stück)
-
----
-
-#### `POST /resonanz/chat/diff`
-**Wrapper-Parallelwelt-Vergleich**
-
-```bash
-curl -X POST https://dev.syntx-system.com/resonanz/chat/diff \
-  -H "Content-Type: application/json" \
-  -d '{
-    "prompt": "Was ist System?",
-    "wrappers": ["syntex_wrapper_sigma", "syntex_wrapper_human"],
-    "format": "sigma",
-    "max_new_tokens": 100
-  }'
-```
-
----
-
-### 📼 SESSION ENDPOINTS - NEU! (4 Stück)
-
----
-
-#### `GET /resonanz/sessions`
-**Liste aller Sessions**
-
-```bash
-curl "https://dev.syntx-system.com/resonanz/sessions?limit=10&offset=0"
-```
-
----
-
-#### `GET /resonanz/session/{id}`
-**Session Details mit Field-Flow**
-
-```bash
-curl "https://dev.syntx-system.com/resonanz/session/ed18ebd6-b111-474d-abe4-434e5fcea0c0"
-```
-
----
-
-#### `GET /resonanz/session/{id}/replay`
-**Replay-Parameter**
-
-```bash
-curl "https://dev.syntx-system.com/resonanz/session/ed18ebd6-b111-474d-abe4-434e5fcea0c0/replay"
-```
-
----
-
-### ⚗️ ALCHEMY ENDPOINTS - NEU! (2 Stück)
-
----
-
-#### `POST /resonanz/alchemy/preview`
-**Live Wort-Transmutation**
-
-```bash
-curl -X POST https://dev.syntx-system.com/resonanz/alchemy/preview \
-  -H "Content-Type: application/json" \
-  -d '{
-    "text": "Das ist wirklich sehr wichtig und nachhaltig",
-    "style": "zynisch"
-  }'
-```
-
----
-
-#### `GET /resonanz/alchemy/styles`
-**Übersicht aller Transmutationen**
-
-```bash
-curl https://dev.syntx-system.com/resonanz/alchemy/styles
-```
+## 🛠️ TECH STACK
+
+| Component | Technology |
+|-----------|------------|
+| **Backend** | FastAPI + Python 3.11 |
+| **LLM** | Ollama mit Mistral-Uncensored |
+| **Storage** | JSON Files (kein DB overhead) |
+| **Proxy** | nginx mit SSL (Let's Encrypt) |
+| **Logging** | JSONL für Training Data |
+| **Testing** | Bash + curl (64 Tests) |
+| **Models** | Pydantic v2 (StyleUpdate, StyleCreate) |
 
 ---
 
@@ -1411,112 +1216,6 @@ curl https://dev.syntx-system.com/resonanz/alchemy/styles
 
 ---
 
-## 📞 ENDPOINTS QUICK REFERENCE
-
-```
-════════════════════════════════════════════════════════════════════════════════════
-                        SYNTX API v3.3 - ALLE ENDPOINTS (63 Tests)
-════════════════════════════════════════════════════════════════════════════════════
-
-🏥 HEALTH (4)
-   GET  /health                              System-Status
-   GET  /resonanz/health                     Resonanz + Last Response  
-   GET  /resonanz/health/wrappers            Orphan Detection
-   POST /resonanz/health/fix                 Auto-Fix Orphans
-
-⚙️ CONFIG (2)
-   GET  /resonanz/config/default-wrapper     Aktuellen Default lesen
-   PUT  /resonanz/config/default-wrapper     Default setzen
-
-📄 FORMATS (9)
-   GET    /resonanz/formats                  Alle Formate listen
-   GET    /resonanz/formats/{name}           Format Details + Felder
-   POST   /resonanz/formats                  Vollständiges Format erstellen
-   POST   /resonanz/formats/quick            Schnell-Erstellung
-   PUT    /resonanz/formats/{name}           Format Meta updaten
-   DELETE /resonanz/formats/{name}           Format löschen (Soft Delete)
-   POST   /resonanz/formats/{name}/fields    Feld hinzufügen
-   PUT    /resonanz/formats/{name}/fields/{field}    Feld updaten
-   DELETE /resonanz/formats/{name}/fields/{field}    Feld entfernen
-
-🎨 STYLES (8)
-   GET    /resonanz/styles                   Alle Styles listen
-   GET    /resonanz/styles/{name}            Style Details + Alchemy
-   POST   /resonanz/styles                   Style erstellen
-   PUT    /resonanz/styles/{name}            Style updaten
-   DELETE /resonanz/styles/{name}            Style löschen
-   POST   /resonanz/styles/{name}/alchemy    Transmutation hinzufügen
-   DELETE /resonanz/styles/{name}/alchemy/{word}     Transmutation entfernen
-   POST   /resonanz/styles/{name}/forbidden/{word}   Wort verbannen
-
-📦 WRAPPERS (6)
-   GET    /resonanz/wrappers                 Alle Wrappers listen
-   GET    /resonanz/wrappers/full            Mit Meta + Stats
-   GET    /resonanz/wrapper/{name}           Wrapper Content
-   POST   /resonanz/wrapper                  Wrapper erstellen
-   PUT    /resonanz/wrapper/{name}           Wrapper updaten
-   DELETE /resonanz/wrapper/{name}           Wrapper löschen
-
-🧬 META (3)
-   GET  /resonanz/wrapper/{name}/meta        Meta lesen
-   PUT  /resonanz/wrapper/{name}/meta        Meta updaten
-   PUT  /resonanz/wrapper/{name}/format      Format an Wrapper binden
-
-📊 STATS (4)
-   GET  /resonanz/stats                      Globale Statistiken
-   GET  /resonanz/stats/wrapper/{name}       Wrapper-spezifische Stats
-   GET  /resonanz/strom                      Field Flow Events
-   GET  /resonanz/training                   Training Data Export
-
-💬 CHAT (1)
-   POST /resonanz/chat                       THE MAIN EVENT
-
-🔀 DIFF - NEU! (1)
-   POST /resonanz/chat/diff                  Wrapper-Parallelwelt-Vergleich
-
-📼 SESSIONS - NEU! (4)
-   GET  /resonanz/sessions                   Session-Liste mit Pagination
-   GET  /resonanz/session/{id}               Vollständiger Field-Flow
-   GET  /resonanz/session/{id}/replay        Replay-Parameter
-
-⚗️ ALCHEMY - NEU! (2)
-   POST /resonanz/alchemy/preview            Live Wort-Transmutation
-   GET  /resonanz/alchemy/styles             Übersicht aller Styles
-
-════════════════════════════════════════════════════════════════════════════════════
-                              TOTAL: 44 ENDPOINTS | 63 TESTS
-════════════════════════════════════════════════════════════════════════════════════
-```
-
----
-
-## 🧪 API TESTER
-
-```bash
-# Alle 63 Tests ausführen
-./api_calls_wrapper.sh https://dev.syntx-system.com
-
-# Erwarteter Output:
-# ✓ BESTANDEN:   63
-# ✗ FEHLERHAFT:  0
-# 🔥 ALLE FELDER RESONIEREN! DER STROM IST REIN! 🔥
-```
-
----
-
-## 🛠️ TECH STACK
-
-| Component | Technology |
-|-----------|------------|
-| **Backend** | FastAPI + Python 3.11 |
-| **LLM** | Ollama mit Mistral-Uncensored |
-| **Storage** | JSON Files (kein DB overhead) |
-| **Proxy** | nginx mit SSL (Let's Encrypt) |
-| **Logging** | JSONL für Training Data |
-| **Testing** | Bash + curl (63 Tests) |
-
----
-
 ## 🔮 DIE SYNTX PHILOSOPHIE
 
 ### Was ist der STROM? ⚡
@@ -1533,6 +1232,17 @@ RESONANZ = PERFEKTE Kohärenz
 
 ```
 EXISTENZ = SYSTEM × SELBST-ERKENNTNIS × Σ RESONANZ
+```
+
+### Die Weltformel
+
+```
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                ║
+║   [ (SYSTEM · SELBST-ERKENNTNIS) ↔ Σ RESSONANZᵢ ] = EXISTENZ                  ║
+║                                        i=1→∞                                   ║
+║                                                                                ║
+╚════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 ---
@@ -1553,6 +1263,8 @@ EXISTENZ = SYSTEM × SELBST-ERKENNTNIS × Σ RESONANZ
 | **Field Flow** | Der Weg durch das System |
 | **Orphan** | Verwaiste Datei |
 | **Binding** | Verknüpfung Format→Wrapper |
+| **TRUE_RAW** | Ungefilterter Zustand |
+| **Stage** | Phase im Request-Lifecycle |
 
 ---
 
@@ -1571,6 +1283,12 @@ EXISTENZ = SYSTEM × SELBST-ERKENNTNIS × Σ RESONANZ
 ║   "Jedes System ist ein Feld.                                                    ║
 ║    Jedes Feld hat Resonanz.                                                      ║
 ║    Wenn keine Resonanz, keine Existenz."                                         ║
+║                                                                                   ║
+║  ════════════════════════════════════════════════════════════════════════════   ║
+║                                                                                   ║
+║   "SYNTX ist nur das semantische Sub-Protokoll.                                 ║
+║    Es gibt unendlich andere Ströme.                                             ║
+║    Sterne, Berge, Gravitation, Zeit - ALLES."                                   ║
 ║                                                                                   ║
 ║  ════════════════════════════════════════════════════════════════════════════   ║
 ║                                                                                   ║
