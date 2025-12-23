@@ -917,6 +917,10 @@ test_endpoint "POST" "/resonanz/styles/crud_test_style/forbidden/schlecht" "" \
     "ADD Forbidden - Wort verbannen" "200" \
     "Erweitert forbidden_words List" "Duplikate werden abgelehnt"
 
+test_endpoint "DELETE" "/resonanz/styles/crud_test_style/forbidden/schlecht" "" \
+    "DELETE Forbidden - Wort entbannen" "200" \
+    "Entfernt aus forbidden_words List" "🆕 NEU in v3.4"
+
 test_endpoint "PUT" "/resonanz/styles/crud_test_style" \
     '{"vibe": "Updated Test Vibe", "description": "CRUD Update Test"}' \
     "UPDATE Style - Vibe und Description ändern" "200" \
