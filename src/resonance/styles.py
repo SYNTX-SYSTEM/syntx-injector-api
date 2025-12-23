@@ -100,3 +100,10 @@ async def add_forbidden(style_name: str, word: str):
     success, msg = style_crud.add_forbidden(style_name, word)
     if not success: raise HTTPException(status_code=400, detail=msg)
     return {"status": "🚫 WORT VERBANNT", "message": msg}
+
+@router.delete("/{style_name}/forbidden/{word}")
+async def remove_forbidden(style_name: str, word: str):
+    """🔓 WORT ENTBANNEN"""
+    success, msg = style_crud.remove_forbidden(style_name, word)
+    if not success: raise HTTPException(status_code=400, detail=msg)
+    return {"status": "🔓 WORT ENTBANNT", "message": msg}

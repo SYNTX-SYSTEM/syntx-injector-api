@@ -40,3 +40,14 @@ class StyleCrud(SyntxCrudBase):
         style.setdefault("forbidden_words", []).append(word)
         self.alchemist.write_json(style_name, style)
         return True, f"'{word}' verbannt"
+
+    def remove_forbidden(self, style_name: str, word: str) -> Tuple[bool, str]:
+        style = self.get(style_name)
+        if not style: return False, f"Style '{style_name}' nicht gefunden"
+        forbidden = style.get("forbidden_words", [])
+        if word not in forbidden: return False, f"'{word}' nicht in Verbotsliste"
+        self.alchemist.create_backup(style_name)
+        forbidden.remove(word)
+        style["forbidden_words"] = forbidden
+        self.alchemist.write_json(style_name, style)
+        return True, f"'{word}' entbannt"
