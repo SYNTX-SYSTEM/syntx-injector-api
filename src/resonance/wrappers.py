@@ -5,6 +5,7 @@
 ║                                                                              ║
 ║    Nicht "File Management" - FELD ENTDECKUNG.                                ║
 ║    Wrapper sind schlafende Felder. Dieser Code erweckt sie.                  ║
+from src.resonance.config import get_runtime_wrapper
 ║                                                                              ║
 ║    ════════════════════════════════════════════════════════════════════      ║
 ║                                                                              ║
@@ -211,7 +212,7 @@ async def list_wrappers(active: bool = False) -> Dict:
     # 🔍 Scanne alle .txt Dateien (schlafende Felder)
     for file in wrapper_dir.glob("*.txt"):
         stat = file.stat()
-        is_active = (file.stem == active_wrapper)
+        is_active = (file.stem == get_runtime_wrapper())
         
         wrapper_info = {
             "name": file.stem,
@@ -266,7 +267,7 @@ async def get_wrapper(name: str) -> Dict:
             "size_bytes": stat.st_size,
             "size_human": f"{stat.st_size / 1024:.1f} KB",
             "last_modified": datetime.fromtimestamp(stat.st_mtime).isoformat() + 'Z',
-            "is_active": (name == active_wrapper)
+            "is_active": (name == get_runtime_wrapper())
         }
         
     except Exception as e:
@@ -512,7 +513,7 @@ async def update_wrapper(name: str, wrapper: WrapperUpdate) -> Dict:
                 "size_human": f"{len(content_bytes) / 1024:.1f} KB",
                 "previous_size_bytes": previous_size,
                 "modified": datetime.now().isoformat() + 'Z',
-                "is_active": (name == active_wrapper)
+                "is_active": (name == get_runtime_wrapper())
             }
         }
         
