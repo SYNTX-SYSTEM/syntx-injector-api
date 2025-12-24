@@ -22,7 +22,7 @@ from functools import lru_cache
 STYLE_GRIMOIRE = Path("/opt/syntx-config/styles")
 
 
-@lru_cache(maxsize=16)
+# @lru_cache(maxsize=16)  # DISABLED - caused stale reads
 def summon_style(style_name: str) -> Optional[Dict]:
     """
     📜 STYLE BESCHWÖREN
