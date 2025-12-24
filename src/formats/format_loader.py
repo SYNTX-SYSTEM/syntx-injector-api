@@ -23,7 +23,7 @@ def _load_format_raw(format_name: str) -> Optional[Dict]:
         return None
 
 
-@lru_cache(maxsize=16)
+# @lru_cache(maxsize=16)  # DISABLED - caused stale reads
 def load_format(format_name: str) -> Optional[Dict]:
     """🔮 FORMAT LADEN MIT VERERBUNG"""
     fmt = _load_format_raw(format_name)
