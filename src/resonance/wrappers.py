@@ -5,7 +5,6 @@
 ║                                                                              ║
 ║    Nicht "File Management" - FELD ENTDECKUNG.                                ║
 ║    Wrapper sind schlafende Felder. Dieser Code erweckt sie.                  ║
-from src.resonance.config import get_runtime_wrapper
 ║                                                                              ║
 ║    ════════════════════════════════════════════════════════════════════      ║
 ║                                                                              ║
@@ -35,6 +34,7 @@ import re
 
 from ..config import settings
 
+from src.resonance.config import get_runtime_wrapper
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  🌊 ROUTER INITIALISIERUNG - Das Resonanzfeld öffnet sich
