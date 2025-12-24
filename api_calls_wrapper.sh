@@ -8,9 +8,10 @@
 # ║   ███████║   ██║   ██║ ╚████║   ██║   ██╔╝ ██╗                            ║
 # ║   ╚══════╝   ╚═╝   ╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝                            ║
 # ║                                                                           ║
-# ║   🔮 SYNTX API EXPLORER v3.4                                              ║
+# ║   🔮 SYNTX API EXPLORER v3.5 - HEILIGABEND EDITION                        ║
 # ║   ─────────────────────────────────────────────────────                   ║
 # ║   Complete Endpoint Documentation | Full JSON Display                     ║
+# ║   ✨ NEW: Default vs Runtime Wrapper Separation (Dec 24, 2024)            ║
 # ║                                                                           ║
 # ║   "See every field. Understand every resonance."                          ║
 # ║                                                                           ║
@@ -99,10 +100,11 @@ make_request() {
 echo ""
 echo -e "${PURPLE}╔═══════════════════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${PURPLE}║${NC}                                                                           ${PURPLE}║${NC}"
-echo -e "${PURPLE}║${NC}   ${WHITE}🔮 SYNTX API EXPLORER v3.4${NC}                                              ${PURPLE}║${NC}"
+echo -e "${PURPLE}║${NC}   ${WHITE}🔮 SYNTX API EXPLORER v3.5 - HEILIGABEND EDITION${NC}                       ${PURPLE}║${NC}"
 echo -e "${PURPLE}║${NC}   ${GRAY}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}   ${PURPLE}║${NC}"
 echo -e "${PURPLE}║${NC}   ${DIM}Target:${NC} ${YELLOW}$BASE_URL${NC}                                           ${PURPLE}║${NC}"
 echo -e "${PURPLE}║${NC}   ${DIM}Output:${NC} ${GREEN}$OUTPUT_FILE${NC}                                         ${PURPLE}║${NC}"
+echo -e "${PURPLE}║${NC}   ${DIM}New:${NC} ${CYAN}Default vs Runtime Wrapper Separation${NC}                        ${PURPLE}║${NC}"
 echo -e "${PURPLE}║${NC}                                                                           ${PURPLE}║${NC}"
 echo -e "${PURPLE}╚═══════════════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
@@ -140,11 +142,97 @@ echo "$endpoint_data," >> "$OUTPUT_FILE"
 endpoint_data="{\"name\": \"Wrapper Health Scan\", \"method\": \"GET\", \"endpoint\": \"/resonanz/health/wrappers\", \"response\": $response}"
 
 # ============================================================================
-# 📦 2. WRAPPER ENDPOINTS
+# ⚙️ 2. CONFIGURATION ENDPOINTS (MOVED UP - SYSTEMICALLY BEFORE WRAPPERS)
+# ============================================================================
+print_section "⚙️ CONFIGURATION ENDPOINTS - DEFAULT vs RUNTIME SEPARATION"
+
+echo -e "${YELLOW}💎 CRITICAL CONCEPT:${NC}"
+echo -e "   ${WHITE}DEFAULT${NC} = Fallback wrapper (config file)"
+echo -e "   ${WHITE}RUNTIME${NC} = Currently active wrapper (runtime file)"
+echo -e "   ${DIM}These are now SEPARATE and can be set independently!${NC}"
+echo ""
+
+# 2.1 GET /resonanz/config/default-wrapper
+print_endpoint "Get Default Wrapper (Fallback)" "GET" "/resonanz/config/default-wrapper"
+response=$(make_request "GET" "/resonanz/config/default-wrapper")
+print_response "$response"
+echo "$endpoint_data," >> "$OUTPUT_FILE"
+endpoint_data="{\"name\": \"Get Default Wrapper\", \"method\": \"GET\", \"endpoint\": \"/resonanz/config/default-wrapper\", \"response\": $response}"
+
+# Store current default
+current_default=$(echo "$response" | jq -r '.active_wrapper' 2>/dev/null)
+
+# 2.2 GET /resonanz/config/runtime-wrapper (NEW!)
+print_endpoint "Get Runtime Wrapper (Currently Active)" "GET" "/resonanz/config/runtime-wrapper"
+response=$(make_request "GET" "/resonanz/config/runtime-wrapper")
+print_response "$response"
+echo "$endpoint_data," >> "$OUTPUT_FILE"
+endpoint_data="{\"name\": \"Get Runtime Wrapper\", \"method\": \"GET\", \"endpoint\": \"/resonanz/config/runtime-wrapper\", \"response\": $response}"
+
+# Store current runtime
+current_runtime=$(echo "$response" | jq -r '.runtime_wrapper' 2>/dev/null)
+
+# 2.3 DEMO: Set Default (should NOT change runtime)
+echo -e "${YELLOW}🧪 DEMO: Testing Default vs Runtime Separation${NC}"
+echo ""
+
+print_endpoint "Set Default Wrapper (should NOT change runtime)" "PUT" "/resonanz/config/default-wrapper?wrapper_name=syntex_wrapper_human"
+response=$(make_request "PUT" "/resonanz/config/default-wrapper?wrapper_name=syntex_wrapper_human")
+print_response "$response"
+echo "$endpoint_data," >> "$OUTPUT_FILE"
+endpoint_data="{\"name\": \"Set Default Wrapper\", \"method\": \"PUT\", \"endpoint\": \"/resonanz/config/default-wrapper\", \"response\": $response}"
+
+# 2.4 Verify Runtime UNCHANGED
+print_endpoint "Verify Runtime Wrapper (should still be: $current_runtime)" "GET" "/resonanz/config/runtime-wrapper"
+response=$(make_request "GET" "/resonanz/config/runtime-wrapper")
+new_runtime=$(echo "$response" | jq -r '.runtime_wrapper' 2>/dev/null)
+if [ "$new_runtime" == "$current_runtime" ]; then
+    echo -e "   ${GREEN}✓ SUCCESS: Runtime unchanged ($current_runtime)${NC}"
+else
+    echo -e "   ${RED}✗ FAILED: Runtime changed to $new_runtime${NC}"
+fi
+print_response "$response"
+echo "$endpoint_data," >> "$OUTPUT_FILE"
+endpoint_data="{\"name\": \"Verify Runtime Unchanged\", \"method\": \"GET\", \"endpoint\": \"/resonanz/config/runtime-wrapper\", \"response\": $response}"
+
+# 2.5 DEMO: Set Runtime (should NOT change default)
+print_endpoint "Set Runtime Wrapper (should NOT change default)" "PUT" "/resonanz/config/runtime-wrapper?wrapper_name=syntex_wrapper_deepsweep"
+response=$(make_request "PUT" "/resonanz/config/runtime-wrapper?wrapper_name=syntex_wrapper_deepsweep")
+print_response "$response"
+echo "$endpoint_data," >> "$OUTPUT_FILE"
+endpoint_data="{\"name\": \"Set Runtime Wrapper\", \"method\": \"PUT\", \"endpoint\": \"/resonanz/config/runtime-wrapper\", \"response\": $response}"
+
+# 2.6 Verify Default UNCHANGED
+print_endpoint "Verify Default Wrapper (should still be: human)" "GET" "/resonanz/config/default-wrapper"
+response=$(make_request "GET" "/resonanz/config/default-wrapper")
+new_default=$(echo "$response" | jq -r '.active_wrapper' 2>/dev/null)
+if [ "$new_default" == "syntex_wrapper_human" ]; then
+    echo -e "   ${GREEN}✓ SUCCESS: Default unchanged (human)${NC}"
+else
+    echo -e "   ${RED}✗ FAILED: Default changed to $new_default${NC}"
+fi
+print_response "$response"
+echo "$endpoint_data," >> "$OUTPUT_FILE"
+endpoint_data="{\"name\": \"Verify Default Unchanged\", \"method\": \"GET\", \"endpoint\": \"/resonanz/config/default-wrapper\", \"response\": $response}"
+
+# 2.7 Final State Summary
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${WHITE}📊 FINAL STATE AFTER TESTS:${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+final_default=$(curl -s "$BASE_URL/resonanz/config/default-wrapper" | jq -r '.active_wrapper')
+final_runtime=$(curl -s "$BASE_URL/resonanz/config/runtime-wrapper" | jq -r '.runtime_wrapper')
+echo -e "   ${DIM}Default:${NC} ${YELLOW}$final_default${NC}"
+echo -e "   ${DIM}Runtime:${NC} ${GREEN}$final_runtime${NC}"
+echo -e "   ${DIM}Separated:${NC} ${WHITE}$([ "$final_default" != "$final_runtime" ] && echo "✓ YES" || echo "✗ NO")${NC}"
+echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+
+# ============================================================================
+# 📦 3. WRAPPER ENDPOINTS
 # ============================================================================
 print_section "📦 WRAPPER ENDPOINTS"
 
-# 2.1 GET /resonanz/wrappers
+# 3.1 GET /resonanz/wrappers
 print_endpoint "List All Wrappers" "GET" "/resonanz/wrappers"
 response=$(make_request "GET" "/resonanz/wrappers")
 print_response "$response"
@@ -155,14 +243,14 @@ endpoint_data="{\"name\": \"List All Wrappers\", \"method\": \"GET\", \"endpoint
 first_wrapper=$(echo "$response" | grep -o '"name":"[^"]*"' | head -1 | cut -d'"' -f4)
 
 if [ -n "$first_wrapper" ]; then
-    # 2.2 GET /resonanz/wrapper/{name}
+    # 3.2 GET /resonanz/wrapper/{name}
     print_endpoint "Get Wrapper Content" "GET" "/resonanz/wrapper/$first_wrapper"
     response=$(make_request "GET" "/resonanz/wrapper/$first_wrapper")
     print_response "$response"
     echo "$endpoint_data," >> "$OUTPUT_FILE"
     endpoint_data="{\"name\": \"Get Wrapper Content\", \"method\": \"GET\", \"endpoint\": \"/resonanz/wrapper/$first_wrapper\", \"response\": $response}"
     
-    # 2.3 GET /resonanz/wrapper/{name}/meta
+    # 3.3 GET /resonanz/wrapper/{name}/meta
     print_endpoint "Get Wrapper Metadata" "GET" "/resonanz/wrapper/$first_wrapper/meta"
     response=$(make_request "GET" "/resonanz/wrapper/$first_wrapper/meta")
     print_response "$response"
@@ -171,11 +259,11 @@ if [ -n "$first_wrapper" ]; then
 fi
 
 # ============================================================================
-# 📄 3. FORMAT ENDPOINTS
+# 📄 4. FORMAT ENDPOINTS
 # ============================================================================
 print_section "📄 FORMAT ENDPOINTS"
 
-# 3.1 GET /resonanz/formats
+# 4.1 GET /resonanz/formats
 print_endpoint "List All Formats" "GET" "/resonanz/formats"
 response=$(make_request "GET" "/resonanz/formats")
 print_response "$response"
@@ -186,7 +274,7 @@ endpoint_data="{\"name\": \"List All Formats\", \"method\": \"GET\", \"endpoint\
 first_format=$(echo "$response" | grep -o '"name":"[^"]*"' | head -1 | cut -d'"' -f4)
 
 if [ -n "$first_format" ]; then
-    # 3.2 GET /resonanz/formats/{name}
+    # 4.2 GET /resonanz/formats/{name}
     print_endpoint "Get Format Details" "GET" "/resonanz/formats/$first_format"
     response=$(make_request "GET" "/resonanz/formats/$first_format")
     print_response "$response"
@@ -195,11 +283,11 @@ if [ -n "$first_format" ]; then
 fi
 
 # ============================================================================
-# 🎨 4. STYLE ENDPOINTS
+# 🎨 5. STYLE ENDPOINTS
 # ============================================================================
 print_section "🎨 STYLE ENDPOINTS"
 
-# 4.1 GET /resonanz/styles
+# 5.1 GET /resonanz/styles
 print_endpoint "List All Styles" "GET" "/resonanz/styles"
 response=$(make_request "GET" "/resonanz/styles")
 print_response "$response"
@@ -210,14 +298,14 @@ endpoint_data="{\"name\": \"List All Styles\", \"method\": \"GET\", \"endpoint\"
 first_style=$(echo "$response" | grep -o '"name":"[^"]*"' | head -1 | cut -d'"' -f4)
 
 if [ -n "$first_style" ]; then
-    # 4.2 GET /resonanz/styles/{name}
+    # 5.2 GET /resonanz/styles/{name}
     print_endpoint "Get Style Details" "GET" "/resonanz/styles/$first_style"
     response=$(make_request "GET" "/resonanz/styles/$first_style")
     print_response "$response"
     echo "$endpoint_data," >> "$OUTPUT_FILE"
     endpoint_data="{\"name\": \"Get Style Details\", \"method\": \"GET\", \"endpoint\": \"/resonanz/styles/$first_style\", \"response\": $response}"
     
-    # 4.3 POST /resonanz/alchemy/preview
+    # 5.3 POST /resonanz/alchemy/preview
     request_body="{\"text\": \"Das ist ein wichtiger Test der Transmutation\", \"style\": \"$first_style\"}"
     print_endpoint "Alchemy Preview" "POST" "/resonanz/alchemy/preview" "$request_body"
     response=$(make_request "POST" "/resonanz/alchemy/preview" "$request_body")
@@ -227,18 +315,18 @@ if [ -n "$first_style" ]; then
 fi
 
 # ============================================================================
-# 📊 5. STATS ENDPOINTS
+# 📊 6. STATISTICS ENDPOINTS
 # ============================================================================
 print_section "📊 STATISTICS ENDPOINTS"
 
-# 5.1 GET /resonanz/stats
+# 6.1 GET /resonanz/stats
 print_endpoint "Global Statistics" "GET" "/resonanz/stats"
 response=$(make_request "GET" "/resonanz/stats")
 print_response "$response"
 echo "$endpoint_data," >> "$OUTPUT_FILE"
 endpoint_data="{\"name\": \"Global Statistics\", \"method\": \"GET\", \"endpoint\": \"/resonanz/stats\", \"response\": $response}"
 
-# 5.2 GET /resonanz/strom
+# 6.2 GET /resonanz/strom
 print_endpoint "Field Flow Stream" "GET" "/resonanz/strom?limit=3"
 response=$(make_request "GET" "/resonanz/strom?limit=3")
 print_response "$response"
@@ -246,11 +334,11 @@ echo "$endpoint_data," >> "$OUTPUT_FILE"
 endpoint_data="{\"name\": \"Field Flow Stream\", \"method\": \"GET\", \"endpoint\": \"/resonanz/strom\", \"response\": $response}"
 
 # ============================================================================
-# 📼 6. SESSION ENDPOINTS
+# 📼 7. SESSION ENDPOINTS
 # ============================================================================
 print_section "📼 SESSION ENDPOINTS"
 
-# 6.1 GET /resonanz/sessions
+# 7.1 GET /resonanz/sessions
 print_endpoint "List Sessions" "GET" "/resonanz/sessions?limit=3"
 response=$(make_request "GET" "/resonanz/sessions?limit=3")
 print_response "$response"
@@ -261,7 +349,7 @@ endpoint_data="{\"name\": \"List Sessions\", \"method\": \"GET\", \"endpoint\": 
 session_id=$(echo "$response" | grep -o '"request_id":"[^"]*"' | head -1 | cut -d'"' -f4)
 
 if [ -n "$session_id" ]; then
-    # 6.2 GET /resonanz/session/{id}
+    # 7.2 GET /resonanz/session/{id}
     print_endpoint "Get Session Details" "GET" "/resonanz/session/$session_id"
     response=$(make_request "GET" "/resonanz/session/$session_id")
     print_response "$response"
@@ -270,11 +358,11 @@ if [ -n "$session_id" ]; then
 fi
 
 # ============================================================================
-# 💬 7. CHAT ENDPOINTS
+# 💬 8. CHAT ENDPOINTS
 # ============================================================================
 print_section "💬 CHAT ENDPOINTS"
 
-# 7.1 POST /resonanz/chat (Main Endpoint)
+# 8.1 POST /resonanz/chat (Main Endpoint)
 if [ -n "$first_wrapper" ] && [ -n "$first_format" ]; then
     request_body="{\"prompt\": \"Was ist SYNTX Field Resonance?\", \"mode\": \"$first_wrapper\", \"format\": \"$first_format\", \"style\": \"${first_style:-wissenschaftlich}\", \"max_new_tokens\": 150}"
     print_endpoint "Field Resonance Chat" "POST" "/resonanz/chat" "$request_body"
@@ -284,7 +372,7 @@ if [ -n "$first_wrapper" ] && [ -n "$first_format" ]; then
     endpoint_data="{\"name\": \"Field Resonance Chat\", \"method\": \"POST\", \"endpoint\": \"/resonanz/chat\", \"request\": $request_body, \"response\": $response}"
 fi
 
-# 7.2 POST /resonanz/chat/diff
+# 8.2 POST /resonanz/chat/diff
 if [ -n "$first_wrapper" ]; then
     # Get second wrapper
     wrappers_response=$(make_request "GET" "/resonanz/wrappers")
@@ -301,18 +389,6 @@ if [ -n "$first_wrapper" ]; then
 fi
 
 # ============================================================================
-# ⚙️ 8. CONFIG ENDPOINTS
-# ============================================================================
-print_section "⚙️ CONFIGURATION ENDPOINTS"
-
-# 8.1 GET /resonanz/config/default-wrapper
-print_endpoint "Get Default Wrapper" "GET" "/resonanz/config/default-wrapper"
-response=$(make_request "GET" "/resonanz/config/default-wrapper")
-print_response "$response"
-echo "$endpoint_data," >> "$OUTPUT_FILE"
-endpoint_data="{\"name\": \"Get Default Wrapper\", \"method\": \"GET\", \"endpoint\": \"/resonanz/config/default-wrapper\", \"response\": $response}"
-
-# ============================================================================
 # 📋 9. COMPLETE ENDPOINT LISTING
 # ============================================================================
 print_section "📋 ALL AVAILABLE ENDPOINTS"
@@ -323,6 +399,12 @@ echo -e "${CYAN}🏥 HEALTH & MONITORING${NC}"
 echo -e "  ${GREEN}/health${NC}                    - System health check"
 echo -e "  ${GREEN}/resonanz/health${NC}          - Field resonance health"
 echo -e "  ${GREEN}/resonanz/health/wrappers${NC} - Wrapper health scan"
+echo ""
+echo -e "${CYAN}⚙️ CONFIGURATION (✨ UPDATED!)${NC}"
+echo -e "  ${GREEN}/resonanz/config/default-wrapper${NC} - Get/set default wrapper (fallback)"
+echo -e "  ${YELLOW}/resonanz/config/runtime-wrapper${NC} - Get/set runtime wrapper (active) ${BOLD}[NEW!]${NC}"
+echo -e "  ${DIM}  → Default = Fallback config | Runtime = Currently active${NC}"
+echo -e "  ${DIM}  → Can be set INDEPENDENTLY for full separation!${NC}"
 echo ""
 echo -e "${CYAN}📦 WRAPPER OPERATIONS${NC}"
 echo -e "  ${GREEN}/resonanz/wrappers${NC}        - List all wrappers"
@@ -355,9 +437,6 @@ echo -e "${CYAN}💬 CHAT${NC}"
 echo -e "  ${GREEN}/resonanz/chat${NC}            - Main chat endpoint"
 echo -e "  ${GREEN}/resonanz/chat/diff${NC}       - Wrapper comparison"
 echo ""
-echo -e "${CYAN}⚙️ CONFIGURATION${NC}"
-echo -e "  ${GREEN}/resonanz/config/default-wrapper${NC} - Get/set default wrapper"
-echo ""
 echo -e "${CYAN}🔧 ADMIN${NC}"
 echo -e "  ${GREEN}/resonanz/health/fix${NC}      - Auto-fix orphaned wrappers"
 echo ""
@@ -372,14 +451,16 @@ echo -e "${GREEN}✓${NC} Complete API documentation saved to: ${YELLOW}$OUTPUT_
 echo ""
 echo -e "${PURPLE}╔═══════════════════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${PURPLE}║${NC}                                                                           ${PURPLE}║${NC}"
-echo -e "${PURPLE}║${NC}   ${WHITE}🔮 EXPLORATION COMPLETE${NC}                                                  ${PURPLE}║${NC}"
+echo -e "${PURPLE}║${NC}   ${WHITE}🔮 EXPLORATION COMPLETE - HEILIGABEND EDITION${NC}                         ${PURPLE}║${NC}"
 echo -e "${PURPLE}║${NC}   ${GRAY}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}   ${PURPLE}║${NC}"
 echo -e "${PURPLE}║${NC}                                                                           ${PURPLE}║${NC}"
-echo -e "${PURPLE}║${NC}   ${CYAN}•${NC} ${WHITE}15+ endpoints explored${NC}                                         ${PURPLE}║${NC}"
+echo -e "${PURPLE}║${NC}   ${CYAN}•${NC} ${WHITE}17+ endpoints explored (2 NEW!)${NC}                                  ${PURPLE}║${NC}"
 echo -e "${PURPLE}║${NC}   ${CYAN}•${NC} ${WHITE}Full JSON requests/responses captured${NC}                          ${PURPLE}║${NC}"
 echo -e "${PURPLE}║${NC}   ${CYAN}•${NC} ${WHITE}Complete endpoint listing documented${NC}                           ${PURPLE}║${NC}"
+echo -e "${PURPLE}║${NC}   ${CYAN}•${NC} ${YELLOW}Default vs Runtime separation tested!${NC}                          ${PURPLE}║${NC}"
 echo -e "${PURPLE}║${NC}                                                                           ${PURPLE}║${NC}"
 echo -e "${PURPLE}║${NC}   ${GRAY}\"See every field. Understand every resonance.\"${NC}                           ${PURPLE}║${NC}"
+echo -e "${PURPLE}║${NC}   ${WHITE}🎄 Frohe Weihnachten! 🎁${NC}                                                ${PURPLE}║${NC}"
 echo -e "${PURPLE}║${NC}                                                                           ${PURPLE}║${NC}"
 echo -e "${PURPLE}╚═══════════════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
