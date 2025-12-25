@@ -1,466 +1,931 @@
 #!/bin/bash
-# ╔═══════════════════════════════════════════════════════════════════════════╗
-# ║                                                                           ║
-# ║   ███████╗██╗   ██╗███╗   ██╗████████╗██╗  ██╗                            ║
-# ║   ██╔════╝╚██╗ ██╔╝████╗  ██║╚══██╔══╝╚██╗██╔╝                            ║
-# ║   ███████╗ ╚████╔╝ ██╔██╗ ██║   ██║    ╚███╔╝                             ║
-# ║   ╚════██║  ╚██╔╝  ██║╚██╗██║   ██║    ██╔██╗                             ║
-# ║   ███████║   ██║   ██║ ╚████║   ██║   ██╔╝ ██╗                            ║
-# ║   ╚══════╝   ╚═╝   ╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝                            ║
-# ║                                                                           ║
-# ║   🔮 SYNTX API EXPLORER v3.5 - HEILIGABEND EDITION                        ║
-# ║   ─────────────────────────────────────────────────────                   ║
-# ║   Complete Endpoint Documentation | Full JSON Display                     ║
-# ║   ✨ NEW: Default vs Runtime Wrapper Separation (Dec 24, 2024)            ║
-# ║                                                                           ║
-# ║   "See every field. Understand every resonance."                          ║
-# ║                                                                           ║
-# ╚═══════════════════════════════════════════════════════════════════════════╝
+# ═══════════════════════════════════════════════════════════════════════════════
+#  ╔═╗╦ ╦╔╗╔╔╦╗═╗ ╦  ╔═╗╔═╗╦  ╔╦╗  ╔═╗╔═╗╔═╗╔═╗╔╗╔╔═╗╔╗╔╔═╗╔═╗
+#  ╚═╗╚╦╝║║║ ║ ╔╩╦╝  ╠╣ ║╣ ║   ║║  ╠╦╝║╣ ╚═╗║ ║║║║╠═╣║║║║  ║╣ 
+#  ╚═╝ ╩ ╝╚╝ ╩ ╩ ╚═  ╚  ╚═╝╩═╝═╩╝  ╩╚═╚═╝╚═╝╚═╝╝╚╝╩ ╩╝╚╝╚═╝╚═╝
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+#  🔥 SYNTX FIELD RESONANCE TESTER v5.0 - DER ULTIMATIVE STROM-PRÜFER
+#
+#  ══════════════════════════════════════════════════════════════════════════════
+#  ARCHITEKTUR:
+#  
+#    ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+#    │   WRAPPER   │────▶│   FORMAT    │────▶│    STYLE    │
+#    │  (WIE denkt │     │ (WAS kommt  │     │ (WIE klingt │
+#    │   das LLM?) │     │    raus?)   │     │     es?)    │
+#    └─────────────┘     └─────────────┘     └─────────────┘
+#           │                   │                   │
+#           └───────────────────┴───────────────────┘
+#                               │
+#                        ┌──────▼──────┐
+#                        │    CHAT     │
+#                        │ (Der Strom) │
+#                        └─────────────┘
+#
+#  ══════════════════════════════════════════════════════════════════════════════
+#  ENDPOINTS ÜBERSICHT:
+#
+#  🏥 HEALTH (3)      - System-Vitalzeichen, Wrapper-Orphan-Detection
+#  ⚙️ CONFIG (2)      - Default Wrapper, Runtime-Konfiguration  
+#  📄 FORMATS (7)     - Feld-Definitionen, Domains, Vererbung, Typen
+#  🎨 STYLES (2)      - Style Alchemy, Word Transmutation
+#  📦 WRAPPERS (8)    - Denk-Modi CRUD, Meta, Aktivierung
+#  📊 STATS (4)       - Feld-Fluss-Analyse, Training-Export
+#  💬 CHAT (6)        - Das Herzstück mit allen Kombinationen
+#  🔧 ADMIN (1)       - Auto-Fix, Maintenance
+#
+#  GESAMT: 33 Endpoints | 45+ Test-Szenarien
+#  ══════════════════════════════════════════════════════════════════════════════
+#
+#  USAGE:
+#    ./api_calls_wrapper.sh                    # Default: https://dev.syntx-system.com
+#    ./api_calls_wrapper.sh http://localhost:8001  # Lokal testen
+#    ./api_calls_wrapper.sh --quick            # Nur kritische Tests
+#    ./api_calls_wrapper.sh --verbose          # Volle Response-Ausgabe
+#
+# ═══════════════════════════════════════════════════════════════════════════════
 
-# ============================================================================
-# 🎨 COLORS
-# ============================================================================
-RED='\033[0;31m'
+set -o pipefail
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🎨 FARB-ALCHEMIE - Der visuelle Strom
+# ═══════════════════════════════════════════════════════════════════════════════
+CYAN='\033[0;36m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+RED='\033[0;31m'
+MAGENTA='\033[0;35m'
 BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-CYAN='\033[0;36m'
 WHITE='\033[1;37m'
 GRAY='\033[0;90m'
 NC='\033[0m'
 BOLD='\033[1m'
 DIM='\033[2m'
+UNDERLINE='\033[4m'
 
-# ============================================================================
-# ⚙️ CONFIGURATION
-# ============================================================================
-BASE_URL="https://dev.syntx-system.com"
-OUTPUT_FILE="syntx_api_documentation_$(date +%Y%m%d_%H%M%S).json"
+# ═══════════════════════════════════════════════════════════════════════════════
+#  📊 FELD-ZÄHLER - Resonanz-Statistik
+# ═══════════════════════════════════════════════════════════════════════════════
+TOTAL_TESTS=0
+PASSED_TESTS=0
+FAILED_TESTS=0
+SKIPPED_TESTS=0
+START_TIME=$(date +%s)
 
-# ============================================================================
-# 📊 FUNCTIONS
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
+#  ⚙️ KONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════════
+BASE_URL="${1:-https://dev.syntx-system.com}"
+VERBOSE="${2:-false}"
+QUICK_MODE=false
 
-print_section() {
+# Parse Args
+for arg in "$@"; do
+    case $arg in
+        --quick) QUICK_MODE=true ;;
+        --verbose) VERBOSE=true ;;
+        http*) BASE_URL="$arg" ;;
+    esac
+done
+
+# 🧪 Temporäre Test-Ressourcen
+EPOCH=$(date +%s)
+TEST_WRAPPER="syntx_fieldtest_${EPOCH}"
+TEST_FORMAT="syntx_formattest_${EPOCH}"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🖼️ DISPLAY-FUNKTIONEN - Visuelle Resonanz
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Großes Banner
+banner() {
     echo ""
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${WHITE}$1${NC}"
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo ""
+    echo -e "${MAGENTA}╔════════════════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${MAGENTA}║${NC}  ${WHITE}${BOLD}$1${NC}"
+    echo -e "${MAGENTA}╚════════════════════════════════════════════════════════════════════════════════╝${NC}"
 }
 
-print_endpoint() {
-    echo -e "${CYAN}➤ $1${NC}"
-    echo -e "   ${DIM}Method:${NC} ${YELLOW}$2${NC}"
-    echo -e "   ${DIM}Endpoint:${NC} ${GREEN}$BASE_URL$3${NC}"
-    if [ -n "$4" ]; then
-        echo -e "   ${DIM}Request Body:${NC}"
-        echo "$4" | jq . 2>/dev/null || echo "   $4"
+# Section Header mit Beschreibung
+section() {
+    local title="$1"
+    local desc="$2"
+    local count="$3"
+    echo ""
+    echo -e "${CYAN}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${NC}"
+    echo -e "${CYAN}┃${NC} ${BOLD}${WHITE}$title${NC} ${DIM}($count Endpoints)${NC}"
+    echo -e "${CYAN}┃${NC} ${GRAY}$desc${NC}"
+    echo -e "${CYAN}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}"
+}
+
+# Trennlinie
+divider() {
+    echo -e "${GRAY}────────────────────────────────────────────────────────────────────────────────────${NC}"
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🔮 TEST-ENGINE - Der Resonanz-Prüfer
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+#  ARCHITEKTUR DES TEST-AUFRUFS:
+#  
+#    test_endpoint "METHOD" "ENDPOINT" "PAYLOAD" "BESCHREIBUNG" "ERWARTETER_CODE"
+#                     │          │          │            │               │
+#                     │          │          │            │               └── HTTP Status (default: 200)
+#                     │          │          │            └── Was der Test prüft
+#                     │          │          └── JSON Body für POST/PUT
+#                     │          └── API Pfad
+#                     └── GET/POST/PUT/DELETE
+#
+#  FELD-FLOW:
+#    1. Request senden
+#    2. Response parsen
+#    3. Status prüfen
+#    4. Statistik updaten
+#    5. Visuelle Ausgabe
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+test_endpoint() {
+    local METHOD="$1"
+    local ENDPOINT="$2"
+    local PAYLOAD="$3"
+    local DESCRIPTION="$4"
+    local EXPECTED="${5:-200}"
+    local KALIBRIERUNG="$6"
+    local STROM_KOPPLUNG="$7"
+    
+    TOTAL_TESTS=$((TOTAL_TESTS + 1))
+    
+    # Header
+    echo ""
+    divider
+    echo -e "${BOLD}🔮 TEST #${TOTAL_TESTS}${NC} ${GRAY}│${NC} ${YELLOW}${METHOD}${NC} ${WHITE}${ENDPOINT}${NC}"
+    echo -e "${GRAY}   ${DESCRIPTION}${NC}"
+    
+    # Kalibrierung + Strom-Kopplung anzeigen
+    [ -n "$KALIBRIERUNG" ] && echo -e "${BLUE}   ⚡ Kalibrierung: ${KALIBRIERUNG}${NC}"
+    [ -n "$STROM_KOPPLUNG" ] && echo -e "${CYAN}   🌊 Strom-Kopplung: ${STROM_KOPPLUNG}${NC}"
+    
+    # Payload anzeigen (gekürzt)
+    if [ -n "$PAYLOAD" ]; then
+        local SHORT_PAYLOAD=$(echo "$PAYLOAD" | head -c 100)
+        [ ${#PAYLOAD} -gt 100 ] && SHORT_PAYLOAD="${SHORT_PAYLOAD}..."
+        echo -e "${DIM}   📦 Payload: ${SHORT_PAYLOAD}${NC}"
     fi
-}
-
-print_response() {
-    echo -e "   ${DIM}Response:${NC}"
-    echo "$1" | jq . 2>/dev/null || echo "   $1"
-    echo ""
-}
-
-make_request() {
-    local method="$1"
-    local endpoint="$2"
-    local body="$3"
     
-    echo -e "${GRAY}   Calling endpoint...${NC}"
+    # Request ausführen
+    local RESPONSE=""
+    local HTTP_CODE=""
     
-    if [ -n "$body" ]; then
-        response=$(curl -s -w "\n⏱%{http_code}⏱%{time_total}" -X "$method" \
-            -H "Content-Type: application/json" \
-            -d "$body" \
-            "$BASE_URL$endpoint" 2>/dev/null)
+    case $METHOD in
+        GET)
+            RESPONSE=$(curl -s -w "\n%{http_code}" "$BASE_URL$ENDPOINT" 2>/dev/null)
+            ;;
+        DELETE)
+            RESPONSE=$(curl -s -w "\n%{http_code}" -X DELETE "$BASE_URL$ENDPOINT" 2>/dev/null)
+            ;;
+        POST|PUT)
+            if [ -n "$PAYLOAD" ]; then
+                RESPONSE=$(curl -s -w "\n%{http_code}" -X $METHOD \
+                    -H "Content-Type: application/json" \
+                    -d "$PAYLOAD" "$BASE_URL$ENDPOINT" 2>/dev/null)
+            else
+                RESPONSE=$(curl -s -w "\n%{http_code}" -X $METHOD "$BASE_URL$ENDPOINT" 2>/dev/null)
+            fi
+            ;;
+    esac
+    
+    HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+    local BODY=$(echo "$RESPONSE" | sed '$d')
+    
+    # Response anzeigen
+    echo -e "${DIM}   Response:${NC}"
+    if [ "$VERBOSE" = true ]; then
+        echo "$BODY" | jq -C '.' 2>/dev/null | sed 's/^/   /'
     else
-        response=$(curl -s -w "\n⏱%{http_code}⏱%{time_total}" -X "$method" \
-            "$BASE_URL$endpoint" 2>/dev/null)
+        echo "$BODY" | jq -C '.' 2>/dev/null | head -20 | sed 's/^/   /'
+        local LINES=$(echo "$BODY" | jq '.' 2>/dev/null | wc -l)
+        [ "$LINES" -gt 20 ] && echo -e "   ${DIM}... (+$((LINES - 20)) Zeilen)${NC}"
     fi
     
-    # Split response and status code
-    local http_code=$(echo "$response" | grep -o '⏱[0-9]*⏱' | sed 's/⏱//g' | head -1)
-    local time_taken=$(echo "$response" | grep -o '⏱[0-9]*\.[0-9]*$' | sed 's/⏱//g')
-    local body_response=$(echo "$response" | sed '/⏱[0-9]*⏱/d' | sed '/⏱[0-9]*\.[0-9]*$/d')
-    
-    echo -e "   ${DIM}Status:${NC} ${WHITE}$http_code${NC} ${DIM}| Time:${NC} ${WHITE}${time_taken}s${NC}"
-    
-    echo "$body_response"
+    # Ergebnis
+    if [ "$HTTP_CODE" = "$EXPECTED" ]; then
+        echo -e "   ${GREEN}✓ $HTTP_CODE - RESONANZ BESTÄTIGT${NC}"
+        PASSED_TESTS=$((PASSED_TESTS + 1))
+        return 0
+    else
+        echo -e "   ${RED}✗ $HTTP_CODE - DRIFT DETECTED (erwartet: $EXPECTED)${NC}"
+        FAILED_TESTS=$((FAILED_TESTS + 1))
+        return 1
+    fi
 }
 
-# ============================================================================
-# 🚀 MAIN EXPLORATION
-# ============================================================================
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🚀 INITIALISIERUNG - Der Strom beginnt zu fließen
+# ═══════════════════════════════════════════════════════════════════════════════
+
+clear
+echo ""
+echo -e "${MAGENTA}"
+cat << 'ASCIIART'
+
+   ██████╗██╗   ██╗███╗   ██╗████████╗██╗  ██╗    ███████╗██╗     ██████╗ ██╗    ██╗
+   ██╔════╝╚██╗ ██╔╝████╗  ██║╚══██╔══╝╚██╗██╔╝    ██╔════╝██║    ██╔═══██╗██║    ██║
+   ███████╗ ╚████╔╝ ██╔██╗ ██║   ██║    ╚███╔╝     █████╗  ██║    ██║   ██║██║ █╗ ██║
+   ╚════██║  ╚██╔╝  ██║╚██╗██║   ██║    ██╔██╗     ██╔══╝  ██║    ██║   ██║██║███╗██║
+   ███████║   ██║   ██║ ╚████║   ██║   ██╔╝ ██╗    ██║     ███████╗╚██████╔╝╚███╔███╔╝
+   ╚══════╝   ╚═╝   ╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝    ╚═╝     ╚══════╝ ╚═════╝  ╚══╝╚══╝
+                                                                                     
+              🔥 FIELD RESONANCE API TESTER v5.0 🔥
+                 Der ultimative Strom-Prüfer
+
+ASCIIART
+echo -e "${NC}"
+
+echo -e "   ${GRAY}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "   ${WHITE}Target:${NC}     ${CYAN}$BASE_URL${NC}"
+echo -e "   ${WHITE}Timestamp:${NC}  ${CYAN}$(date '+%Y-%m-%d %H:%M:%S %Z')${NC}"
+echo -e "   ${WHITE}Mode:${NC}       ${CYAN}$([ "$QUICK_MODE" = true ] && echo "QUICK" || echo "FULL")${NC}"
+echo -e "   ${WHITE}Verbose:${NC}    ${CYAN}$VERBOSE${NC}"
+echo -e "   ${GRAY}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🏥 HEALTH ENDPOINTS - System-Vitalzeichen
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+#  ARCHITEKTUR:
+#    Diese Endpoints prüfen die Gesundheit des SYNTX-Systems.
+#    Sie kalibrieren NICHT, sie MESSEN den aktuellen Feld-Zustand.
+#
+#  STRÖME:
+#    /health → Alle Module (analytics, compare, feld, resonanz, generation)
+#    /resonanz/health → Nur Resonanz-Subsystem + letzter Response
+#    /resonanz/health/wrappers → Wrapper-Integrität + Orphan-Detection
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+section "🏥 HEALTH - System-Vitalzeichen" \
+        "Prüft Feld-Integrität, Modul-Status, Wrapper-Orphans" \
+        "3"
+
+test_endpoint "GET" "/health" "" \
+    "Root Health - Alle System-Module" \
+    "200" \
+    "Keine (Read-Only)" \
+    "Verbindet: analytics, compare, feld, resonanz, generation, predictions"
+
+test_endpoint "GET" "/resonanz/health" "" \
+    "Resonanz Health - Format Loader Status + letzter Response" \
+    "200" \
+    "Keine (Read-Only)" \
+    "Zeigt: service, version, format_loader, last_response mit latency"
+
+test_endpoint "GET" "/resonanz/health/wrappers" "" \
+    "Wrapper Health - Orphan Detection, Healthy/Orphan Split" \
+    "200" \
+    "Keine (Read-Only)" \
+    "Prüft: Wrapper ohne .txt, Meta ohne Wrapper, Wrapper-Total"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  ⚙️ CONFIG ENDPOINTS - System-Konfiguration
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+#  ARCHITEKTUR:
+#    Der Default-Wrapper bestimmt WIE das LLM denkt, wenn kein
+#    expliziter mode= Parameter übergeben wird.
+#
+#  STRÖME:
+#    GET  → Liest aktiven Wrapper aus /opt/syntx-config/active_wrapper.txt
+#    PUT  → Setzt neuen Default und schreibt in active_wrapper.txt
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+section "⚙️ CONFIG - System-Konfiguration" \
+        "Default Wrapper, Runtime-Settings, Fallback-Modi" \
+        "2"
+
+test_endpoint "GET" "/resonanz/config/default-wrapper" "" \
+    "Get Default Wrapper - Welcher Wrapper ist aktiv?" \
+    "200" \
+    "Keine (Read-Only)" \
+    "Liest: active_wrapper, exists, path, source (file/runtime/env)"
+
+test_endpoint "PUT" "/resonanz/config/default-wrapper?wrapper_name=syntex_wrapper_sigma" "" \
+    "Set Default Wrapper - Wrapper aktivieren (temporär)" \
+    "200" \
+    "Setzt: active_wrapper.txt, Runtime-Cache" \
+    "Koppelt alle zukünftigen Requests an diesen Wrapper"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  📄 FORMAT ENDPOINTS - Feld-Definitionen
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+#  ARCHITEKTUR:
+#    Formate definieren WAS aus dem LLM rauskommt.
+#    Sie strukturieren den Output in definierte Felder.
+#
+#    FORMAT = {
+#      name: "sigma",
+#      domain: "technical",       ← Kategorisierung
+#      extends: "base_format",    ← Vererbung
+#      fields: [
+#        {name: "drift", type: "text", ...},      ← Freitext
+#        {name: "rating", type: "rating", ...},   ← Skala 1-10
+#        {name: "tags", type: "keywords", ...},   ← Komma-separiert
+#        {name: "pros", type: "list", ...}        ← Bullet Points
+#      ]
+#    }
+#
+#  STRÖME:
+#    GET /formats           → Liste mit Domain-Filter
+#    GET /formats/{name}    → Details mit Vererbungs-Auflösung
+#    POST /formats/quick    → Schnell-Erstellung
+#    DELETE /formats/{name} → Soft-Delete mit Backup
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+section "📄 FORMATS - Feld-Definitionen" \
+        "Domains, Vererbung (extends), Feld-Typen (text/list/rating/keywords)" \
+        "7"
+
+test_endpoint "GET" "/resonanz/formats" "" \
+    "List ALL Formats - Alle verfügbaren Feld-Strukturen" \
+    "200" \
+    "Keine (Read-Only)" \
+    "Liefert: count, available_domains, formats[] mit fields_count"
+
+test_endpoint "GET" "/resonanz/formats?domain=technical" "" \
+    "Filter by Domain - Nur technische Formate (sigma, economics)" \
+    "200" \
+    "Filter: domain=technical" \
+    "Domains: technical, psychology, analysis, raw"
+
+test_endpoint "GET" "/resonanz/formats?domain=psychology" "" \
+    "Filter by Domain - Nur psychologische Formate (human, human_deep)" \
+    "200" \
+    "Filter: domain=psychology" \
+    "Inkludiert: Formate mit extends (Vererbung aufgelöst)"
+
+test_endpoint "GET" "/resonanz/formats/sigma" "" \
+    "Get Format Details - Sigma (6 Felder, technisch)" \
+    "200" \
+    "Keine (Read-Only)" \
+    "Felder: sigma_drift, sigma_mechanismus, sigma_frequenz, sigma_dichte, sigma_strome, sigma_extrakt"
+
+test_endpoint "GET" "/resonanz/formats/sigma?language=en" "" \
+    "Get Format (English) - Mehrsprachige Feld-Beschreibungen" \
+    "200" \
+    "Language: en" \
+    "Headers/Descriptions werden auf Englisch geliefert"
+
+test_endpoint "GET" "/resonanz/formats/human_deep" "" \
+    "Get Extended Format - human_deep extends human (8 Felder)" \
+    "200" \
+    "Vererbung: extends=human" \
+    "6 Felder von human + 2 neue (unterbewusstsein, schattenarbeit)"
+
+test_endpoint "GET" "/resonanz/formats/review" "" \
+    "Get Typed Format - Review mit allen Feld-Typen" \
+    "200" \
+    "Keine (Read-Only)" \
+    "Typen: text (zusammenfassung), list (pro_contra), rating (bewertung), keywords (tags)"
+
+test_endpoint "POST" "/resonanz/formats/quick" \
+    "{\"name\": \"$TEST_FORMAT\", \"description_de\": \"API Test Format\", \"field_names\": [\"alpha\", \"beta\", \"gamma\"], \"wrapper\": \"syntex_wrapper_sigma\"}" \
+    "Quick Create Format - Schnell-Erstellung mit Defaults" \
+    "200" \
+    "Schreibt: /opt/syntx-config/formats/{name}.json" \
+    "Erstellt Format mit Standardwerten für weights, validation, keywords"
+
+test_endpoint "DELETE" "/resonanz/formats/$TEST_FORMAT" "" \
+    "Delete Format - Soft-Delete mit Backup" \
+    "200" \
+    "Backup: .{name}.json.deleted" \
+    "Format wird umbenannt, nicht gelöscht"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🎨 STYLE ENDPOINTS - Post-Processing Alchemy
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+#  ARCHITEKTUR:
+#    Styles transformieren den Output NACH der LLM-Generierung.
+#    Sie ändern WIE der Text KLINGT, nicht WAS drin steht.
+#
+#    STYLE = {
+#      name: "zynisch",
+#      vibe: "Der Augenroll-Transformer",
+#      word_alchemy: {               ← Wort-Transmutation
+#        "wichtig": "angeblich wichtig",
+#        "Experten": "selbsternannte Experten"
+#      },
+#      forbidden_words: ["mega"],    ← Verbannte Worte
+#      tone_injection: "...",        ← Pre-LLM Injection (optional)
+#      suffix: "..."                 ← Post-LLM Anhang
+#    }
+#
+#  STRÖME:
+#    GET /styles        → Liste aller Styles mit Vibe + Alchemy-Count
+#    GET /styles/{name} → Vollständige Style-Definition
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+section "🎨 STYLES - Post-Processing Alchemy" \
+        "Word Alchemy, Forbidden Words, Tone Injection, Suffixes" \
+        "2"
+
+test_endpoint "GET" "/resonanz/styles" "" \
+    "List ALL Styles - Grimoire öffnen" \
+    "200" \
+    "Keine (Read-Only)" \
+    "Styles: wissenschaftlich, zynisch, poetisch, berlin_slang"
+
+test_endpoint "GET" "/resonanz/styles/wissenschaftlich" "" \
+    "Get Style: wissenschaftlich - Der Laborkittel des Outputs" \
+    "200" \
+    "Keine (Read-Only)" \
+    "Transmutiert: wichtig→signifikant, zeigt→indiziert, Problem→Problemstellung"
+
+test_endpoint "GET" "/resonanz/styles/zynisch" "" \
+    "Get Style: zynisch - Der Augenroll-Transformer" \
+    "200" \
+    "Keine (Read-Only)" \
+    "Transmutiert: nachhaltig→greenwashing-kompatibel, innovativ→mit neuem Buzzword versehen"
+
+test_endpoint "GET" "/resonanz/styles/poetisch" "" \
+    "Get Style: poetisch - Der Wortwebstuhl" \
+    "200" \
+    "Keine (Read-Only)" \
+    "Transmutiert: System→Gewebe, Prozess→Tanz, Daten→Tropfen im Strom"
+
+test_endpoint "GET" "/resonanz/styles/berlin_slang" "" \
+    "Get Style: berlin_slang - Späti-Philosophie um 3 Uhr nachts" \
+    "200" \
+    "Keine (Read-Only)" \
+    "Transmutiert: Das→Dit, Ich→Ick, nicht→nich, etwas→wat"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  📦 WRAPPER ENDPOINTS - Denk-Modi (WIE denkt das LLM?)
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+#  ARCHITEKTUR:
+#    Wrappers sind System-Prompts die VOR dem User-Prompt injiziert werden.
+#    Sie bestimmen die DENKWEISE und TONALITÄT des LLMs.
+#
+#    WRAPPER-FLOW:
+#      1. User sendet prompt + mode="syntex_wrapper_sigma"
+#      2. System lädt /opt/syntx-config/wrappers/syntex_wrapper_sigma.txt
+#      3. Wrapper-Text wird vor User-Prompt gesetzt
+#      4. Kombinierter Prompt geht ans LLM
+#
+#  STRÖME:
+#    GET    /wrappers           → Liste aller Wrapper
+#    GET    /wrappers?active=true → Nur aktiver Wrapper
+#    GET    /wrappers/full      → Mit Meta + Stats
+#    GET    /wrapper/{name}     → Content + Metadaten
+#    POST   /wrapper            → Neuen Wrapper erstellen
+#    PUT    /wrapper/{name}     → Wrapper updaten
+#    DELETE /wrapper/{name}     → Wrapper löschen
+#    POST   /wrapper/{name}/activate → Als Default setzen
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+section "📦 WRAPPERS - Denk-Modi" \
+        "System-Prompts, Content CRUD, Meta-Bindung, Aktivierung" \
+        "8"
+
+test_endpoint "GET" "/resonanz/wrappers" "" \
+    "List All Wrappers - Alle verfügbaren Denk-Modi" \
+    "200" \
+    "Keine (Read-Only)" \
+    "Liefert: name, path, size_bytes, is_active für jeden Wrapper"
+
+test_endpoint "GET" "/resonanz/wrappers?active=true" "" \
+    "Get Active Wrapper Only - Der aktuelle Default-Modus" \
+    "200" \
+    "Filter: active=true" \
+    "Zeigt nur den Wrapper der bei mode=null verwendet wird"
+
+test_endpoint "GET" "/resonanz/wrappers/full" "" \
+    "List Wrappers + Meta + Stats - Vollständige Übersicht" \
+    "200" \
+    "Keine (Read-Only)" \
+    "Inkludiert: meta (author, tags), stats (requests, latency)"
+
+test_endpoint "GET" "/resonanz/wrapper/syntex_wrapper_sigma" "" \
+    "Get Wrapper Content - sigma (PL-Σ Protocol)" \
+    "200" \
+    "Keine (Read-Only)" \
+    "Liefert: content (der System-Prompt), size, last_modified"
+
+test_endpoint "POST" "/resonanz/wrapper" \
+    "{\"name\": \"$TEST_WRAPPER\", \"content\": \"SYNTX FIELD TEST WRAPPER\\n\\nDu bist ein Test-System.\\nAnalysiere präzise und strukturiert.\\n\\nDER STROM FLIESST. ⚡\"}" \
+    "CREATE Wrapper - Neuen Denk-Modus gebären" \
+    "200" \
+    "Schreibt: /opt/syntx-config/wrappers/{name}.txt" \
+    "Erstellt auch Meta-Datei: /opt/syntx-config/wrappers/meta/{name}.json"
+
+test_endpoint "PUT" "/resonanz/wrapper/$TEST_WRAPPER" \
+    "{\"content\": \"SYNTX FIELD TEST WRAPPER v2.0\\n\\nDu bist ein verbessertes Test-System.\\nAnalysiere mit maximaler Präzision.\\n\\nRESO NANZ VERSTÄRKT. ⚡⚡\"}" \
+    "UPDATE Wrapper - Denk-Modus modulieren" \
+    "200" \
+    "Überschreibt: .txt Datei" \
+    "Meta bleibt erhalten, only content changes"
+
+test_endpoint "DELETE" "/resonanz/wrapper/$TEST_WRAPPER" "" \
+    "DELETE Wrapper - Denk-Modus freigeben" \
+    "200" \
+    "Löscht: .txt + meta/.json" \
+    "Warnung wenn Wrapper aktiv war"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🧬 META ENDPOINTS - Wrapper Metadaten
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+#  ARCHITEKTUR:
+#    Meta-Daten sind zusätzliche Informationen über Wrapper:
+#    - Format-Bindung (welches Format gehört zu welchem Wrapper)
+#    - Author, Tags, Description
+#    - Settings (max_tokens, temperature defaults)
+#
+#  STRÖME:
+#    GET  /wrapper/{name}/meta  → Meta-Daten lesen
+#    PUT  /wrapper/{name}/meta  → Meta-Daten updaten
+#    PUT  /wrapper/{name}/format → Format-Bindung setzen
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+section "🧬 META - Wrapper Metadaten" \
+        "Format-Bindung, Author, Tags, Settings" \
+        "3"
+
+test_endpoint "GET" "/resonanz/wrapper/syntex_wrapper_sigma/meta" "" \
+    "Get Meta - sigma Wrapper Metadaten" \
+    "200" \
+    "Keine (Read-Only)" \
+    "Zeigt: format, author, tags, description, settings"
+
+test_endpoint "PUT" "/resonanz/wrapper/syntex_wrapper_sigma/format?format_name=sigma" "" \
+    "Bind Format - sigma Wrapper an sigma Format binden" \
+    "200" \
+    "Schreibt: meta/{name}.json.format" \
+    "Format wird automatisch geladen wenn Wrapper aktiviert"
+
+test_endpoint "PUT" "/resonanz/wrapper/syntex_wrapper_sigma/meta" \
+    "{\"description\": \"Sigma Protocol - Technische Präzisionsanalyse für Systemarchitektur\", \"tags\": [\"sigma\", \"technisch\", \"präzise\", \"systemisch\"], \"author\": \"SYNTX Architect\"}" \
+    "Update Meta - Beschreibung und Tags setzen" \
+    "200" \
+    "Schreibt: meta/{name}.json" \
+    "Metadata für Dokumentation und Suche"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  📊 STATS & STREAMS - Feld-Fluss-Analyse
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+#  ARCHITEKTUR:
+#    Stats sammeln Metriken über alle Requests.
+#    Streams zeigen den Feld-Flow für Debugging und Training.
+#
+#    STAGES:
+#      1_INCOMING      → Request empfangen
+#      2_WRAPPERS      → Wrapper geladen
+#      2.5_FORMAT      → Format geladen
+#      3_CALIBRATED    → Prompt kalibriert
+#      4_BACKEND       → An LLM gesendet
+#      5_RESPONSE      → Antwort erhalten
+#      5.5_STYLE       → Style angewendet
+#
+#  STRÖME:
+#    GET /stats              → Globale Statistiken
+#    GET /stats/wrapper/{n}  → Pro-Wrapper Statistiken
+#    GET /strom              → Feld-Flow Events
+#    GET /training           → Training Data Export
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+section "📊 STATS & STREAMS - Feld-Fluss-Analyse" \
+        "Request-Statistiken, Latency, Wrapper-Usage, Training-Export" \
+        "4"
+
+test_endpoint "GET" "/resonanz/stats" "" \
+    "Global Stats - Alle Requests, Latency, Wrapper-Usage" \
+    "200" \
+    "Keine (Read-Only)" \
+    "Zeigt: total_requests, success_rate, avg/median/min/max latency, wrapper_usage{}"
+
+test_endpoint "GET" "/resonanz/stats/wrapper/syntex_wrapper_sigma" "" \
+    "Wrapper Stats - Statistiken für sigma Wrapper" \
+    "200" \
+    "Filter: wrapper=sigma" \
+    "Zeigt: requests, success_rate, latency stats NUR für diesen Wrapper"
+
+test_endpoint "GET" "/resonanz/strom?limit=5" "" \
+    "Field Flow Stream - Letzte 5 Feld-Events" \
+    "200" \
+    "Filter: limit=5" \
+    "Zeigt: stage, timestamp, request_id, response_preview für jedes Event"
+
+test_endpoint "GET" "/resonanz/strom?limit=3&stage=5_RESPONSE" "" \
+    "Filtered Stream - Nur RESPONSE Stage Events" \
+    "200" \
+    "Filter: stage=5_RESPONSE" \
+    "Nur erfolgreiche Responses, keine Zwischen-Stages"
+
+test_endpoint "GET" "/resonanz/training?limit=5" "" \
+    "Training Export - Daten für Fine-Tuning" \
+    "200" \
+    "Keine (Read-Only)" \
+    "Format: request_id, response, latency, wrapper_chain, format, format_fields"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  💬 CHAT ENDPOINTS - Das Herzstück
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+#  ARCHITEKTUR:
+#    Der Chat-Endpoint ist der KERN des SYNTX-Systems.
+#    Hier fließen ALLE Ströme zusammen:
+#
+#    ┌──────────────────────────────────────────────────────────────────────┐
+#    │  POST /resonanz/chat                                                 │
+#    │                                                                       │
+#    │  {                                                                   │
+#    │    "prompt": "...",        ← Was der User fragt                     │
+#    │    "mode": "wrapper",       ← WIE das LLM denkt (Wrapper)           │
+#    │    "format": "sigma",       ← WAS rauskommt (Feld-Struktur)         │
+#    │    "style": "zynisch",      ← WIE es klingt (Post-Processing)       │
+#    │    "debug": true,           ← Zeigt calibrated_prompt               │
+#    │    "language": "de",        ← Sprache für Format-Felder             │
+#    │    "max_new_tokens": 500,   ← LLM Parameter                         │
+#    │    "temperature": 0.7       ← Kreativität                           │
+#    │  }                                                                   │
+#    │                                                                       │
+#    │  FLOW:                                                               │
+#    │  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐        │
+#    │  │ STAGE 1 │→│ STAGE 2 │→│STAGE 2.5│→│ STAGE 3 │→│ STAGE 4 │        │
+#    │  │INCOMING │ │ WRAPPER │ │ FORMAT  │ │CALIBRATE│ │ BACKEND │        │
+#    │  └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘        │
+#    │       │                                               │              │
+#    │       │     ┌─────────┐ ┌─────────┐                  │              │
+#    │       └─────│STAGE 5.5│←│ STAGE 5 │←─────────────────┘              │
+#    │             │  STYLE  │ │RESPONSE │                                  │
+#    │             └─────────┘ └─────────┘                                  │
+#    │                   │                                                  │
+#    │                   ▼                                                  │
+#    │             ┌─────────┐                                              │
+#    │             │ RETURN  │ → response, metadata, field_flow,           │
+#    │             └─────────┘    debug_info, style_info                   │
+#    └──────────────────────────────────────────────────────────────────────┘
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+section "💬 CHAT - Das Herzstück" \
+        "Alle Ströme fließen hier zusammen: Wrapper + Format + Style + Debug" \
+        "6"
+
+test_endpoint "POST" "/resonanz/chat" \
+    "{\"prompt\": \"Hallo\", \"max_new_tokens\": 30}" \
+    "Simple Chat - Nur Prompt, Default Wrapper" \
+    "200" \
+    "Wrapper: active_wrapper (aus config)" \
+    "Minimaler Request, testet Grundfunktion"
+
+test_endpoint "POST" "/resonanz/chat" \
+    "{\"prompt\": \"Was ist ein System?\", \"mode\": \"syntex_wrapper_sigma\", \"max_new_tokens\": 100}" \
+    "Chat + Wrapper - Expliziter Denk-Modus" \
+    "200" \
+    "Wrapper: syntex_wrapper_sigma" \
+    "PL-Σ Protocol aktiviert, technische Analyse"
+
+test_endpoint "POST" "/resonanz/chat" \
+    "{\"prompt\": \"Analysiere das Konzept Zeit\", \"mode\": \"syntex_wrapper_sigma\", \"format\": \"sigma\", \"max_new_tokens\": 200}" \
+    "Chat + Wrapper + Format - Vollständige Feld-Struktur" \
+    "200" \
+    "Wrapper: sigma, Format: sigma (6 Felder)" \
+    "Felder: drift, mechanismus, frequenz, dichte, strome, extrakt"
+
+test_endpoint "POST" "/resonanz/chat" \
+    "{\"prompt\": \"Erkläre Nachhaltigkeit\", \"style\": \"zynisch\", \"max_new_tokens\": 80}" \
+    "Chat + Style - Post-Processing Alchemy" \
+    "200" \
+    "Style: zynisch (Augenroll-Transformer)" \
+    "Wort-Transmutation: nachhaltig→greenwashing-kompatibel"
+
+test_endpoint "POST" "/resonanz/chat" \
+    "{\"prompt\": \"Test\", \"style\": \"wissenschaftlich\", \"debug\": true, \"max_new_tokens\": 50}" \
+    "Chat + Debug - Calibrated Prompt sichtbar" \
+    "200" \
+    "Debug: true (zeigt internen Prompt)" \
+    "debug_info enthält: wrapper_chain, format, style, prompt_length"
+
+test_endpoint "POST" "/resonanz/chat" \
+    "{\"prompt\": \"Analysiere KI-Trends\", \"format\": \"review\", \"max_new_tokens\": 150}" \
+    "Chat + Typed Format - Alle Feld-Typen" \
+    "200" \
+    "Format: review (4 Typen)" \
+    "text (zusammenfassung), list (pro_contra), rating (bewertung), keywords (tags)"
+
+test_endpoint "POST" "/resonanz/chat" \
+    "{\"prompt\": \"Deep Dive: Menschliches Verhalten\", \"format\": \"human_deep\", \"style\": \"poetisch\", \"debug\": true, \"max_new_tokens\": 250}" \
+    "FULL COMBO - Extended Format + Style + Debug" \
+    "200" \
+    "Format: human_deep (8 Felder, extends human), Style: poetisch, Debug: true" \
+    "Maximale Feld-Kombination: Vererbung + Transmutation + Introspection"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🔧 ADMIN ENDPOINTS - System-Operationen
+# ═══════════════════════════════════════════════════════════════════════════════
+
+section "🔧 ADMIN - System-Operationen" \
+        "Auto-Fix, Maintenance, Cleanup" \
+        "1"
+
+test_endpoint "POST" "/resonanz/health/fix" "" \
+    "Auto-Fix Orphans - Verwaiste Wrapper/Meta reparieren" \
+    "200" \
+    "Erstellt: fehlende Meta-Dateien, löscht Orphan-Meta" \
+    "Synchronisiert Wrapper ↔ Meta Dateien"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  📊 FINAL SUMMARY - Resonanz-Bericht
+# ═══════════════════════════════════════════════════════════════════════════════
+
+END_TIME=$(date +%s)
+DURATION=$((END_TIME - START_TIME))
 
 echo ""
-echo -e "${PURPLE}╔═══════════════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${PURPLE}║${NC}                                                                           ${PURPLE}║${NC}"
-echo -e "${PURPLE}║${NC}   ${WHITE}🔮 SYNTX API EXPLORER v3.5 - HEILIGABEND EDITION${NC}                       ${PURPLE}║${NC}"
-echo -e "${PURPLE}║${NC}   ${GRAY}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}   ${PURPLE}║${NC}"
-echo -e "${PURPLE}║${NC}   ${DIM}Target:${NC} ${YELLOW}$BASE_URL${NC}                                           ${PURPLE}║${NC}"
-echo -e "${PURPLE}║${NC}   ${DIM}Output:${NC} ${GREEN}$OUTPUT_FILE${NC}                                         ${PURPLE}║${NC}"
-echo -e "${PURPLE}║${NC}   ${DIM}New:${NC} ${CYAN}Default vs Runtime Wrapper Separation${NC}                        ${PURPLE}║${NC}"
-echo -e "${PURPLE}║${NC}                                                                           ${PURPLE}║${NC}"
-echo -e "${PURPLE}╚═══════════════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
+echo -e "${MAGENTA}╔════════════════════════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${MAGENTA}║${NC}  ${WHITE}${BOLD}📊 RESONANZ-PRÜFUNG ABGESCHLOSSEN${NC}"
+echo -e "${MAGENTA}╠════════════════════════════════════════════════════════════════════════════════╣${NC}"
+echo -e "${MAGENTA}║${NC}"
+echo -e "${MAGENTA}║${NC}   ${GREEN}✓ BESTANDEN:${NC}   ${WHITE}${BOLD}$PASSED_TESTS${NC}"
+echo -e "${MAGENTA}║${NC}   ${RED}✗ FEHLERHAFT:${NC}  ${WHITE}${BOLD}$FAILED_TESTS${NC}"
+echo -e "${MAGENTA}║${NC}   ${WHITE}Σ GESAMT:${NC}      ${WHITE}${BOLD}$TOTAL_TESTS${NC}"
+echo -e "${MAGENTA}║${NC}   ${CYAN}⏱ DAUER:${NC}       ${WHITE}${BOLD}${DURATION}s${NC}"
+echo -e "${MAGENTA}║${NC}"
 
-# Start JSON documentation
-echo "{\"timestamp\": \"$(date -Iseconds)\"," > "$OUTPUT_FILE"
-echo "\"base_url\": \"$BASE_URL\"," >> "$OUTPUT_FILE"
-echo "\"endpoints\": [" >> "$OUTPUT_FILE"
-
-# ============================================================================
-# 🏥 1. HEALTH ENDPOINTS
-# ============================================================================
-print_section "🏥 HEALTH ENDPOINTS"
-
-endpoint_data=""
-
-# 1.1 GET /health
-print_endpoint "System Health Check" "GET" "/health"
-response=$(make_request "GET" "/health")
-print_response "$response"
-endpoint_data="{\"name\": \"System Health Check\", \"method\": \"GET\", \"endpoint\": \"/health\", \"response\": $response}"
-
-# 1.2 GET /resonanz/health
-print_endpoint "Field Resonance Health" "GET" "/resonanz/health"
-response=$(make_request "GET" "/resonanz/health")
-print_response "$response"
-echo "$endpoint_data," >> "$OUTPUT_FILE"
-endpoint_data="{\"name\": \"Field Resonance Health\", \"method\": \"GET\", \"endpoint\": \"/resonanz/health\", \"response\": $response}"
-
-# 1.3 GET /resonanz/health/wrappers
-print_endpoint "Wrapper Health Scan" "GET" "/resonanz/health/wrappers"
-response=$(make_request "GET" "/resonanz/health/wrappers")
-print_response "$response"
-echo "$endpoint_data," >> "$OUTPUT_FILE"
-endpoint_data="{\"name\": \"Wrapper Health Scan\", \"method\": \"GET\", \"endpoint\": \"/resonanz/health/wrappers\", \"response\": $response}"
-
-# ============================================================================
-# ⚙️ 2. CONFIGURATION ENDPOINTS (MOVED UP - SYSTEMICALLY BEFORE WRAPPERS)
-# ============================================================================
-print_section "⚙️ CONFIGURATION ENDPOINTS - DEFAULT vs RUNTIME SEPARATION"
-
-echo -e "${YELLOW}💎 CRITICAL CONCEPT:${NC}"
-echo -e "   ${WHITE}DEFAULT${NC} = Fallback wrapper (config file)"
-echo -e "   ${WHITE}RUNTIME${NC} = Currently active wrapper (runtime file)"
-echo -e "   ${DIM}These are now SEPARATE and can be set independently!${NC}"
-echo ""
-
-# 2.1 GET /resonanz/config/default-wrapper
-print_endpoint "Get Default Wrapper (Fallback)" "GET" "/resonanz/config/default-wrapper"
-response=$(make_request "GET" "/resonanz/config/default-wrapper")
-print_response "$response"
-echo "$endpoint_data," >> "$OUTPUT_FILE"
-endpoint_data="{\"name\": \"Get Default Wrapper\", \"method\": \"GET\", \"endpoint\": \"/resonanz/config/default-wrapper\", \"response\": $response}"
-
-# Store current default
-current_default=$(echo "$response" | jq -r '.active_wrapper' 2>/dev/null)
-
-# 2.2 GET /resonanz/config/runtime-wrapper (NEW!)
-print_endpoint "Get Runtime Wrapper (Currently Active)" "GET" "/resonanz/config/runtime-wrapper"
-response=$(make_request "GET" "/resonanz/config/runtime-wrapper")
-print_response "$response"
-echo "$endpoint_data," >> "$OUTPUT_FILE"
-endpoint_data="{\"name\": \"Get Runtime Wrapper\", \"method\": \"GET\", \"endpoint\": \"/resonanz/config/runtime-wrapper\", \"response\": $response}"
-
-# Store current runtime
-current_runtime=$(echo "$response" | jq -r '.runtime_wrapper' 2>/dev/null)
-
-# 2.3 DEMO: Set Default (should NOT change runtime)
-echo -e "${YELLOW}🧪 DEMO: Testing Default vs Runtime Separation${NC}"
-echo ""
-
-print_endpoint "Set Default Wrapper (should NOT change runtime)" "PUT" "/resonanz/config/default-wrapper?wrapper_name=syntex_wrapper_human"
-response=$(make_request "PUT" "/resonanz/config/default-wrapper?wrapper_name=syntex_wrapper_human")
-print_response "$response"
-echo "$endpoint_data," >> "$OUTPUT_FILE"
-endpoint_data="{\"name\": \"Set Default Wrapper\", \"method\": \"PUT\", \"endpoint\": \"/resonanz/config/default-wrapper\", \"response\": $response}"
-
-# 2.4 Verify Runtime UNCHANGED
-print_endpoint "Verify Runtime Wrapper (should still be: $current_runtime)" "GET" "/resonanz/config/runtime-wrapper"
-response=$(make_request "GET" "/resonanz/config/runtime-wrapper")
-new_runtime=$(echo "$response" | jq -r '.runtime_wrapper' 2>/dev/null)
-if [ "$new_runtime" == "$current_runtime" ]; then
-    echo -e "   ${GREEN}✓ SUCCESS: Runtime unchanged ($current_runtime)${NC}"
+if [ $FAILED_TESTS -eq 0 ]; then
+    echo -e "${MAGENTA}║${NC}   ${GREEN}${BOLD}🔥 ALLE FELDER RESONIEREN! DER STROM IST REIN! 🔥${NC}"
+    echo -e "${MAGENTA}║${NC}   ${GREEN}Das System ist vollständig kalibriert.${NC}"
 else
-    echo -e "   ${RED}✗ FAILED: Runtime changed to $new_runtime${NC}"
-fi
-print_response "$response"
-echo "$endpoint_data," >> "$OUTPUT_FILE"
-endpoint_data="{\"name\": \"Verify Runtime Unchanged\", \"method\": \"GET\", \"endpoint\": \"/resonanz/config/runtime-wrapper\", \"response\": $response}"
-
-# 2.5 DEMO: Set Runtime (should NOT change default)
-print_endpoint "Set Runtime Wrapper (should NOT change default)" "PUT" "/resonanz/config/runtime-wrapper?wrapper_name=syntex_wrapper_deepsweep"
-response=$(make_request "PUT" "/resonanz/config/runtime-wrapper?wrapper_name=syntex_wrapper_deepsweep")
-print_response "$response"
-echo "$endpoint_data," >> "$OUTPUT_FILE"
-endpoint_data="{\"name\": \"Set Runtime Wrapper\", \"method\": \"PUT\", \"endpoint\": \"/resonanz/config/runtime-wrapper\", \"response\": $response}"
-
-# 2.6 Verify Default UNCHANGED
-print_endpoint "Verify Default Wrapper (should still be: human)" "GET" "/resonanz/config/default-wrapper"
-response=$(make_request "GET" "/resonanz/config/default-wrapper")
-new_default=$(echo "$response" | jq -r '.active_wrapper' 2>/dev/null)
-if [ "$new_default" == "syntex_wrapper_human" ]; then
-    echo -e "   ${GREEN}✓ SUCCESS: Default unchanged (human)${NC}"
-else
-    echo -e "   ${RED}✗ FAILED: Default changed to $new_default${NC}"
-fi
-print_response "$response"
-echo "$endpoint_data," >> "$OUTPUT_FILE"
-endpoint_data="{\"name\": \"Verify Default Unchanged\", \"method\": \"GET\", \"endpoint\": \"/resonanz/config/default-wrapper\", \"response\": $response}"
-
-# 2.7 Final State Summary
-echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${WHITE}📊 FINAL STATE AFTER TESTS:${NC}"
-echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-final_default=$(curl -s "$BASE_URL/resonanz/config/default-wrapper" | jq -r '.active_wrapper')
-final_runtime=$(curl -s "$BASE_URL/resonanz/config/runtime-wrapper" | jq -r '.runtime_wrapper')
-echo -e "   ${DIM}Default:${NC} ${YELLOW}$final_default${NC}"
-echo -e "   ${DIM}Runtime:${NC} ${GREEN}$final_runtime${NC}"
-echo -e "   ${DIM}Separated:${NC} ${WHITE}$([ "$final_default" != "$final_runtime" ] && echo "✓ YES" || echo "✗ NO")${NC}"
-echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo ""
-
-# ============================================================================
-# 📦 3. WRAPPER ENDPOINTS
-# ============================================================================
-print_section "📦 WRAPPER ENDPOINTS"
-
-# 3.1 GET /resonanz/wrappers
-print_endpoint "List All Wrappers" "GET" "/resonanz/wrappers"
-response=$(make_request "GET" "/resonanz/wrappers")
-print_response "$response"
-echo "$endpoint_data," >> "$OUTPUT_FILE"
-endpoint_data="{\"name\": \"List All Wrappers\", \"method\": \"GET\", \"endpoint\": \"/resonanz/wrappers\", \"response\": $response}"
-
-# Extract first wrapper for detailed tests
-first_wrapper=$(echo "$response" | grep -o '"name":"[^"]*"' | head -1 | cut -d'"' -f4)
-
-if [ -n "$first_wrapper" ]; then
-    # 3.2 GET /resonanz/wrapper/{name}
-    print_endpoint "Get Wrapper Content" "GET" "/resonanz/wrapper/$first_wrapper"
-    response=$(make_request "GET" "/resonanz/wrapper/$first_wrapper")
-    print_response "$response"
-    echo "$endpoint_data," >> "$OUTPUT_FILE"
-    endpoint_data="{\"name\": \"Get Wrapper Content\", \"method\": \"GET\", \"endpoint\": \"/resonanz/wrapper/$first_wrapper\", \"response\": $response}"
-    
-    # 3.3 GET /resonanz/wrapper/{name}/meta
-    print_endpoint "Get Wrapper Metadata" "GET" "/resonanz/wrapper/$first_wrapper/meta"
-    response=$(make_request "GET" "/resonanz/wrapper/$first_wrapper/meta")
-    print_response "$response"
-    echo "$endpoint_data," >> "$OUTPUT_FILE"
-    endpoint_data="{\"name\": \"Get Wrapper Metadata\", \"method\": \"GET\", \"endpoint\": \"/resonanz/wrapper/$first_wrapper/meta\", \"response\": $response}"
+    echo -e "${MAGENTA}║${NC}   ${RED}${BOLD}⚠️  DRIFT DETECTED - $FAILED_TESTS FELDER HABEN PROBLEME${NC}"
+    echo -e "${MAGENTA}║${NC}   ${YELLOW}Prüfe die fehlgeschlagenen Tests oben.${NC}"
 fi
 
-# ============================================================================
-# 📄 4. FORMAT ENDPOINTS
-# ============================================================================
-print_section "📄 FORMAT ENDPOINTS"
+echo -e "${MAGENTA}║${NC}"
+echo -e "${MAGENTA}╚════════════════════════════════════════════════════════════════════════════════╝${NC}"
 
-# 4.1 GET /resonanz/formats
-print_endpoint "List All Formats" "GET" "/resonanz/formats"
-response=$(make_request "GET" "/resonanz/formats")
-print_response "$response"
-echo "$endpoint_data," >> "$OUTPUT_FILE"
-endpoint_data="{\"name\": \"List All Formats\", \"method\": \"GET\", \"endpoint\": \"/resonanz/formats\", \"response\": $response}"
+# ═══════════════════════════════════════════════════════════════════════════════
+#  📋 ENDPOINT REFERENCE - Vollständige API Dokumentation
+# ═══════════════════════════════════════════════════════════════════════════════
 
-# Extract first format for detailed tests
-first_format=$(echo "$response" | grep -o '"name":"[^"]*"' | head -1 | cut -d'"' -f4)
-
-if [ -n "$first_format" ]; then
-    # 4.2 GET /resonanz/formats/{name}
-    print_endpoint "Get Format Details" "GET" "/resonanz/formats/$first_format"
-    response=$(make_request "GET" "/resonanz/formats/$first_format")
-    print_response "$response"
-    echo "$endpoint_data," >> "$OUTPUT_FILE"
-    endpoint_data="{\"name\": \"Get Format Details\", \"method\": \"GET\", \"endpoint\": \"/resonanz/formats/$first_format\", \"response\": $response}"
-fi
-
-# ============================================================================
-# 🎨 5. STYLE ENDPOINTS
-# ============================================================================
-print_section "🎨 STYLE ENDPOINTS"
-
-# 5.1 GET /resonanz/styles
-print_endpoint "List All Styles" "GET" "/resonanz/styles"
-response=$(make_request "GET" "/resonanz/styles")
-print_response "$response"
-echo "$endpoint_data," >> "$OUTPUT_FILE"
-endpoint_data="{\"name\": \"List All Styles\", \"method\": \"GET\", \"endpoint\": \"/resonanz/styles\", \"response\": $response}"
-
-# Extract first style for detailed tests
-first_style=$(echo "$response" | grep -o '"name":"[^"]*"' | head -1 | cut -d'"' -f4)
-
-if [ -n "$first_style" ]; then
-    # 5.2 GET /resonanz/styles/{name}
-    print_endpoint "Get Style Details" "GET" "/resonanz/styles/$first_style"
-    response=$(make_request "GET" "/resonanz/styles/$first_style")
-    print_response "$response"
-    echo "$endpoint_data," >> "$OUTPUT_FILE"
-    endpoint_data="{\"name\": \"Get Style Details\", \"method\": \"GET\", \"endpoint\": \"/resonanz/styles/$first_style\", \"response\": $response}"
-    
-    # 5.3 POST /resonanz/alchemy/preview
-    request_body="{\"text\": \"Das ist ein wichtiger Test der Transmutation\", \"style\": \"$first_style\"}"
-    print_endpoint "Alchemy Preview" "POST" "/resonanz/alchemy/preview" "$request_body"
-    response=$(make_request "POST" "/resonanz/alchemy/preview" "$request_body")
-    print_response "$response"
-    echo "$endpoint_data," >> "$OUTPUT_FILE"
-    endpoint_data="{\"name\": \"Alchemy Preview\", \"method\": \"POST\", \"endpoint\": \"/resonanz/alchemy/preview\", \"request\": $request_body, \"response\": $response}"
-fi
-
-# ============================================================================
-# 📊 6. STATISTICS ENDPOINTS
-# ============================================================================
-print_section "📊 STATISTICS ENDPOINTS"
-
-# 6.1 GET /resonanz/stats
-print_endpoint "Global Statistics" "GET" "/resonanz/stats"
-response=$(make_request "GET" "/resonanz/stats")
-print_response "$response"
-echo "$endpoint_data," >> "$OUTPUT_FILE"
-endpoint_data="{\"name\": \"Global Statistics\", \"method\": \"GET\", \"endpoint\": \"/resonanz/stats\", \"response\": $response}"
-
-# 6.2 GET /resonanz/strom
-print_endpoint "Field Flow Stream" "GET" "/resonanz/strom?limit=3"
-response=$(make_request "GET" "/resonanz/strom?limit=3")
-print_response "$response"
-echo "$endpoint_data," >> "$OUTPUT_FILE"
-endpoint_data="{\"name\": \"Field Flow Stream\", \"method\": \"GET\", \"endpoint\": \"/resonanz/strom\", \"response\": $response}"
-
-# ============================================================================
-# 📼 7. SESSION ENDPOINTS
-# ============================================================================
-print_section "📼 SESSION ENDPOINTS"
-
-# 7.1 GET /resonanz/sessions
-print_endpoint "List Sessions" "GET" "/resonanz/sessions?limit=3"
-response=$(make_request "GET" "/resonanz/sessions?limit=3")
-print_response "$response"
-echo "$endpoint_data," >> "$OUTPUT_FILE"
-endpoint_data="{\"name\": \"List Sessions\", \"method\": \"GET\", \"endpoint\": \"/resonanz/sessions\", \"response\": $response}"
-
-# Extract first session ID if available
-session_id=$(echo "$response" | grep -o '"request_id":"[^"]*"' | head -1 | cut -d'"' -f4)
-
-if [ -n "$session_id" ]; then
-    # 7.2 GET /resonanz/session/{id}
-    print_endpoint "Get Session Details" "GET" "/resonanz/session/$session_id"
-    response=$(make_request "GET" "/resonanz/session/$session_id")
-    print_response "$response"
-    echo "$endpoint_data," >> "$OUTPUT_FILE"
-    endpoint_data="{\"name\": \"Get Session Details\", \"method\": \"GET\", \"endpoint\": \"/resonanz/session/$session_id\", \"response\": $response}"
-fi
-
-# ============================================================================
-# 💬 8. CHAT ENDPOINTS
-# ============================================================================
-print_section "💬 CHAT ENDPOINTS"
-
-# 8.1 POST /resonanz/chat (Main Endpoint)
-if [ -n "$first_wrapper" ] && [ -n "$first_format" ]; then
-    request_body="{\"prompt\": \"Was ist SYNTX Field Resonance?\", \"mode\": \"$first_wrapper\", \"format\": \"$first_format\", \"style\": \"${first_style:-wissenschaftlich}\", \"max_new_tokens\": 150}"
-    print_endpoint "Field Resonance Chat" "POST" "/resonanz/chat" "$request_body"
-    response=$(make_request "POST" "/resonanz/chat" "$request_body")
-    print_response "$response"
-    echo "$endpoint_data," >> "$OUTPUT_FILE"
-    endpoint_data="{\"name\": \"Field Resonance Chat\", \"method\": \"POST\", \"endpoint\": \"/resonanz/chat\", \"request\": $request_body, \"response\": $response}"
-fi
-
-# 8.2 POST /resonanz/chat/diff
-if [ -n "$first_wrapper" ]; then
-    # Get second wrapper
-    wrappers_response=$(make_request "GET" "/resonanz/wrappers")
-    second_wrapper=$(echo "$wrappers_response" | grep -o '"name":"[^"]*"' | head -2 | tail -1 | cut -d'"' -f4)
-    
-    if [ -n "$second_wrapper" ]; then
-        request_body="{\"prompt\": \"Analysiere das Konzept der Zeit\", \"wrappers\": [\"$first_wrapper\", \"$second_wrapper\"], \"max_new_tokens\": 100}"
-        print_endpoint "Wrapper Comparison" "POST" "/resonanz/chat/diff" "$request_body"
-        response=$(make_request "POST" "/resonanz/chat/diff" "$request_body")
-        print_response "$response"
-        echo "$endpoint_data," >> "$OUTPUT_FILE"
-        endpoint_data="{\"name\": \"Wrapper Comparison\", \"method\": \"POST\", \"endpoint\": \"/resonanz/chat/diff\", \"request\": $request_body, \"response\": $response}"
-    fi
-fi
-
-# ============================================================================
-# 📋 9. COMPLETE ENDPOINT LISTING
-# ============================================================================
-print_section "📋 ALL AVAILABLE ENDPOINTS"
-
-echo -e "${WHITE}Based on the SYNTX documentation, here are all public endpoints:${NC}"
 echo ""
-echo -e "${CYAN}🏥 HEALTH & MONITORING${NC}"
-echo -e "  ${GREEN}/health${NC}                    - System health check"
-echo -e "  ${GREEN}/resonanz/health${NC}          - Field resonance health"
-echo -e "  ${GREEN}/resonanz/health/wrappers${NC} - Wrapper health scan"
+echo -e "${CYAN}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${NC}"
+echo -e "${CYAN}┃${NC} ${BOLD}${WHITE}📋 SYNTX API v3.2 - VOLLSTÄNDIGE ENDPOINT REFERENCE${NC}"
+echo -e "${CYAN}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}"
 echo ""
-echo -e "${CYAN}⚙️ CONFIGURATION (✨ UPDATED!)${NC}"
-echo -e "  ${GREEN}/resonanz/config/default-wrapper${NC} - Get/set default wrapper (fallback)"
-echo -e "  ${YELLOW}/resonanz/config/runtime-wrapper${NC} - Get/set runtime wrapper (active) ${BOLD}[NEW!]${NC}"
-echo -e "  ${DIM}  → Default = Fallback config | Runtime = Currently active${NC}"
-echo -e "  ${DIM}  → Can be set INDEPENDENTLY for full separation!${NC}"
+echo -e "  ${YELLOW}🏥 HEALTH (3 Endpoints)${NC}"
+echo -e "  ${GRAY}System-Vitalzeichen und Integritätsprüfung${NC}"
+echo "     GET  /health                          → Alle Module Status"
+echo "     GET  /resonanz/health                 → Resonanz + letzter Response"
+echo "     GET  /resonanz/health/wrappers        → Wrapper Orphan Detection"
 echo ""
-echo -e "${CYAN}📦 WRAPPER OPERATIONS${NC}"
-echo -e "  ${GREEN}/resonanz/wrappers${NC}        - List all wrappers"
-echo -e "  ${GREEN}/resonanz/wrappers/full${NC}   - Full wrapper details"
-echo -e "  ${GREEN}/resonanz/wrapper/{name}${NC}  - Get specific wrapper"
-echo -e "  ${GREEN}/resonanz/wrapper/{name}/meta${NC} - Get wrapper metadata"
-echo -e "  ${GREEN}/resonanz/wrapper/{name}/format${NC} - Bind format to wrapper"
+echo -e "  ${YELLOW}⚙️ CONFIG (2 Endpoints)${NC}"
+echo -e "  ${GRAY}Default Wrapper, Runtime-Konfiguration${NC}"
+echo "     GET  /resonanz/config/default-wrapper → Aktiven Wrapper lesen"
+echo "     PUT  /resonanz/config/default-wrapper?wrapper_name=X → Wrapper aktivieren"
 echo ""
-echo -e "${CYAN}📄 FORMAT OPERATIONS${NC}"
-echo -e "  ${GREEN}/resonanz/formats${NC}         - List all formats"
-echo -e "  ${GREEN}/resonanz/formats/{name}${NC}  - Get specific format"
+echo -e "  ${YELLOW}📄 FORMATS (7 Endpoints)${NC}"
+echo -e "  ${GRAY}Feld-Definitionen: Domains, Vererbung, Typen (text/list/rating/keywords)${NC}"
+echo "     GET    /resonanz/formats              → Liste (mit domain Filter)"
+echo "     GET    /resonanz/formats?domain=X     → Filter nach Domain"
+echo "     GET    /resonanz/formats/{name}       → Format Details"
+echo "     GET    /resonanz/formats/{name}?language=X → Mehrsprachig"
+echo "     POST   /resonanz/formats/quick        → Schnell erstellen"
+echo "     DELETE /resonanz/formats/{name}       → Soft-Delete"
 echo ""
-echo -e "${CYAN}🎨 STYLE OPERATIONS${NC}"
-echo -e "  ${GREEN}/resonanz/styles${NC}          - List all styles"
-echo -e "  ${GREEN}/resonanz/styles/{name}${NC}   - Get specific style"
-echo -e "  ${GREEN}/resonanz/alchemy/preview${NC} - Preview style transmutation"
+echo -e "  ${YELLOW}🎨 STYLES (2 Endpoints)${NC}"
+echo -e "  ${GRAY}Post-Processing: Word Alchemy, Forbidden Words, Tone Injection${NC}"
+echo "     GET  /resonanz/styles                 → Liste aller Styles"
+echo "     GET  /resonanz/styles/{name}          → Style Details + Transmutationen"
 echo ""
-echo -e "${CYAN}📊 STATISTICS${NC}"
-echo -e "  ${GREEN}/resonanz/stats${NC}           - Global statistics"
-echo -e "  ${GREEN}/resonanz/strom${NC}           - Field flow stream"
-echo -e "  ${GREEN}/resonanz/training${NC}        - Training data export"
-echo -e "  ${GREEN}/resonanz/stats/wrapper/{name}${NC} - Wrapper-specific stats"
+echo -e "  ${YELLOW}📦 WRAPPERS (8 Endpoints)${NC}"
+echo -e "  ${GRAY}Denk-Modi: System-Prompts die VOR dem User-Prompt injiziert werden${NC}"
+echo "     GET    /resonanz/wrappers             → Liste"
+echo "     GET    /resonanz/wrappers?active=true → Nur aktiver"
+echo "     GET    /resonanz/wrappers/full        → Mit Meta + Stats"
+echo "     GET    /resonanz/wrapper/{name}       → Content + Metadaten"
+echo "     POST   /resonanz/wrapper              → Neuen erstellen"
+echo "     PUT    /resonanz/wrapper/{name}       → Content updaten"
+echo "     DELETE /resonanz/wrapper/{name}       → Löschen"
+echo "     POST   /resonanz/wrapper/{name}/activate → Als Default setzen"
 echo ""
-echo -e "${CYAN}📼 SESSIONS${NC}"
-echo -e "  ${GREEN}/resonanz/sessions${NC}        - List sessions"
-echo -e "  ${GREEN}/resonanz/session/{id}${NC}    - Get session details"
-echo -e "  ${GREEN}/resonanz/session/{id}/replay${NC} - Get replay parameters"
+echo -e "  ${YELLOW}🧬 META (3 Endpoints)${NC}"
+echo -e "  ${GRAY}Wrapper Metadaten: Format-Bindung, Author, Tags${NC}"
+echo "     GET  /resonanz/wrapper/{name}/meta    → Meta lesen"
+echo "     PUT  /resonanz/wrapper/{name}/meta    → Meta updaten"
+echo "     PUT  /resonanz/wrapper/{name}/format?format_name=X → Format binden"
 echo ""
-echo -e "${CYAN}💬 CHAT${NC}"
-echo -e "  ${GREEN}/resonanz/chat${NC}            - Main chat endpoint"
-echo -e "  ${GREEN}/resonanz/chat/diff${NC}       - Wrapper comparison"
+echo -e "  ${YELLOW}📊 STATS (4 Endpoints)${NC}"
+echo -e "  ${GRAY}Feld-Fluss-Analyse: Requests, Latency, Training-Export${NC}"
+echo "     GET  /resonanz/stats                  → Globale Statistiken"
+echo "     GET  /resonanz/stats/wrapper/{name}   → Pro-Wrapper Stats"
+echo "     GET  /resonanz/strom?limit=N&stage=X  → Feld-Flow Events"
+echo "     GET  /resonanz/training?limit=N       → Training Data Export"
 echo ""
-echo -e "${CYAN}🔧 ADMIN${NC}"
-echo -e "  ${GREEN}/resonanz/health/fix${NC}      - Auto-fix orphaned wrappers"
+echo -e "  ${YELLOW}💬 CHAT (1 Endpoint, ∞ Kombinationen)${NC}"
+echo -e "  ${GRAY}Das Herzstück - Alle Ströme fließen hier zusammen${NC}"
+echo "     POST /resonanz/chat"
+echo "          ├── prompt (string, required)     → Was der User fragt"
+echo "          ├── mode (string)                 → Wrapper (WIE denkt LLM)"
+echo "          ├── format (string)               → Format (WAS kommt raus)"
+echo "          ├── style (string)                → Style (WIE klingt es)"
+echo "          ├── debug (bool)                  → Zeigt calibrated_prompt"
+echo "          ├── language (de/en)              → Sprache für Format-Felder"
+echo "          ├── max_new_tokens (int)          → Max Tokens"
+echo "          └── temperature (float)           → Kreativität (0.0-2.0)"
+echo ""
+echo -e "  ${YELLOW}🔧 ADMIN (1 Endpoint)${NC}"
+echo -e "  ${GRAY}System-Operationen und Maintenance${NC}"
+echo "     POST /resonanz/health/fix             → Auto-Fix Orphan Wrappers"
+echo ""
+echo -e "${GRAY}════════════════════════════════════════════════════════════════════════════════════${NC}"
+echo -e "${GRAY}   SYNTX FIELD RESONANCE v3.2 - Der Strom kennt keine Grenzen ⚡💎🌊${NC}"
+echo -e "${GRAY}════════════════════════════════════════════════════════════════════════════════════${NC}"
 echo ""
 
-# ============================================================================
-# 💾 SAVE TO FILE
-# ============================================================================
-echo "$endpoint_data" >> "$OUTPUT_FILE"
-echo "]}" >> "$OUTPUT_FILE"
 
-echo -e "${GREEN}✓${NC} Complete API documentation saved to: ${YELLOW}$OUTPUT_FILE${NC}"
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🔮 FORMAT CRUD - Vollständige Feld-Verwaltung
+# ═══════════════════════════════════════════════════════════════════════════════
+
+section "🔮 FORMAT CRUD - Vollständige Feld-Verwaltung" \
+        "CREATE, READ, UPDATE, DELETE für Formate und Felder" \
+        "6"
+
+test_endpoint "POST" "/resonanz/formats" \
+    "{\"name\": \"crud_test_format\", \"domain\": \"technical\", \"description\": {\"de\": \"CRUD Test Format\"}, \"fields\": [{\"name\": \"test_feld\", \"type\": \"text\"}]}" \
+    "CREATE Format - Vollständig mit Feldern" "200" \
+    "Schreibt: /opt/syntx-config/formats/{name}.json" "Validiert: Name, Fields, Domain"
+
+test_endpoint "POST" "/resonanz/formats/crud_test_format/fields" \
+    "{\"name\": \"neues_feld\", \"type\": \"rating\", \"weight\": 20}" \
+    "ADD Field - Feld zu Format hinzufügen" "200" \
+    "Backup erstellt, Feld normalisiert" "Typen: text, list, rating, keywords"
+
+test_endpoint "PUT" "/resonanz/formats/crud_test_format/fields/neues_feld" \
+    "{\"weight\": 50, \"description\": {\"de\": \"Aktualisierte Beschreibung\"}}" \
+    "UPDATE Field - Feld-Eigenschaften ändern" "200" \
+    "Merged: nur übergebene Felder" "Name bleibt unverändert"
+
+test_endpoint "DELETE" "/resonanz/formats/crud_test_format/fields/neues_feld" "" \
+    "DELETE Field - Feld entfernen" "200" \
+    "Letztes Feld kann nicht gelöscht werden" "Backup vor Löschung"
+
+test_endpoint "PUT" "/resonanz/formats/crud_test_format" \
+    "{\"domain\": \"analysis\", \"description\": {\"de\": \"Aktualisiertes Format\"}}" \
+    "UPDATE Format - Meta-Daten ändern" "200" \
+    "Merged mit existierendem Format" "Felder bleiben erhalten"
+
+test_endpoint "DELETE" "/resonanz/formats/crud_test_format" "" \
+    "DELETE Format - Soft Delete" "200" \
+    "Backup: .{name}.json.{timestamp}.deleted" "Kann wiederhergestellt werden"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🎨 STYLE CRUD - Alchemy Verwaltung
+# ═══════════════════════════════════════════════════════════════════════════════
+
+section "🎨 STYLE CRUD - Alchemy Verwaltung" \
+        "Styles, Transmutationen, Verbannte Worte" \
+        "5"
+
+test_endpoint "POST" "/resonanz/styles" \
+    "{\"name\": \"crud_test_style\", \"vibe\": \"Test Vibe\", \"word_alchemy\": {\"test\": \"prüfung\"}, \"forbidden_words\": [\"verboten\"]}" \
+    "CREATE Style - Mit Alchemy + Forbidden" "200" \
+    "Schreibt: /opt/syntx-config/styles/{name}.json" "Validiert: Name, Alchemy Dict"
+
+test_endpoint "POST" "/resonanz/styles/crud_test_style/alchemy" \
+    "{\"original\": \"neu\", \"replacement\": \"brandneu\"}" \
+    "ADD Transmutation - Wort-Ersetzung hinzufügen" "200" \
+    "Erweitert word_alchemy Dict" "Backup vor Änderung"
+
+test_endpoint "DELETE" "/resonanz/styles/crud_test_style/alchemy/neu" "" \
+    "DELETE Transmutation - Wort-Ersetzung entfernen" "200" \
+    "Entfernt aus word_alchemy" "Backup vor Änderung"
+
+test_endpoint "POST" "/resonanz/styles/crud_test_style/forbidden/schlecht" "" \
+    "ADD Forbidden - Wort verbannen" "200" \
+    "Erweitert forbidden_words List" "Duplikate werden abgelehnt"
+
+test_endpoint "DELETE" "/resonanz/styles/crud_test_style" "" \
+    "DELETE Style - Soft Delete" "200" \
+    "Backup erstellt" "Kann wiederhergestellt werden"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🏁 ENDE
+# ═══════════════════════════════════════════════════════════════════════════════
+
 echo ""
-echo -e "${PURPLE}╔═══════════════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${PURPLE}║${NC}                                                                           ${PURPLE}║${NC}"
-echo -e "${PURPLE}║${NC}   ${WHITE}🔮 EXPLORATION COMPLETE - HEILIGABEND EDITION${NC}                         ${PURPLE}║${NC}"
-echo -e "${PURPLE}║${NC}   ${GRAY}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}   ${PURPLE}║${NC}"
-echo -e "${PURPLE}║${NC}                                                                           ${PURPLE}║${NC}"
-echo -e "${PURPLE}║${NC}   ${CYAN}•${NC} ${WHITE}17+ endpoints explored (2 NEW!)${NC}                                  ${PURPLE}║${NC}"
-echo -e "${PURPLE}║${NC}   ${CYAN}•${NC} ${WHITE}Full JSON requests/responses captured${NC}                          ${PURPLE}║${NC}"
-echo -e "${PURPLE}║${NC}   ${CYAN}•${NC} ${WHITE}Complete endpoint listing documented${NC}                           ${PURPLE}║${NC}"
-echo -e "${PURPLE}║${NC}   ${CYAN}•${NC} ${YELLOW}Default vs Runtime separation tested!${NC}                          ${PURPLE}║${NC}"
-echo -e "${PURPLE}║${NC}                                                                           ${PURPLE}║${NC}"
-echo -e "${PURPLE}║${NC}   ${GRAY}\"See every field. Understand every resonance.\"${NC}                           ${PURPLE}║${NC}"
-echo -e "${PURPLE}║${NC}   ${WHITE}🎄 Frohe Weihnachten! 🎁${NC}                                                ${PURPLE}║${NC}"
-echo -e "${PURPLE}║${NC}                                                                           ${PURPLE}║${NC}"
-echo -e "${PURPLE}╚═══════════════════════════════════════════════════════════════════════════╝${NC}"
+echo -e "${GRAY}════════════════════════════════════════════════════════════════════════════════════${NC}"
 echo ""
+exit $FAILED_TESTS
