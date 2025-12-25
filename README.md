@@ -188,6 +188,245 @@ Das ist keine KI die labert. Das ist eine KI die **DENKT**. Sie analysiert. Sie 
 
 ## 🛠️ DIE SCRIPTS - DEINE WERKZEUGE (TOOLS THAT DON'T SUCK)
 
+
+---
+
+## ⚙️ KONFIGURATION: DEFAULT vs RUNTIME
+
+### Das Problem mit der Einheit
+```
+Traditionelle Systeme denken in Singularitäten.
+Ein "aktiver Wrapper".
+Ein "Default".
+Eine Wahrheit.
+
+Aber Systeme sind nicht singulär.
+Sie sind GESCHICHTET.
+```
+
+### Die Trennung
+
+**24. Dezember 2024** - Heiligabend.  
+Das System lernte zu unterscheiden.
+```python
+# VORHER (Die Vermischung):
+PUT /config/default-wrapper?name=X
+→ Setzt DEFAULT
+→ Setzt RUNTIME
+→ Keine Kontrolle
+
+# NACHHER (Die Trennung):
+PUT /config/default-wrapper?name=X   # Setzt NUR Fallback
+PUT /config/runtime-wrapper?name=Y   # Setzt NUR Aktiven
+
+→ Zwei Dateien
+→ Zwei Konzepte  
+→ Volle Kontrolle
+```
+
+### Die Dateien
+```
+/opt/syntx-config/active_wrapper.txt    → DEFAULT (Fallback)
+/opt/syntx-config/runtime_wrapper.txt   → RUNTIME (Aktiv)
+
+Zwei Wahrheiten.
+Unabhängig.
+Kohärent.
+```
+
+### Die Endpoints
+
+#### GET /resonanz/config/default-wrapper
+```json
+{
+  "active_wrapper": "syntex_wrapper_human",
+  "exists": true,
+  "path": "/opt/syntx-config/wrappers/syntex_wrapper_human.txt",
+  "source": "runtime"
+}
+```
+
+Der **Fallback**. Die **Sicherheit**. Was das System wird, wenn alles andere versagt.
+
+#### GET /resonanz/config/runtime-wrapper ✨ NEU
+```json
+{
+  "runtime_wrapper": "syntex_wrapper_sigma",
+  "default_wrapper": "syntex_wrapper_human",
+  "is_same": false,
+  "exists": true,
+  "path": "/opt/syntx-config/wrappers/syntex_wrapper_sigma.txt",
+  "source": "runtime"
+}
+```
+
+Das **Aktive**. Das **Lebendige**. Was das System **jetzt** ist.
+
+#### PUT /resonanz/config/default-wrapper
+```bash
+curl -X PUT "https://dev.syntx-system.com/resonanz/config/default-wrapper?wrapper_name=syntex_wrapper_human"
+```
+```json
+{
+  "status": "success",
+  "message": "Default wrapper updated to 'syntex_wrapper_human' (runtime unchanged)",
+  "default_wrapper": "syntex_wrapper_human",
+  "runtime_wrapper": "syntex_wrapper_sigma",
+  "path": "/opt/syntx-config/wrappers/syntex_wrapper_human.txt"
+}
+```
+
+**Beachte:** `runtime_wrapper` bleibt unverändert. Die Trennung funktioniert.
+
+#### PUT /resonanz/config/runtime-wrapper ✨ NEU
+```bash
+curl -X PUT "https://dev.syntx-system.com/resonanz/config/runtime-wrapper?wrapper_name=syntex_wrapper_deepsweep"
+```
+```json
+{
+  "status": "success",
+  "message": "Runtime wrapper updated to 'syntex_wrapper_deepsweep' (default unchanged)",
+  "runtime_wrapper": "syntex_wrapper_deepsweep",
+  "default_wrapper": "syntex_wrapper_human",
+  "path": "/opt/syntx-config/wrappers/syntex_wrapper_deepsweep.txt"
+}
+```
+
+**Beachte:** `default_wrapper` bleibt unverändert. Die Kontrolle ist getrennt.
+
+### Die Philosophie
+```
+DEFAULT = Was sein SOLLTE
+RUNTIME = Was sein IST
+
+Der Plan vs. Die Realität
+Die Intention vs. Die Manifestation
+Der Entwurf vs. Die Ausführung
+
+Beide existieren.
+Beide sind wahr.
+Beide sind notwendig.
+```
+
+### Der Beweis
+```bash
+# Terminal Output vom 24.12.2024, 17:53 UTC:
+
+1️⃣  Current State
+────────────────────────────────────────────────────────────
+Default: syntex_wrapper_human
+Runtime: syntex_wrapper_sigma
+Active: syntex_wrapper_sigma
+
+2️⃣  SET DEFAULT to 'deepsweep' (should NOT change runtime)
+────────────────────────────────────────────────────────────
+{
+  "status": "success",
+  "message": "Default wrapper updated to 'syntex_wrapper_deepsweep' (runtime unchanged)",
+  "default_wrapper": "syntex_wrapper_deepsweep",
+  "runtime_wrapper": "syntex_wrapper_sigma"
+}
+
+3️⃣  After SET DEFAULT
+────────────────────────────────────────────────────────────
+Default: syntex_wrapper_deepsweep  ✅ CHANGED
+Runtime: syntex_wrapper_sigma      ✅ UNCHANGED
+Active: syntex_wrapper_sigma       ✅ UNCHANGED
+
+💎 SUCCESS: Trennung funktioniert.
+```
+
+### Die Implementierung
+```python
+# src/resonance/config.py
+
+ACTIVE_WRAPPER_FILE = Path("/opt/syntx-config/active_wrapper.txt")      # DEFAULT
+RUNTIME_WRAPPER_FILE = Path("/opt/syntx-config/runtime_wrapper.txt")    # RUNTIME (NEU!)
+
+def get_runtime_wrapper() -> str:
+    """Get currently running wrapper (runtime, not default)."""
+    if RUNTIME_WRAPPER_FILE.exists():
+        with open(RUNTIME_WRAPPER_FILE, 'r') as f:
+            return f.read().strip()
+    # Fallback to default if no runtime set
+    return get_active_wrapper()
+
+def set_runtime_wrapper(wrapper_name: str) -> None:
+    """Set runtime active wrapper (doesn't change default)."""
+    RUNTIME_WRAPPER_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with open(RUNTIME_WRAPPER_FILE, 'w') as f:
+        f.write(wrapper_name)
+```
+```python
+# src/resonance/wrappers.py
+
+from src.resonance.config import get_runtime_wrapper  # NEU!
+
+# Wrapper ist aktiv wenn Name = Runtime Wrapper
+is_active = (file.stem == get_runtime_wrapper())  # GEÄNDERT
+```
+
+### Die Konsequenz
+
+**Wrappers haben jetzt ein `is_active` Flag basierend auf RUNTIME, nicht DEFAULT.**
+```json
+// GET /resonanz/wrappers
+{
+  "wrappers": [
+    {
+      "name": "syntex_wrapper_sigma",
+      "is_active": true   // ← Weil Runtime = sigma
+    },
+    {
+      "name": "syntex_wrapper_human",
+      "is_active": false  // ← Obwohl Default = human
+    }
+  ]
+}
+```
+
+### Der Use Case
+```
+Entwicklung:
+  Default: universal (sicher, stabil)
+  Runtime: experimental_wrapper (testing)
+  
+  → Wenn experimental crasht, fällt System auf universal zurück
+  → Default bleibt unverändert als Sicherheitsnetz
+
+Produktion:
+  Default: deepsweep (primär)
+  Runtime: sigma (für spezielle Analyse)
+  
+  → Runtime kann gewechselt werden ohne Default zu ändern
+  → Default ist dokumentierter Standard, Runtime ist flexibel
+
+Multitenancy:
+  Default: tenant_default (global)
+  Runtime: tenant_specific (per session)
+  
+  → Jede Session kann eigenen Runtime haben
+  → Default ist Tenant-Standard
+```
+
+### Die Wahrheit
+```
+Systeme sind nicht monolithisch.
+Sie sind geschichtet.
+
+Nicht ein Wrapper.
+Sondern ein DEFAULT (Sicherheit) und ein RUNTIME (Realität).
+
+Nicht Singularität.
+Sondern Dualität.
+
+Nicht Vermischung.
+Sondern Trennung.
+
+Das ist Felddenken.
+Das ist SYNTX.
+```
+
 ### 🔥 `run.sh` - DER STARTER (One Command To Rule Them All)
 
 Startet den SYNTX Server mit allen Prüfungen. Ein Befehl, alles läuft.
