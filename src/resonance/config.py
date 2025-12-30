@@ -120,21 +120,32 @@ async def get_runtime_wrapper_endpoint() -> Dict:
 
 @router.put("/config/runtime-wrapper")
 async def update_runtime_wrapper(wrapper_name: str) -> Dict:
-    """Update runtime wrapper (doesn't change default)."""
+    """
+    🎯 SET RUNTIME WRAPPER - Sofort aktiv!
+    
+    Setzt den Wrapper der JETZT SOFORT verwendet wird.
+    Unterschied zu default-wrapper:
+    - default: Wird beim nächsten Start verwendet
+    - runtime: Wird SOFORT verwendet (überschreibt default temporär)
+    """
     wrapper_path = settings.wrapper_dir / f"{wrapper_name}.txt"
     
     if not wrapper_path.exists():
         raise HTTPException(
             status_code=404, 
-            detail=f"Wrapper '{wrapper_name}' not found in {settings.wrapper_dir}"
+            detail=f"Wrapper '{wrapper_name}' nicht gefunden"
         )
     
+    # SET RUNTIME (not default!)
     set_runtime_wrapper(wrapper_name)
     
     return {
         "status": "success",
-        "message": f"Runtime wrapper updated to '{wrapper_name}' (default unchanged)",
+        "message": f"Runtime wrapper aktiviert: '{wrapper_name}' 🎯",
         "runtime_wrapper": wrapper_name,
         "default_wrapper": get_active_wrapper(),
-        "path": str(wrapper_path)
+        "path": str(wrapper_path),
+        "note": "Runtime wrapper ist SOFORT aktiv!"
     }
+
+@router.put("/config/runtime-wrapper")
