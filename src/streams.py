@@ -20,6 +20,7 @@ from datetime import datetime
 import uuid
 
 from .config import settings
+from .resonance.config import get_runtime_wrapper
 
 # 🔥 FORMAT LOADER - DIE REVOLUTION!
 try:
@@ -68,6 +69,10 @@ async def load_wrapper_stream(
             wrapper_chain.append("terminology")
     
     # 🎯 Layer 3: Mode Wrapper (Hauptpersönlichkeit)
+    # If no mode specified, use runtime wrapper
+    if not mode:
+        mode = get_runtime_wrapper()
+    
     mode_text = await _read_wrapper_file(mode)
     if mode_text:
         wrapper_texts.append(mode_text)

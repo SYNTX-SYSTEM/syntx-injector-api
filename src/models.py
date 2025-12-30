@@ -10,7 +10,7 @@ class ChatRequest(BaseModel):
     """CHAT RESONANZ REQUEST"""
     
     prompt: str = Field(..., min_length=1, description="Die Frage an das Feld")
-    mode: str = Field(default="syntex_wrapper_sigma", description="Wrapper = WIE denkt das Modell?")
+    mode: Optional[str] = Field(default=None, description="Wrapper = WIE denkt das Modell?")
     format: Optional[str] = Field(default=None, description="Format = WAS kommt raus?")
     include_init: bool = Field(default=True, description="SYNTX Init-Wrapper inkludieren?")
     include_terminology: bool = Field(default=False, description="Terminologie-Wrapper inkludieren?")
