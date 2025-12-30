@@ -27,7 +27,7 @@
 #  ENDPOINTS ÜBERSICHT:
 #
 #  🏥 HEALTH (3)      - System-Vitalzeichen, Wrapper-Orphan-Detection
-#  ⚙️ CONFIG (2)      - Default Wrapper, Runtime-Konfiguration  
+#  ⚙️ CONFIG (3)      - Default Wrapper, Runtime-Konfiguration  
 #  📄 FORMATS (7)     - Feld-Definitionen, Domains, Vererbung, Typen
 #  🎨 STYLES (2)      - Style Alchemy, Word Transmutation
 #  📦 WRAPPERS (8)    - Denk-Modi CRUD, Meta, Aktivierung
@@ -303,7 +303,7 @@ test_endpoint "GET" "/resonanz/health/wrappers" "" \
 
 section "⚙️ CONFIG - System-Konfiguration" \
         "Default Wrapper, Runtime-Settings, Fallback-Modi" \
-        "2"
+        "3"
 
 test_endpoint "GET" "/resonanz/config/default-wrapper" "" \
     "Get Default Wrapper - Welcher Wrapper ist aktiv?" \
@@ -316,6 +316,12 @@ test_endpoint "PUT" "/resonanz/config/default-wrapper?wrapper_name=syntex_wrappe
     "200" \
     "Setzt: active_wrapper.txt, Runtime-Cache" \
     "Koppelt alle zukünftigen Requests an diesen Wrapper"
+
+test_endpoint "PUT" "/resonanz/config/runtime-wrapper?wrapper_name=syntex_wrapper_deepsweep" "" \
+    "Set Runtime Wrapper - Sofort aktiv (nicht Default)" \
+    "200" \
+    "Setzt: runtime_wrapper (aktiv JETZT)" \
+    "Runtime aktiv, Default bleibt unveraendert"
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  📄 FORMAT ENDPOINTS - Feld-Definitionen
@@ -749,112 +755,6 @@ test_endpoint "POST" "/resonanz/health/fix" "" \
 #  📊 FINAL SUMMARY - Resonanz-Bericht
 # ═══════════════════════════════════════════════════════════════════════════════
 
-END_TIME=$(date +%s)
-DURATION=$((END_TIME - START_TIME))
-
-echo ""
-echo ""
-echo -e "${MAGENTA}╔════════════════════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${MAGENTA}║${NC}  ${WHITE}${BOLD}📊 RESONANZ-PRÜFUNG ABGESCHLOSSEN${NC}"
-echo -e "${MAGENTA}╠════════════════════════════════════════════════════════════════════════════════╣${NC}"
-echo -e "${MAGENTA}║${NC}"
-echo -e "${MAGENTA}║${NC}   ${GREEN}✓ BESTANDEN:${NC}   ${WHITE}${BOLD}$PASSED_TESTS${NC}"
-echo -e "${MAGENTA}║${NC}   ${RED}✗ FEHLERHAFT:${NC}  ${WHITE}${BOLD}$FAILED_TESTS${NC}"
-echo -e "${MAGENTA}║${NC}   ${WHITE}Σ GESAMT:${NC}      ${WHITE}${BOLD}$TOTAL_TESTS${NC}"
-echo -e "${MAGENTA}║${NC}   ${CYAN}⏱ DAUER:${NC}       ${WHITE}${BOLD}${DURATION}s${NC}"
-echo -e "${MAGENTA}║${NC}"
-
-if [ $FAILED_TESTS -eq 0 ]; then
-    echo -e "${MAGENTA}║${NC}   ${GREEN}${BOLD}🔥 ALLE FELDER RESONIEREN! DER STROM IST REIN! 🔥${NC}"
-    echo -e "${MAGENTA}║${NC}   ${GREEN}Das System ist vollständig kalibriert.${NC}"
-else
-    echo -e "${MAGENTA}║${NC}   ${RED}${BOLD}⚠️  DRIFT DETECTED - $FAILED_TESTS FELDER HABEN PROBLEME${NC}"
-    echo -e "${MAGENTA}║${NC}   ${YELLOW}Prüfe die fehlgeschlagenen Tests oben.${NC}"
-fi
-
-echo -e "${MAGENTA}║${NC}"
-echo -e "${MAGENTA}╚════════════════════════════════════════════════════════════════════════════════╝${NC}"
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  📋 ENDPOINT REFERENCE - Vollständige API Dokumentation
-# ═══════════════════════════════════════════════════════════════════════════════
-
-echo ""
-echo -e "${CYAN}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${NC}"
-echo -e "${CYAN}┃${NC} ${BOLD}${WHITE}📋 SYNTX API v3.2 - VOLLSTÄNDIGE ENDPOINT REFERENCE${NC}"
-echo -e "${CYAN}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}"
-echo ""
-echo -e "  ${YELLOW}🏥 HEALTH (3 Endpoints)${NC}"
-echo -e "  ${GRAY}System-Vitalzeichen und Integritätsprüfung${NC}"
-echo "     GET  /health                          → Alle Module Status"
-echo "     GET  /resonanz/health                 → Resonanz + letzter Response"
-echo "     GET  /resonanz/health/wrappers        → Wrapper Orphan Detection"
-echo ""
-echo -e "  ${YELLOW}⚙️ CONFIG (2 Endpoints)${NC}"
-echo -e "  ${GRAY}Default Wrapper, Runtime-Konfiguration${NC}"
-echo "     GET  /resonanz/config/default-wrapper → Aktiven Wrapper lesen"
-echo "     PUT  /resonanz/config/default-wrapper?wrapper_name=X → Wrapper aktivieren"
-echo ""
-echo -e "  ${YELLOW}📄 FORMATS (7 Endpoints)${NC}"
-echo -e "  ${GRAY}Feld-Definitionen: Domains, Vererbung, Typen (text/list/rating/keywords)${NC}"
-echo "     GET    /resonanz/formats              → Liste (mit domain Filter)"
-echo "     GET    /resonanz/formats?domain=X     → Filter nach Domain"
-echo "     GET    /resonanz/formats/{name}       → Format Details"
-echo "     GET    /resonanz/formats/{name}?language=X → Mehrsprachig"
-echo "     POST   /resonanz/formats/quick        → Schnell erstellen"
-echo "     DELETE /resonanz/formats/{name}       → Soft-Delete"
-echo ""
-echo -e "  ${YELLOW}🎨 STYLES (2 Endpoints)${NC}"
-echo -e "  ${GRAY}Post-Processing: Word Alchemy, Forbidden Words, Tone Injection${NC}"
-echo "     GET  /resonanz/styles                 → Liste aller Styles"
-echo "     GET  /resonanz/styles/{name}          → Style Details + Transmutationen"
-echo ""
-echo -e "  ${YELLOW}📦 WRAPPERS (8 Endpoints)${NC}"
-echo -e "  ${GRAY}Denk-Modi: System-Prompts die VOR dem User-Prompt injiziert werden${NC}"
-echo "     GET    /resonanz/wrappers             → Liste"
-echo "     GET    /resonanz/wrappers?active=true → Nur aktiver"
-echo "     GET    /resonanz/wrappers/full        → Mit Meta + Stats"
-echo "     GET    /resonanz/wrapper/{name}       → Content + Metadaten"
-echo "     POST   /resonanz/wrapper              → Neuen erstellen"
-echo "     PUT    /resonanz/wrapper/{name}       → Content updaten"
-echo "     DELETE /resonanz/wrapper/{name}       → Löschen"
-echo "     POST   /resonanz/wrapper/{name}/activate → Als Default setzen"
-echo ""
-echo -e "  ${YELLOW}🧬 META (3 Endpoints)${NC}"
-echo -e "  ${GRAY}Wrapper Metadaten: Format-Bindung, Author, Tags${NC}"
-echo "     GET  /resonanz/wrapper/{name}/meta    → Meta lesen"
-echo "     PUT  /resonanz/wrapper/{name}/meta    → Meta updaten"
-echo "     PUT  /resonanz/wrapper/{name}/format?format_name=X → Format binden"
-echo ""
-echo -e "  ${YELLOW}📊 STATS (4 Endpoints)${NC}"
-echo -e "  ${GRAY}Feld-Fluss-Analyse: Requests, Latency, Training-Export${NC}"
-echo "     GET  /resonanz/stats                  → Globale Statistiken"
-echo "     GET  /resonanz/stats/wrapper/{name}   → Pro-Wrapper Stats"
-echo "     GET  /resonanz/strom?limit=N&stage=X  → Feld-Flow Events"
-echo "     GET  /resonanz/training?limit=N       → Training Data Export"
-echo ""
-echo -e "  ${YELLOW}💬 CHAT (1 Endpoint, ∞ Kombinationen)${NC}"
-echo -e "  ${GRAY}Das Herzstück - Alle Ströme fließen hier zusammen${NC}"
-echo "     POST /resonanz/chat"
-echo "          ├── prompt (string, required)     → Was der User fragt"
-echo "          ├── mode (string)                 → Wrapper (WIE denkt LLM)"
-echo "          ├── format (string)               → Format (WAS kommt raus)"
-echo "          ├── style (string)                → Style (WIE klingt es)"
-echo "          ├── debug (bool)                  → Zeigt calibrated_prompt"
-echo "          ├── language (de/en)              → Sprache für Format-Felder"
-echo "          ├── max_new_tokens (int)          → Max Tokens"
-echo "          └── temperature (float)           → Kreativität (0.0-2.0)"
-echo ""
-echo -e "  ${YELLOW}🔧 ADMIN (1 Endpoint)${NC}"
-echo -e "  ${GRAY}System-Operationen und Maintenance${NC}"
-echo "     POST /resonanz/health/fix             → Auto-Fix Orphan Wrappers"
-echo ""
-echo -e "${GRAY}════════════════════════════════════════════════════════════════════════════════════${NC}"
-echo -e "${GRAY}   SYNTX FIELD RESONANCE v3.2 - Der Strom kennt keine Grenzen ⚡💎🌊${NC}"
-echo -e "${GRAY}════════════════════════════════════════════════════════════════════════════════════${NC}"
-echo ""
-
-
 # ═══════════════════════════════════════════════════════════════════════════════
 #  🔮 FORMAT CRUD - Vollständige Feld-Verwaltung
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -928,4 +828,115 @@ test_endpoint "DELETE" "/resonanz/styles/crud_test_style" "" \
 echo ""
 echo -e "${GRAY}════════════════════════════════════════════════════════════════════════════════════${NC}"
 echo ""
+# ═══════════════════════════════════════════════════════════════════════════════
+#  📊 FINAL SUMMARY - Resonanz-Bericht
+# ═══════════════════════════════════════════════════════════════════════════════
+
+END_TIME=$(date +%s)
+DURATION=$((END_TIME - START_TIME))
+echo "DEBUG: TOTAL_TESTS=$TOTAL_TESTS PASSED=$PASSED_TESTS FAILED=$FAILED_TESTS" >&2
+
+echo ""
+echo ""
+echo -e "${MAGENTA}╔════════════════════════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${MAGENTA}║${NC}  ${WHITE}${BOLD}📊 RESONANZ-PRÜFUNG ABGESCHLOSSEN${NC}"
+echo -e "${MAGENTA}╠════════════════════════════════════════════════════════════════════════════════╣${NC}"
+echo -e "${MAGENTA}║${NC}"
+echo -e "${MAGENTA}║${NC}   ${GREEN}✓ BESTANDEN:${NC}   ${WHITE}${BOLD}$PASSED_TESTS${NC}"
+echo -e "${MAGENTA}║${NC}   ${RED}✗ FEHLERHAFT:${NC}  ${WHITE}${BOLD}$FAILED_TESTS${NC}"
+echo -e "${MAGENTA}║${NC}   ${WHITE}Σ GESAMT:${NC}      ${WHITE}${BOLD}$TOTAL_TESTS${NC}"
+echo -e "${MAGENTA}║${NC}   ${CYAN}⏱ DAUER:${NC}       ${WHITE}${BOLD}${DURATION}s${NC}"
+echo -e "${MAGENTA}║${NC}"
+
+if [ $FAILED_TESTS -eq 0 ]; then
+    echo -e "${MAGENTA}║${NC}   ${GREEN}${BOLD}🔥 ALLE FELDER RESONIEREN! DER STROM IST REIN! 🔥${NC}"
+    echo -e "${MAGENTA}║${NC}   ${GREEN}Das System ist vollständig kalibriert.${NC}"
+else
+    echo -e "${MAGENTA}║${NC}   ${RED}${BOLD}⚠️  DRIFT DETECTED - $FAILED_TESTS FELDER HABEN PROBLEME${NC}"
+    echo -e "${MAGENTA}║${NC}   ${YELLOW}Prüfe die fehlgeschlagenen Tests oben.${NC}"
+fi
+
+echo -e "${MAGENTA}║${NC}"
+echo -e "${MAGENTA}╚════════════════════════════════════════════════════════════════════════════════╝${NC}"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  📋 ENDPOINT REFERENCE - Vollständige API Dokumentation
+# ═══════════════════════════════════════════════════════════════════════════════
+
+echo ""
+echo -e "${CYAN}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${NC}"
+echo -e "${CYAN}┃${NC} ${BOLD}${WHITE}📋 SYNTX API v3.2 - VOLLSTÄNDIGE ENDPOINT REFERENCE${NC}"
+echo -e "${CYAN}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${NC}"
+echo ""
+echo -e "  ${YELLOW}🏥 HEALTH (3 Endpoints)${NC}"
+echo -e "  ${GRAY}System-Vitalzeichen und Integritätsprüfung${NC}"
+echo "     GET  /health                          → Alle Module Status"
+echo "     GET  /resonanz/health                 → Resonanz + letzter Response"
+echo "     GET  /resonanz/health/wrappers        → Wrapper Orphan Detection"
+echo ""
+echo -e "  ${YELLOW}⚙️ CONFIG (3 Endpoints)${NC}"
+echo -e "  ${GRAY}Default Wrapper, Runtime-Konfiguration${NC}"
+echo "     GET  /resonanz/config/default-wrapper → Aktiven Wrapper lesen"
+echo "     PUT  /resonanz/config/default-wrapper?wrapper_name=X → Wrapper aktivieren"
+echo ""
+echo -e "  ${YELLOW}📄 FORMATS (7 Endpoints)${NC}"
+echo -e "  ${GRAY}Feld-Definitionen: Domains, Vererbung, Typen (text/list/rating/keywords)${NC}"
+echo "     GET    /resonanz/formats              → Liste (mit domain Filter)"
+echo "     GET    /resonanz/formats?domain=X     → Filter nach Domain"
+echo "     GET    /resonanz/formats/{name}       → Format Details"
+echo "     GET    /resonanz/formats/{name}?language=X → Mehrsprachig"
+echo "     POST   /resonanz/formats/quick        → Schnell erstellen"
+echo "     DELETE /resonanz/formats/{name}       → Soft-Delete"
+echo ""
+echo -e "  ${YELLOW}🎨 STYLES (2 Endpoints)${NC}"
+echo -e "  ${GRAY}Post-Processing: Word Alchemy, Forbidden Words, Tone Injection${NC}"
+echo "     GET  /resonanz/styles                 → Liste aller Styles"
+echo "     GET  /resonanz/styles/{name}          → Style Details + Transmutationen"
+echo ""
+echo -e "  ${YELLOW}📦 WRAPPERS (8 Endpoints)${NC}"
+echo -e "  ${GRAY}Denk-Modi: System-Prompts die VOR dem User-Prompt injiziert werden${NC}"
+echo "     GET    /resonanz/wrappers             → Liste"
+echo "     GET    /resonanz/wrappers?active=true → Nur aktiver"
+echo "     GET    /resonanz/wrappers/full        → Mit Meta + Stats"
+echo "     GET    /resonanz/wrapper/{name}       → Content + Metadaten"
+echo "     POST   /resonanz/wrapper              → Neuen erstellen"
+echo "     PUT    /resonanz/wrapper/{name}       → Content updaten"
+echo "     DELETE /resonanz/wrapper/{name}       → Löschen"
+echo "     POST   /resonanz/wrapper/{name}/activate → Als Default setzen"
+echo ""
+echo -e "  ${YELLOW}🧬 META (3 Endpoints)${NC}"
+echo -e "  ${GRAY}Wrapper Metadaten: Format-Bindung, Author, Tags${NC}"
+echo "     GET  /resonanz/wrapper/{name}/meta    → Meta lesen"
+echo "     PUT  /resonanz/wrapper/{name}/meta    → Meta updaten"
+echo "     PUT  /resonanz/wrapper/{name}/format?format_name=X → Format binden"
+echo ""
+echo -e "  ${YELLOW}📊 STATS (4 Endpoints)${NC}"
+echo -e "  ${GRAY}Feld-Fluss-Analyse: Requests, Latency, Training-Export${NC}"
+echo "     GET  /resonanz/stats                  → Globale Statistiken"
+echo "     GET  /resonanz/stats/wrapper/{name}   → Pro-Wrapper Stats"
+echo "     GET  /resonanz/strom?limit=N&stage=X  → Feld-Flow Events"
+echo "     GET  /resonanz/training?limit=N       → Training Data Export"
+echo ""
+echo -e "  ${YELLOW}💬 CHAT (1 Endpoint, ∞ Kombinationen)${NC}"
+echo -e "  ${GRAY}Das Herzstück - Alle Ströme fließen hier zusammen${NC}"
+echo "     POST /resonanz/chat"
+echo "          ├── prompt (string, required)     → Was der User fragt"
+echo "          ├── mode (string)                 → Wrapper (WIE denkt LLM)"
+echo "          ├── format (string)               → Format (WAS kommt raus)"
+echo "          ├── style (string)                → Style (WIE klingt es)"
+echo "          ├── debug (bool)                  → Zeigt calibrated_prompt"
+echo "          ├── language (de/en)              → Sprache für Format-Felder"
+echo "          ├── max_new_tokens (int)          → Max Tokens"
+echo "          └── temperature (float)           → Kreativität (0.0-2.0)"
+echo ""
+echo -e "  ${YELLOW}🔧 ADMIN (1 Endpoint)${NC}"
+echo -e "  ${GRAY}System-Operationen und Maintenance${NC}"
+echo "     POST /resonanz/health/fix             → Auto-Fix Orphan Wrappers"
+echo ""
+echo -e "${GRAY}════════════════════════════════════════════════════════════════════════════════════${NC}"
+echo -e "${GRAY}   SYNTX FIELD RESONANCE v3.2 - Der Strom kennt keine Grenzen ⚡💎🌊${NC}"
+echo -e "${GRAY}════════════════════════════════════════════════════════════════════════════════════${NC}"
+echo ""
+
+
 exit $FAILED_TESTS
