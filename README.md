@@ -500,7 +500,7 @@ Format Loader: 🔥 AKTIV
 | Sektion | Tests | Was wird geprüft | Beispiel JSON Response |
 |---------|-------|------------------|------------------------|
 | 🏥 HEALTH | 3 | System lebt? Wrapper gesund? | `{"status":"🟢 RESONANZ AKTIV","service":"syntx-field-resonance"...}` |
-| ⚙️ CONFIG | 2 | Default Wrapper funktioniert? | `{"active_wrapper":"syntex_wrapper_sigma","exists":true...}` |
+| ⚙️ CONFIG | 4 | Default Wrapper funktioniert? | `{"active_wrapper":"syntex_wrapper_sigma","exists":true...}` |
 | 📄 FORMATS | 9 | CRUD für Formate + Felder | `{"status":"🔥 FORMAT GELADEN","format":{"name":"syntex_system"...}}` |
 | 🎨 STYLES | 8 | CRUD für Styles + Alchemy + Forbidden | `{"status":"🎨 GRIMOIRE GEÖFFNET","count":8,"styles":[...]}` |
 | 📦 WRAPPERS | 6 | CRUD für Wrapper + Meta | `{"wrappers":[{"name":"naxixam","path":"/opt/syntx-config/wrappers/naxixam.txt"...}]}` |
@@ -1434,9 +1434,11 @@ Styles transformieren den Output NACH dem LLM. Magie passiert hier!
    GET  /resonanz/health/wrappers            Orphan Detection
    POST /resonanz/health/fix                 Auto-Fix Orphans
 
-⚙️ CONFIG (2)
+⚙️ CONFIG (4)
    GET  /resonanz/config/default-wrapper     Default lesen
    PUT  /resonanz/config/default-wrapper     Default setzen
+   GET  /resonanz/config/runtime-wrapper     Runtime lesen ✨ NEU
+   PUT  /resonanz/config/runtime-wrapper     Runtime setzen ✨ NEU
 
 📄 FORMATS (9)
    GET    /resonanz/formats                  Alle listen
