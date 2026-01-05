@@ -1,7 +1,7 @@
 """
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║  🎯 SYNTX SCORING ROUTER v2.0 - FIELDBRAIN EDITION                           ║
-║  Field-based Response Scoring mit Dynamic Profiles                          ║
+║  🎯 SYNTX SCORING ROUTER                                                     ║
+║  Field-based Response Scoring                                                ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 """
 from fastapi import APIRouter, HTTPException
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/resonanz", tags=["scoring"])
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  📦 MODELS - UPDATED FOR FIELDBRAIN v0.1
+#  📦 MODELS
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class FieldDefinition(BaseModel):
@@ -34,16 +34,11 @@ class ScoreRequest(BaseModel):
     format: FormatDefinition = Field(..., description="Format with fields to score against")
 
 class ScoredField(BaseModel):
-    """FIELDBRAIN v0.1 - Profile-based scoring"""
     name: str
     score: float
     weight: float
     weighted_score: float
-    profile_used: str  # NEW: Which profile was used
-    profile_name: Optional[str] = None  # NEW: Human-readable name
-    strategy: Optional[str] = None  # NEW: Strategy used
-    components: Optional[Dict] = None  # NEW: Component breakdown
-    auto_registered: Optional[bool] = False  # NEW: Was field auto-registered?
+    scoring_method: str
 
 class ScoreResponse(BaseModel):
     scored_fields: List[ScoredField]
@@ -51,7 +46,6 @@ class ScoreResponse(BaseModel):
     format_name: str
     field_count: int
     total_weight: float
-    fieldbrain_version: Optional[str] = "0.1.0"  # NEW
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -63,7 +57,7 @@ async def score_chat_response(request: ScoreRequest):
     """
     🎯 Score Response gegen Format-Felder
     
-    **FIELDBRAIN v0.1 - Profile-Based Scoring**
+    **Das Herzstück der Heuristik!**
     
     Nimmt:
     - `text`: Der LLM Response Text
@@ -71,22 +65,30 @@ async def score_chat_response(request: ScoreRequest):
     
     Gibt zurück:
     - Scores für jedes Feld (0.0-1.0)
-    - Profile verwendet
-    - Component breakdown
+    - Gewichtete Scores
     - Gesamt-Score (normalisiert)
     
     **Beispiel:**
 ```json
     {
-      "text": "Das System driftet stark...",
+      "text": "Das System driftet stark nach links und braucht Kalibrierung...",
       "format": {
-        "name": "syntx_test",
+        "name": "syntx_true_raw",
         "fields": [
-          {"name": "driftkorper", "weight": 1.0}
+          {"name": "driftkorper", "weight": 1.0},
+          {"name": "kalibrierung", "weight": 1.0},
+          {"name": "stromung", "weight": 0.7}
         ]
       }
     }
 ```
+    
+    **Scoring Logic:**
+    1. Für jedes Feld: Suche spezifische Heuristik (z.B. `score_driftkorper`)
+    2. Wenn nicht gefunden: Fallback-Scorer
+    3. Multipliziere Score × Weight
+    4. Summiere alle weighted scores
+    5. Normalisiere durch Summe der Weights
     """
     try:
         # Convert Pydantic models to dicts
@@ -116,20 +118,15 @@ async def get_available_scoring_methods():
     """
     🔍 Liste verfügbare Scorer
     
-    **FIELDBRAIN v0.1 - Returns Profiles, not functions**
-    
     Zeigt:
-    - Alle verfügbaren Scoring Profiles
-    - Total count
+    - Spezifische Heuristiken (z.B. driftkorper, kalibrierung, stromung)
+    - Fallback-Verfügbarkeit
     
     **Beispiel Response:**
 ```json
     {
-      "profiles": {
-        "default_fallback": {...},
-        "flow_bidir_v1": {...}
-      },
-      "total_profiles": 4
+      "specific": ["driftkorper", "kalibrierung", "stromung"],
+      "fallback": "Available for all fields"
     }
 ```
     """
@@ -143,17 +140,17 @@ async def scoring_health():
     
     Prüft:
     - Scoring Module verfügbar
-    - Profiles geladen
-    - Registry funktioniert
+    - Heuristiken geladen
+    - Fallback funktioniert
     """
     try:
         scorers = get_available_scorers()
         
         return {
-            "status": "🟢 FIELDBRAIN AKTIV",
-            "version": "0.1.0",
-            "profiles_loaded": scorers.get("total_profiles", 0),
-            "note": "Profile-based scoring operational"
+            "status": "🟢 SCORING AKTIV",
+            "specific_scorers": len(scorers.get("specific", [])),
+            "scorers": scorers,
+            "fallback": "Available"
         }
     except Exception as e:
         return {

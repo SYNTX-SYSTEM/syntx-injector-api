@@ -1,14 +1,34 @@
 """
-SYNTX Scoring Router
-Main orchestration for format-based field scoring
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  🧠 SYNTX SCORING ROUTER v2.0 - FIELDBRAIN EDITION                           ║
+║                                                                              ║
+║  Format-based field scoring mit Dynamic Profiles.                           ║
+║  Keine hardcoded Scorer mehr. Nur Profile.                                  ║
+║                                                                              ║
+║  "Das System denkt in Profilen, nicht in Code." 💎                          ║
+╚══════════════════════════════════════════════════════════════════════════════╝
 """
 from typing import Dict, List, Any
-import importlib
-from .fallback import fallback_score
+
+# FIELDBRAIN Modules
+from .profile_loader import get_profile, get_profile_for_field
+from .dynamic_scorer import score_with_profile
+from .registry import ensure_field_registered
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🎯 MAIN SCORING FUNCTION - FIELDBRAIN POWERED
+# ═══════════════════════════════════════════════════════════════════════════════
 
 def score_response(format_data: Dict, response_text: str) -> Dict[str, Any]:
     """
-    Score LLM response based on format fields
+    🧠 Score LLM response based on format fields - FIELDBRAIN v0.1
+    
+    **NEW: Profile-Based Scoring**
+    - Jedes Feld nutzt ein Profile aus scoring_profiles.json
+    - Auto-Registration von unbekannten Feldern
+    - Dynamische Component Execution
+    - Keine hardcoded Scorer mehr
     
     Args:
         format_data: Format definition with fields
@@ -29,13 +49,16 @@ def score_response(format_data: Dict, response_text: str) -> Dict[str, Any]:
                     "name": "driftkorper",
                     "score": 0.75,
                     "weight": 1.0,
-                    "weighted_score": 0.75
+                    "weighted_score": 0.75,
+                    "profile_used": "dynamic_language_v1",
+                    "components": {...}
                 },
                 ...
             ],
             "total_score": 0.82,
             "format_name": "syntx_true_raw",
-            "field_count": 3
+            "field_count": 3,
+            "fieldbrain_version": "0.1.0"
         }
     """
     
@@ -55,43 +78,45 @@ def score_response(format_data: Dict, response_text: str) -> Dict[str, Any]:
     scored_fields = []
     total_weighted_score = 0.0
     
-    # Import syntx heuristics module
-    try:
-        from .heuristics import syntx
-    except ImportError:
-        syntx = None
-    
     for field in fields:
         field_name = field.get("name", "")
         field_weight = field.get("weight", 1.0)
         
-        # Try to find specific scorer
-        scorer_func = None
-        if syntx:
-            scorer_func_name = f"score_{field_name.lower()}"
-            scorer_func = getattr(syntx, scorer_func_name, None)
+        # 🌱 STEP 1: Ensure field is registered (lazy auto-registration)
+        field_meta = ensure_field_registered(field_name)
         
-        # Score the field
-        if scorer_func and callable(scorer_func):
-            # Use specific heuristic
-            score = scorer_func(response_text)
-            scoring_method = "specific"
-        else:
-            # Use fallback
-            score = fallback_score(field_name, response_text)
-            scoring_method = "fallback"
+        # 🎯 STEP 2: Get profile for this field
+        profile_id = get_profile_for_field(field_name)
+        profile = get_profile(profile_id)
+        
+        if not profile:
+            # Fallback if profile not found
+            profile_id = "default_fallback"
+            profile = get_profile(profile_id)
+        
+        # ⚡ STEP 3: Score with profile
+        score_result = score_with_profile(
+            profile,
+            response_text,
+            keywords=field_meta.get("keywords", [])
+        )
         
         # Calculate weighted score
+        score = score_result["score"]
         weighted_score = score * field_weight
         total_weighted_score += weighted_score
         
         # Add to results
         scored_fields.append({
             "name": field_name,
-            "score": round(score, 2),
+            "score": score,
             "weight": field_weight,
             "weighted_score": round(weighted_score, 2),
-            "scoring_method": scoring_method
+            "profile_used": profile_id,
+            "profile_name": profile.get("name", "Unknown"),
+            "strategy": score_result.get("strategy", "Unknown"),
+            "components": score_result.get("components", {}),
+            "auto_registered": field_meta.get("auto_registered", False)
         })
     
     # Calculate total score (normalize by sum of weights)
@@ -103,36 +128,47 @@ def score_response(format_data: Dict, response_text: str) -> Dict[str, Any]:
         "total_score": round(normalized_total_score, 2),
         "format_name": format_name,
         "field_count": len(fields),
-        "total_weight": total_weight
+        "total_weight": total_weight,
+        "fieldbrain_version": "0.1.0"
     }
 
 
-def get_available_scorers() -> Dict[str, List[str]]:
+# ═══════════════════════════════════════════════════════════════════════════════
+#  📋 AVAILABLE SCORERS - NOW PROFILE-BASED
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def get_available_scorers() -> Dict[str, Any]:
     """
-    Get list of available specific scorers
+    🔍 Get list of available scoring profiles
+    
+    **NEW: Returns profiles instead of hardcoded functions**
     
     Returns:
         {
-            "specific": ["driftkorper", "kalibrierung", "stromung"],
-            "fallback": "Available for all fields"
+            "profiles": {
+                "default_fallback": {...},
+                "flow_bidir_v1": {...},
+                ...
+            },
+            "total_profiles": 4,
+            "fieldbrain_version": "0.1.0"
         }
     """
-    try:
-        from .heuristics import syntx
-        
-        # Find all score_* functions
-        specific_scorers = [
-            name.replace("score_", "")
-            for name in dir(syntx)
-            if name.startswith("score_") and callable(getattr(syntx, name))
-        ]
-        
-        return {
-            "specific": specific_scorers,
-            "fallback": "Available for all fields"
-        }
-    except ImportError:
-        return {
-            "specific": [],
-            "fallback": "Available for all fields"
-        }
+    from .profile_loader import list_all_profiles
+    
+    profiles = list_all_profiles()
+    
+    return {
+        "profiles": profiles,
+        "total_profiles": len(profiles),
+        "fieldbrain_version": "0.1.0",
+        "note": "🧠 FIELDBRAIN aktiv - Profile-based scoring"
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🎯 DAS IST FIELDBRAIN v0.1
+# ═══════════════════════════════════════════════════════════════════════════════
+# Keine hardcoded Scorer. Nur Profiles.
+# Auto-Registration. Dynamic Execution.
+# GPT kann tweaken. System lernt. 💎⚡🌊

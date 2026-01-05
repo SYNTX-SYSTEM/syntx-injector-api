@@ -1,0 +1,134 @@
+{
+  "version": "0.1.0",
+  "last_updated": "2026-01-05T15:00:00Z",
+  "profiles": {
+    "default_fallback": {
+      "name": "Default Fallback",
+      "description": "Generisches Scoring für unbekannte Felder - Keyword Density + Context",
+      "strategy": "keyword_density + context",
+      "components": {
+        "keyword_density": {
+          "weight": 0.6,
+          "normalize_at": 5.0,
+          "description": "Keywords im Text / Gesamt-Wörter * 100 / normalize_at"
+        },
+        "context_presence": {
+          "weight": 0.4,
+          "min_keywords_per_sentence": 2,
+          "description": "Sätze mit 2+ Keywords = höherer Context-Score"
+        }
+      }
+    },
+    "flow_bidir_v1": {
+      "name": "Flow & Bidirektionalität",
+      "description": "Erkennt Fluss, Transfer, Austausch und bidirektionale Bewegung",
+      "strategy": "pattern_match + flow_tokens",
+      "components": {
+        "pattern_match": {
+          "weight": 0.5,
+          "patterns": [
+            "von .+ nach",
+            "zwischen .+ und",
+            "wechselseitig",
+            "bidirektional",
+            "hin und her"
+          ],
+          "normalize_at": 3,
+          "description": "Regex-Patterns für Fluss-Strukturen"
+        },
+        "flow_tokens": {
+          "weight": 0.5,
+          "tokens": [
+            "fluss",
+            "strom",
+            "strömung",
+            "transfer",
+            "austausch",
+            "energie",
+            "bewegung",
+            "zirkulation"
+          ],
+          "normalize_at": 5,
+          "description": "Flow-spezifische Keywords"
+        }
+      }
+    },
+    "dynamic_language_v1": {
+      "name": "Dynamische Sprache",
+      "description": "Erkennt Bewegung, Veränderung, Instabilität - Drift-Detection",
+      "strategy": "dynamic_patterns + change_indicators",
+      "components": {
+        "dynamic_patterns": {
+          "weight": 0.6,
+          "patterns": [
+            "kippt",
+            "bewegt",
+            "driftet",
+            "wandelt",
+            "verändert",
+            "fließt",
+            "schwingt",
+            "pendelt",
+            "instabil"
+          ],
+          "normalize_at": 4,
+          "description": "Patterns für Dynamik und Bewegung"
+        },
+        "change_indicators": {
+          "weight": 0.4,
+          "tokens": [
+            "änderung",
+            "wandel",
+            "entwicklung",
+            "transformation",
+            "übergang",
+            "shift"
+          ],
+          "normalize_at": 3,
+          "description": "Change-spezifische Tokens"
+        }
+      }
+    },
+    "feedback_loops_v1": {
+      "name": "Feedback & Kalibrierung",
+      "description": "Erkennt Feedback-Loops, Iterationen, Anpassungen",
+      "strategy": "feedback_patterns + calibration_tokens",
+      "components": {
+        "feedback_patterns": {
+          "weight": 0.5,
+          "patterns": [
+            "feedback",
+            "rückkopplung",
+            "schleife",
+            "iterativ",
+            "rekursiv",
+            "zyklisch"
+          ],
+          "normalize_at": 3,
+          "description": "Feedback-Loop Detection"
+        },
+        "calibration_tokens": {
+          "weight": 0.5,
+          "tokens": [
+            "kalibrierung",
+            "anpassung",
+            "justierung",
+            "abstimmung",
+            "korrektur",
+            "präzision",
+            "ausrichtung",
+            "einstellen"
+          ],
+          "normalize_at": 5,
+          "description": "Kalibrierungs-Keywords"
+        }
+      }
+    }
+  },
+  "field_to_profile_mapping": {
+    "_comment": "Default Mappings - können überschrieben werden in fields_metadata.json",
+    "driftkorper": "dynamic_language_v1",
+    "kalibrierung": "feedback_loops_v1",
+    "stromung": "flow_bidir_v1"
+  }
+}
