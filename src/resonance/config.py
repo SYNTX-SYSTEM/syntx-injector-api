@@ -148,4 +148,3 @@ async def update_runtime_wrapper(wrapper_name: str) -> Dict:
         "note": "Runtime wrapper ist SOFORT aktiv!"
     }
 
-@router.put("/config/runtime-wrapper")
