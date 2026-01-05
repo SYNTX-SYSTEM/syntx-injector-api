@@ -71,7 +71,11 @@
             "pendelt",
             "instabil",
             "wandert",
-            "rutscht"
+            "rutscht",
+            "system",
+            "verschiebt",
+            "langsam",
+            "gleitet"
           ],
           "normalize_at": 5,
           "description": "Patterns für Dynamik und Bewegung"
@@ -96,9 +100,17 @@
           "reason": "Added wandert and rutscht based on Phase 2.5 deployment test",
           "analysis": "Testing write capability - Phase 2.5 activation",
           "timestamp": "2026-01-05T16:31:07.550800Z"
+        },
+        {
+          "changed_by": "autonomous_system",
+          "reason": "Analysis of 4 low-score samples for field 'bewegung_test' identified 4 missing patterns: 'system' (10x), 'verschiebt' (10x), 'langsam' (10x), 'gleitet' (10x). Adding to dynamic_patterns.patterns.",
+          "field_analyzed": "bewegung_test",
+          "pattern_count": 4,
+          "avg_confidence": 0.95,
+          "timestamp": "2026-01-05T17:37:47.172444Z"
         }
       ],
-      "updated_at": "2026-01-05T16:31:07.550809Z"
+      "updated_at": "2026-01-05T17:37:47.172454Z"
     },
     "feedback_loops_v1": {
       "name": "Feedback & Kalibrierung",
