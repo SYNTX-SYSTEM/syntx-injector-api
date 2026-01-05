@@ -421,3 +421,201 @@ async def scoring_health():
 async def get_available_scoring_methods():
     """🔍 Liste verfügbare Scorer"""
     return get_available_scorers()
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🤖 AUTONOMOUS OPTIMIZATION ENDPOINTS (PHASE 3)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+from scoring.autonomous.log_analyzer import analyze_low_scores
+from scoring.autonomous.profile_optimizer import (
+    generate_suggestions_from_analysis,
+    save_suggestion,
+    load_pending_suggestions
+)
+
+
+@router.post("/scoring/autonomous/analyze")
+async def trigger_autonomous_analysis(
+    days: int = Query(7, description="Days to analyze"),
+    score_threshold: float = Query(0.3, description="Score threshold for problematic fields"),
+    min_occurrences: int = Query(3, description="Min occurrences to consider")
+):
+    """
+    🤖 Trigger autonomous log analysis
+    
+    **PHASE 3: Autonomous Optimization**
+    
+    Analyzes scoring logs, identifies problematic fields,
+    generates optimization suggestions
+    """
+    try:
+        # Step 1: Analyze logs
+        analysis = analyze_low_scores(
+            days=days,
+            score_threshold=score_threshold,
+            min_occurrences=min_occurrences
+        )
+        
+        # Step 2: Generate suggestions
+        suggestions = generate_suggestions_from_analysis(analysis)
+        
+        # Step 3: Save suggestions
+        saved = []
+        for suggestion in suggestions:
+            filepath = save_suggestion(suggestion)
+            saved.append({
+                "suggestion_id": suggestion["suggestion_id"],
+                "profile_id": suggestion["profile_id"],
+                "field_name": suggestion["field_name"],
+                "confidence": suggestion["confidence"],
+                "patterns_count": len(suggestion["patterns_to_add"]),
+                "saved_to": filepath
+            })
+        
+        return {
+            "status": "✅ Analysis complete",
+            "analysis_summary": {
+                "period_days": analysis["analysis_period_days"],
+                "fields_analyzed": analysis["total_fields_analyzed"],
+                "problematic_fields": analysis["problematic_count"]
+            },
+            "suggestions_generated": len(suggestions),
+            "suggestions": saved
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+
+@router.get("/scoring/autonomous/suggestions")
+async def get_pending_suggestions():
+    """
+    📋 Get all pending optimization suggestions
+    
+    Returns suggestions ready for review/approval
+    """
+    try:
+        suggestions = load_pending_suggestions()
+        
+        return {
+            "pending_count": len(suggestions),
+            "suggestions": [
+                {
+                    "suggestion_id": s["suggestion_id"],
+                    "profile_id": s["profile_id"],
+                    "field_name": s["field_name"],
+                    "confidence": s["confidence"],
+                    "patterns_to_add": s["patterns_to_add"],
+                    "reasoning": s["reasoning"],
+                    "estimated_impact": s["estimated_impact"],
+                    "created_at": s["created_at"]
+                }
+                for s in suggestions
+            ]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load suggestions: {str(e)}")
+
+
+@router.post("/scoring/autonomous/apply/{suggestion_id}")
+async def apply_suggestion(suggestion_id: str):
+    """
+    ✅ Apply an optimization suggestion
+    
+    **PHASE 3: Auto-apply with validation**
+    
+    Applies the suggested profile update after final validation
+    """
+    try:
+        # Load suggestion
+        suggestions = load_pending_suggestions()
+        suggestion = next((s for s in suggestions if s["suggestion_id"] == suggestion_id), None)
+        
+        if not suggestion:
+            raise HTTPException(status_code=404, detail=f"Suggestion {suggestion_id} not found")
+        
+        # Apply update (using existing update endpoint logic)
+        from scoring.writers.profile_updater import update_profile
+        from scoring.changelog.changelog_manager import log_profile_change
+        
+        success = update_profile(
+            suggestion["profile_id"],
+            suggestion["update_payload"]["updates"],
+            suggestion["update_payload"]["changelog"]
+        )
+        
+        if not success:
+            raise HTTPException(status_code=500, detail="Update failed")
+        
+        # Log to changelog
+        log_profile_change(
+            profile_id=suggestion["profile_id"],
+            action="autonomous_optimization",
+            changed_by="autonomous_system",
+            reason=suggestion["reasoning"],
+            changes=suggestion["update_payload"]["updates"]
+        )
+        
+        # Invalidate cache
+        invalidate_cache()
+        
+        # Mark suggestion as applied (delete file)
+        from pathlib import Path
+        suggestion_file = Path("/opt/syntx-logs/optimization_suggestions") / f"{suggestion_id}.json"
+        if suggestion_file.exists():
+            # Rename to .applied instead of deleting (keep history)
+            suggestion_file.rename(suggestion_file.with_suffix('.applied'))
+        
+        return {
+            "status": "✅ Applied successfully",
+            "suggestion_id": suggestion_id,
+            "profile_id": suggestion["profile_id"],
+            "patterns_added": suggestion["patterns_to_add"],
+            "message": "Profile updated via autonomous optimization"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Apply failed: {str(e)}")
+
+
+@router.get("/scoring/autonomous/status")
+async def get_autonomous_status():
+    """
+    🏥 Get autonomous optimization system status
+    """
+    try:
+        from pathlib import Path
+        
+        suggestions = load_pending_suggestions()
+        log_dir = Path("/opt/syntx-logs/scoring")
+        suggestion_dir = Path("/opt/syntx-logs/optimization_suggestions")
+        
+        # Count files
+        log_files = len(list(log_dir.glob("scoring_*.jsonl"))) if log_dir.exists() else 0
+        applied_count = len(list(suggestion_dir.glob("*.applied"))) if suggestion_dir.exists() else 0
+        
+        return {
+            "status": "🤖 AUTONOMOUS SYSTEM ACTIVE",
+            "version": "0.1.0 - Phase 3.1",
+            "pending_suggestions": len(suggestions),
+            "total_applied": applied_count,
+            "log_files_available": log_files,
+            "features": [
+                "Log analysis",
+                "Pattern extraction (frequency-based)",
+                "Profile optimization suggestions",
+                "Manual approval required",
+                "Changelog tracking"
+            ],
+            "next_features": [
+                "GPT-4 semantic analysis (Phase 3.2)",
+                "Impact prediction (Phase 3.3)",
+                "Auto-apply with confidence threshold (Phase 3.3)",
+                "Performance tracking (Phase 3.4)"
+            ]
+        }
+    except Exception as e:
+        return {"status": "ERROR", "error": str(e)}
