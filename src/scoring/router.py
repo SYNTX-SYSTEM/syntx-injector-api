@@ -11,7 +11,7 @@
 from typing import Dict, List, Any
 
 # FIELDBRAIN Modules
-from .profile_loader import get_profile, get_profile_for_field
+from .core.profile_reader import get_profile, get_profile_for_field
 from .dynamic_scorer import score_with_profile
 from .registry import ensure_field_registered
 from .logger import log_score  # NEW
@@ -137,7 +137,7 @@ def get_available_scorers() -> Dict[str, Any]:
     
     Returns profiles instead of hardcoded functions
     """
-    from .profile_loader import list_all_profiles
+    from .core.profile_reader import list_all_profiles
     
     profiles = list_all_profiles()
     

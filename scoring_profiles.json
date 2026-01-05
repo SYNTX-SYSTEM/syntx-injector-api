@@ -69,9 +69,11 @@
             "fließt",
             "schwingt",
             "pendelt",
-            "instabil"
+            "instabil",
+            "wandert",
+            "rutscht"
           ],
-          "normalize_at": 4,
+          "normalize_at": 5,
           "description": "Patterns für Dynamik und Bewegung"
         },
         "change_indicators": {
@@ -87,7 +89,16 @@
           "normalize_at": 3,
           "description": "Change-spezifische Tokens"
         }
-      }
+      },
+      "changelog": [
+        {
+          "changed_by": "Claude",
+          "reason": "Added wandert and rutscht based on Phase 2.5 deployment test",
+          "analysis": "Testing write capability - Phase 2.5 activation",
+          "timestamp": "2026-01-05T16:31:07.550800Z"
+        }
+      ],
+      "updated_at": "2026-01-05T16:31:07.550809Z"
     },
     "feedback_loops_v1": {
       "name": "Feedback & Kalibrierung",
@@ -123,6 +134,32 @@
           "description": "Kalibrierungs-Keywords"
         }
       }
+    },
+    "claude_test_v1": {
+      "name": "Claude Test Profile",
+      "description": "Created by Claude during Phase 2.5 testing",
+      "strategy": "test_tokens",
+      "components": {
+        "test_tokens": {
+          "weight": 1.0,
+          "tokens": [
+            "test",
+            "phase",
+            "claude"
+          ],
+          "normalize_at": 3
+        }
+      },
+      "created_at": "2026-01-05T16:31:07.671013Z",
+      "created_by": "Claude",
+      "changelog": [
+        {
+          "created_by": "Claude",
+          "reason": "Phase 2.5 test - demonstrating profile creation capability",
+          "timestamp": "2026-01-05T16:31:07.671020Z",
+          "action": "created"
+        }
+      ]
     }
   },
   "field_to_profile_mapping": {
