@@ -34,7 +34,6 @@ from scoring.changelog.changelog_manager import (
     get_profile_changelog,
     get_recent_changes
 )
-from scoring.analytics.profile_analytics import get_profile_analytics, get_single_profile_stats
 
 router = APIRouter(prefix="/resonanz", tags=["scoring"])
 
@@ -135,36 +134,6 @@ async def get_field_analytics(field_name: str, days: int = Query(7)):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  📊 PROFILE ANALYTICS ENDPOINTS
-# ═══════════════════════════════════════════════════════════════════════════════
-
-@router.get("/scoring/analytics/profiles")
-async def get_profiles_analytics(days: int = Query(7)):
-    """📊 Get performance analytics for all profiles"""
-    try:
-        analytics = get_profile_analytics(days=days)
-        return {
-            "profiles": analytics,
-            "total_profiles": len(analytics),
-            "days_analyzed": days
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Profile analytics failed: {str(e)}")
-
-
-@router.get("/scoring/analytics/profiles/{profile_id}")
-async def get_single_profile_analytics(profile_id: str, days: int = Query(7)):
-    """📈 Get performance analytics for a single profile"""
-    try:
-        stats = get_single_profile_stats(profile_id, days=days)
-        if not stats:
-            return {"profile_id": profile_id, "error": "No logs found", "total_usage": 0}
-        return stats
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Profile analytics failed: {str(e)}")
 #  🔧 PROFILE MANAGEMENT - READ ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════════════════
 

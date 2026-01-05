@@ -74,8 +74,8 @@
             "rutscht",
             "system",
             "verschiebt",
-            "langsam",
-            "gleitet"
+            "gleitet",
+            "langsam"
           ],
           "normalize_at": 5,
           "description": "Patterns für Dynamik und Bewegung"
@@ -108,9 +108,73 @@
           "pattern_count": 4,
           "avg_confidence": 0.95,
           "timestamp": "2026-01-05T17:37:47.172444Z"
+        },
+        {
+          "changed_by": "autonomous_system",
+          "reason": "Analysis of 4 low-score samples for field 'drift_bewegung' identified 4 missing patterns: 'system' (10x), 'verschiebt' (10x), 'gleitet' (10x), 'langsam' (10x). Adding to dynamic_patterns.patterns.",
+          "field_analyzed": "drift_bewegung",
+          "pattern_count": 4,
+          "avg_confidence": 0.95,
+          "timestamp": "2026-01-05T18:50:42.198784Z"
+        },
+        {
+          "changed_by": "autonomous_system",
+          "reason": "Analysis of 4 low-score samples for field 'drift_bewegung' identified 4 missing patterns: 'system' (10x), 'verschiebt' (10x), 'gleitet' (10x), 'langsam' (10x). Adding to dynamic_patterns.patterns.",
+          "field_analyzed": "drift_bewegung",
+          "pattern_count": 4,
+          "avg_confidence": 0.95,
+          "timestamp": "2026-01-05T18:50:44.891789Z"
+        },
+        {
+          "changed_by": "autonomous_system",
+          "reason": "Analysis of 1 low-score samples for field 'driftkorper' identified 1 missing patterns: 'system' (3x). Adding to dynamic_patterns.patterns.",
+          "field_analyzed": "driftkorper",
+          "pattern_count": 1,
+          "avg_confidence": 0.95,
+          "timestamp": "2026-01-05T18:50:51.020050Z"
+        },
+        {
+          "changed_by": "autonomous_system",
+          "reason": "Analysis of 1 low-score samples for field 'driftkorper' identified 1 missing patterns: 'system' (3x). Adding to dynamic_patterns.patterns.",
+          "field_analyzed": "driftkorper",
+          "pattern_count": 1,
+          "avg_confidence": 0.95,
+          "timestamp": "2026-01-05T18:51:02.861119Z"
+        },
+        {
+          "changed_by": "autonomous_system",
+          "reason": "Analysis of 4 low-score samples for field 'bewegung_test' identified 4 missing patterns: 'system' (10x), 'verschiebt' (10x), 'langsam' (10x), 'gleitet' (10x). Adding to dynamic_patterns.patterns.",
+          "field_analyzed": "bewegung_test",
+          "pattern_count": 4,
+          "avg_confidence": 0.95,
+          "timestamp": "2026-01-05T19:54:09.645825Z"
+        },
+        {
+          "changed_by": "autonomous_system",
+          "reason": "Analysis of 3 low-score samples for field 'drift_bewegung' identified 3 missing patterns: 'verschiebt' (10x), 'gleitet' (10x), 'langsam' (10x). Adding to dynamic_patterns.patterns.",
+          "field_analyzed": "drift_bewegung",
+          "pattern_count": 3,
+          "avg_confidence": 0.95,
+          "timestamp": "2026-01-05T21:50:40.084685Z"
+        },
+        {
+          "changed_by": "autonomous_system",
+          "reason": "Analysis of 3 low-score samples for field 'drift_bewegung' identified 3 missing patterns: 'verschiebt' (10x), 'gleitet' (10x), 'langsam' (10x). Adding to dynamic_patterns.patterns.",
+          "field_analyzed": "drift_bewegung",
+          "pattern_count": 3,
+          "avg_confidence": 0.95,
+          "timestamp": "2026-01-05T21:50:43.422479Z"
+        },
+        {
+          "changed_by": "autonomous_system",
+          "reason": "Analysis of 3 low-score samples for field 'drift_bewegung' identified 3 missing patterns: 'verschiebt' (10x), 'gleitet' (10x), 'langsam' (10x). Adding to dynamic_patterns.patterns.",
+          "field_analyzed": "drift_bewegung",
+          "pattern_count": 3,
+          "avg_confidence": 0.95,
+          "timestamp": "2026-01-05T21:50:45.557667Z"
         }
       ],
-      "updated_at": "2026-01-05T17:37:47.172454Z"
+      "updated_at": "2026-01-05T21:50:45.557675Z"
     },
     "feedback_loops_v1": {
       "name": "Feedback & Kalibrierung",
