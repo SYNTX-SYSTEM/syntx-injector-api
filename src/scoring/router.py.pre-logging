@@ -1,11 +1,11 @@
 """
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║  🧠 SYNTX SCORING ROUTER v2.1 - FIELDBRAIN + LOGGING                         ║
+║  🧠 SYNTX SCORING ROUTER v2.0 - FIELDBRAIN EDITION                           ║
 ║                                                                              ║
-║  Format-based field scoring mit Dynamic Profiles + Score Logging.           ║
-║  Jeder Score wird geloggt für Analytics & Optimization.                     ║
+║  Format-based field scoring mit Dynamic Profiles.                           ║
+║  Keine hardcoded Scorer mehr. Nur Profile.                                  ║
 ║                                                                              ║
-║  "Das System denkt in Profilen und lernt aus Geschichte." 💎                ║
+║  "Das System denkt in Profilen, nicht in Code." 💎                          ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 """
 from typing import Dict, List, Any
@@ -14,28 +14,52 @@ from typing import Dict, List, Any
 from .profile_loader import get_profile, get_profile_for_field
 from .dynamic_scorer import score_with_profile
 from .registry import ensure_field_registered
-from .logger import log_score  # NEW
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  🎯 MAIN SCORING FUNCTION - FIELDBRAIN + LOGGING
+#  🎯 MAIN SCORING FUNCTION - FIELDBRAIN POWERED
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def score_response(format_data: Dict, response_text: str) -> Dict[str, Any]:
     """
-    🧠 Score LLM response based on format fields - FIELDBRAIN v0.1 + Logging
+    🧠 Score LLM response based on format fields - FIELDBRAIN v0.1
     
-    **NEW: Score Logging**
-    - Jeder Score wird in /opt/syntx-logs/scoring/ geloggt
-    - JSONL Format für Analytics
-    - Field, Score, Profile, Components
+    **NEW: Profile-Based Scoring**
+    - Jedes Feld nutzt ein Profile aus scoring_profiles.json
+    - Auto-Registration von unbekannten Feldern
+    - Dynamische Component Execution
+    - Keine hardcoded Scorer mehr
     
     Args:
         format_data: Format definition with fields
+            {
+                "name": "syntx_true_raw",
+                "fields": [
+                    {"name": "driftkorper", "weight": 1.0},
+                    {"name": "kalibrierung", "weight": 1.0},
+                    {"name": "stromung", "weight": 0.7}
+                ]
+            }
         response_text: The LLM response to score
     
     Returns:
-        Score result with logged entries
+        {
+            "scored_fields": [
+                {
+                    "name": "driftkorper",
+                    "score": 0.75,
+                    "weight": 1.0,
+                    "weighted_score": 0.75,
+                    "profile_used": "dynamic_language_v1",
+                    "components": {...}
+                },
+                ...
+            ],
+            "total_score": 0.82,
+            "format_name": "syntx_true_raw",
+            "field_count": 3,
+            "fieldbrain_version": "0.1.0"
+        }
     """
     
     # Extract fields from format
@@ -58,7 +82,7 @@ def score_response(format_data: Dict, response_text: str) -> Dict[str, Any]:
         field_name = field.get("name", "")
         field_weight = field.get("weight", 1.0)
         
-        # 🌱 STEP 1: Ensure field is registered
+        # 🌱 STEP 1: Ensure field is registered (lazy auto-registration)
         field_meta = ensure_field_registered(field_name)
         
         # 🎯 STEP 2: Get profile for this field
@@ -66,6 +90,7 @@ def score_response(format_data: Dict, response_text: str) -> Dict[str, Any]:
         profile = get_profile(profile_id)
         
         if not profile:
+            # Fallback if profile not found
             profile_id = "default_fallback"
             profile = get_profile(profile_id)
         
@@ -80,24 +105,6 @@ def score_response(format_data: Dict, response_text: str) -> Dict[str, Any]:
         score = score_result["score"]
         weighted_score = score * field_weight
         total_weighted_score += weighted_score
-        
-        # 📊 STEP 4: LOG THE SCORE (NEW!)
-        try:
-            log_score(
-                field_name=field_name,
-                score=score,
-                text=response_text,
-                profile_used=profile_id,
-                components=score_result.get("components", {}),
-                metadata={
-                    "format": format_name,
-                    "weight": field_weight,
-                    "weighted_score": weighted_score
-                }
-            )
-        except Exception as e:
-            # Don't fail scoring if logging fails
-            print(f"⚠️ Logging failed for {field_name}: {e}")
         
         # Add to results
         scored_fields.append({
@@ -122,20 +129,30 @@ def score_response(format_data: Dict, response_text: str) -> Dict[str, Any]:
         "format_name": format_name,
         "field_count": len(fields),
         "total_weight": total_weight,
-        "fieldbrain_version": "0.1.0",
-        "logging_enabled": True  # NEW
+        "fieldbrain_version": "0.1.0"
     }
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  📋 AVAILABLE SCORERS
+#  📋 AVAILABLE SCORERS - NOW PROFILE-BASED
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def get_available_scorers() -> Dict[str, Any]:
     """
     🔍 Get list of available scoring profiles
     
-    Returns profiles instead of hardcoded functions
+    **NEW: Returns profiles instead of hardcoded functions**
+    
+    Returns:
+        {
+            "profiles": {
+                "default_fallback": {...},
+                "flow_bidir_v1": {...},
+                ...
+            },
+            "total_profiles": 4,
+            "fieldbrain_version": "0.1.0"
+        }
     """
     from .profile_loader import list_all_profiles
     
@@ -150,7 +167,8 @@ def get_available_scorers() -> Dict[str, Any]:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  🎯 FIELDBRAIN v0.1 + LOGGING
+#  🎯 DAS IST FIELDBRAIN v0.1
 # ═══════════════════════════════════════════════════════════════════════════════
-# Profile-based scoring with persistent logging.
-# Every score becomes training data. 💎⚡🌊
+# Keine hardcoded Scorer. Nur Profiles.
+# Auto-Registration. Dynamic Execution.
+# GPT kann tweaken. System lernt. 💎⚡🌊
