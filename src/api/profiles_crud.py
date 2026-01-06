@@ -204,3 +204,25 @@ async def list_profiles_crud():
         "count": len(profiles),
         "profiles": profiles
     }
+
+@router.get("/resonanz/profiles/crud/{profile_id}")
+async def get_single_profile(profile_id: str):
+    """
+    GET SINGLE PROFILE
+    
+    Returns profile data from /opt/syntx-config/profiles/{profile_id}.json
+    Same format as PUT/POST responses
+    """
+    try:
+        profile_data = load_profile(profile_id)
+        
+        return {
+            "status": "✅ PROFILE LOADED",
+            "profile_id": profile_id,
+            "profile": profile_data
+        }
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Profile '{profile_id}' not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
