@@ -91,6 +91,7 @@ from .resonance.diff import router as diff_router
 from .resonance.sessions import router as sessions_router
 from .resonance.alchemy import router as alchemy_router
 from .resonance.scoring import router as scoring_router
+from api.profiles_crud import router as profiles_crud_router
 from .resonance.scoring import router as scoring_router
 
 # Include all routers
@@ -108,5 +109,6 @@ app.include_router(sessions_router)
 app.include_router(alchemy_router)
 app.include_router(scoring_router)
 app.include_router(scoring_router)
+app.include_router(profiles_crud_router)
 
-print("✅ 13 Router geladen - DER STROM FLIESST!")
+print("✅ 14 Router geladen - DER STROM FLIESST!")
