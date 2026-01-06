@@ -16,7 +16,8 @@ from collections import defaultdict
 
 CONFIG_ROOT = Path("/opt/syntx-config")
 LOG_PATH = CONFIG_ROOT / "logs"
-PROFILES_PATH = CONFIG_ROOT / "profiles" / "scoring_profiles.json"
+import os
+PROFILES_DIR = Path(os.getenv("PROFILES_DIR", "/opt/syntx-config/profiles"))
 
 
 def feel_pulse(profile_id: str, days_back: int = 7) -> dict:

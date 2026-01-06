@@ -18,7 +18,8 @@ from datetime import datetime
 #  📁 PROFILE LOCATION
 # ═══════════════════════════════════════════════════════════════════════════════
 
-PROFILES_PATH = Path("/opt/syntx-injector-api/scoring_profiles.json")
+import os
+PROFILES_DIR = Path(os.getenv("PROFILES_DIR", "/opt/syntx-config/profiles"))
 
 # Memory Cache
 _profiles_cache: Optional[Dict] = None
@@ -31,21 +32,28 @@ _last_loaded: Optional[datetime] = None
 
 def load_profiles(force_reload: bool = False) -> Dict:
     """
-    👁️ Lädt Scoring Profiles aus JSON
+    👁️ Lädt Scoring Profiles aus Directory
     
     Read-only operation.
     Cached in memory for performance.
+    Loads all .json files from PROFILES_DIR
     """
     global _profiles_cache, _last_loaded
     
     if not force_reload and _profiles_cache is not None:
         return _profiles_cache
     
-    if not PROFILES_PATH.exists():
+    if not PROFILES_DIR.exists():
         return {"version": "0.1.0", "profiles": {}, "field_to_profile_mapping": {}}
     
-    with open(PROFILES_PATH, 'r', encoding='utf-8') as f:
-        data = json.load(f)
+    profiles = {}
+    for filename in PROFILES_DIR.iterdir():
+        if filename.suffix == '.json':
+            profile_id = filename.stem
+            with open(filename, 'r', encoding='utf-8') as f:
+                profiles[profile_id] = json.load(f)
+    
+    data = {"version": "0.1.0", "profiles": profiles, "field_to_profile_mapping": {}}
     
     _profiles_cache = data
     _last_loaded = datetime.utcnow()

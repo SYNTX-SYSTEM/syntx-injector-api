@@ -266,10 +266,13 @@ async def get_scoring_profiles():
         from pathlib import Path
         import json
         
-        profiles_path = Path("/opt/syntx-injector-api/scoring_profiles.json")
-        with open(profiles_path, 'r') as f:
-            data = json.load(f)
-        profiles = data.get('profiles', {})
+        profiles_dir = Path("/opt/syntx-config/profiles")
+        profiles = {}
+        if profiles_dir.exists():
+            for file in profiles_dir.iterdir():
+                if file.suffix == '.json':
+                    with open(file, 'r') as f:
+                        profiles[file.stem] = json.load(f)
         
         return {
             "status": "✅ PROFILES GELADEN",
@@ -288,10 +291,13 @@ async def get_all_profile_analytics(days: int = 7):
         import json
         from .analytics.profile_usage import measure_profile_usage
         
-        profiles_path = Path("/opt/syntx-injector-api/scoring_profiles.json")
-        with open(profiles_path, 'r') as f:
-            data = json.load(f)
-        profiles = data.get('profiles', {})
+        profiles_dir = Path("/opt/syntx-config/profiles")
+        profiles = {}
+        if profiles_dir.exists():
+            for file in profiles_dir.iterdir():
+                if file.suffix == '.json':
+                    with open(file, 'r') as f:
+                        profiles[file.stem] = json.load(f)
         
         analytics = {}
         for profile_id in profiles.keys():
@@ -324,10 +330,13 @@ async def get_profile_component_breakdown(profile_id: str, field_name: str = Non
         import json
         from .scoring.pattern_analytics import feel_pulse
         
-        profiles_path = Path("/opt/syntx-injector-api/scoring_profiles.json")
-        with open(profiles_path, 'r') as f:
-            data = json.load(f)
-        profiles = data.get('profiles', {})
+        profiles_dir = Path("/opt/syntx-config/profiles")
+        profiles = {}
+        if profiles_dir.exists():
+            for file in profiles_dir.iterdir():
+                if file.suffix == '.json':
+                    with open(file, 'r') as f:
+                        profiles[file.stem] = json.load(f)
         
         if profile_id not in profiles:
             raise HTTPException(status_code=404, detail=f"Profile '{profile_id}' nicht gefunden")

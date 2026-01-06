@@ -18,7 +18,8 @@ from datetime import datetime
 #  📁 PATHS
 # ═══════════════════════════════════════════════════════════════════════════════
 
-PROFILES_PATH = Path("/opt/syntx-injector-api/scoring_profiles.json")
+import os
+PROFILES_DIR = Path(os.getenv("PROFILES_DIR", "/opt/syntx-config/profiles"))
 BACKUP_DIR = Path("/opt/syntx-config/profile_backups")
 BACKUP_DIR.mkdir(parents=True, exist_ok=True)
 

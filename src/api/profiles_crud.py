@@ -173,3 +173,34 @@ async def delete_profile(profile_id: str):
         "profile_id": profile_id,
         "message": f"Profile removed from /opt/syntx-config/profiles/"
     }
+
+@router.get("/resonanz/profiles/crud")
+async def list_profiles_crud():
+    """
+    LIST - Get all profiles from /opt/syntx-config/profiles/
+    """
+    
+    if not os.path.exists(PROFILES_DIR):
+        return {
+            "status": "✅ OK",
+            "count": 0,
+            "profiles": {}
+        }
+    
+    profiles = {}
+    
+    for filename in os.listdir(PROFILES_DIR):
+        if filename.endswith('.json'):
+            profile_id = filename[:-5]  # Remove .json
+            try:
+                profile_data = load_profile(profile_id)
+                profiles[profile_id] = profile_data
+            except Exception as e:
+                print(f"Error loading profile {profile_id}: {e}")
+                continue
+    
+    return {
+        "status": "✅ OK", 
+        "count": len(profiles),
+        "profiles": profiles
+    }

@@ -18,7 +18,8 @@ from datetime import datetime
 #  📁 PROFILE LOCATION
 # ═══════════════════════════════════════════════════════════════════════════════
 
-PROFILES_PATH = Path("/opt/syntx-injector-api/scoring_profiles.json")
+import os
+PROFILES_DIR = Path(os.getenv("PROFILES_DIR", "/opt/syntx-config/profiles"))
 
 # Memory Cache
 _profiles_cache: Optional[Dict] = None
@@ -31,7 +32,7 @@ _last_loaded: Optional[datetime] = None
 
 def load_profiles(force_reload: bool = False) -> Dict:
     """
-    🔥 Lädt Scoring Profiles aus JSON
+    🔥 Lädt Scoring Profiles aus Directory
     
     Caching Strategy:
     - Erste Load: Lädt von Disk
@@ -52,19 +53,25 @@ def load_profiles(force_reload: bool = False) -> Dict:
         return _profiles_cache
     
     # Load from disk
-    if not PROFILES_PATH.exists():
+    if not PROFILES_DIR.exists():
         raise FileNotFoundError(
-            f"❌ Scoring profiles nicht gefunden: {PROFILES_PATH}"
+            f"❌ Profiles directory nicht gefunden: {PROFILES_DIR}"
         )
     
-    with open(PROFILES_PATH, 'r', encoding='utf-8') as f:
-        profiles = json.load(f)
+    profiles = {}
+    for filename in PROFILES_DIR.iterdir():
+        if filename.suffix == '.json':
+            profile_id = filename.stem
+            with open(filename, 'r', encoding='utf-8') as f:
+                profiles[profile_id] = json.load(f)
+    
+    data = {"version": "0.1.0", "profiles": profiles, "field_to_profile_mapping": {}}
     
     # Cache
-    _profiles_cache = profiles
+    _profiles_cache = data
     _last_loaded = datetime.utcnow()
     
-    return profiles
+    return data
 
 
 def get_profile(profile_id: str, force_reload: bool = False) -> Optional[Dict]:

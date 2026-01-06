@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     # Logging
     log_dir: Path
     log_to_console: bool
+    profiles_dir: str = "/opt/syntx-config/profiles"
     
     class Config:
         env_file = ".env"
