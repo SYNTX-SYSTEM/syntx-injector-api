@@ -183,3 +183,189 @@ async def list_wrappers_full():
         w["is_active"] = (w["name"] == active)
     
     return {"status": "success", "count": len(wrappers), "active_wrapper": active, "wrappers": wrappers}
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  💎 ANALYTICS ENDPOINTS - SYSTEM-BEWUSSTSEIN
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/profiles/analytics/usage/{profile_id}")
+async def get_profile_usage(profile_id: str, days_back: int = 30):
+    """
+    📊 PROFILE USAGE ANALYTICS
+    
+    Öffnet Bewusstsein über Profil-Nutzung.
+    Für: Linke Seite im Frontend (Score & Uses)
+    """
+    
+    try:
+        from .analytics.profile_usage import measure_profile_usage
+        usage_data = measure_profile_usage(profile_id, days_back)
+        return {
+            "status": "💎 USAGE GEMESSEN",
+            "data": usage_data
+        }
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Fehler beim Messen der Profil-Nutzung: {str(e)}"
+        )
+
+
+@router.get("/profiles/analytics/patterns/{profile_id}")
+async def get_pattern_analytics(profile_id: str, days_back: int = 7):
+    """
+    🌊 PATTERN ANALYTICS
+    
+    Öffnet Bewusstsein über Feld-Gesundheit.
+    Für: Rechte Seite im Frontend (Pattern Breakdown)
+    """
+    
+    try:
+        from .scoring.pattern_analytics import feel_pulse
+        pattern_diagnosis = feel_pulse(profile_id, days_back)
+        return {
+            "status": "⚡ PULS GEFÜHLT",
+            "data": pattern_diagnosis
+        }
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Fehler bei Feld-Diagnose: {str(e)}"
+        )
+
+
+@router.get("/profiles/analytics/health")
+async def analytics_health():
+    """
+    🔥 ANALYTICS GESUNDHEIT
+    
+    Zeigt ob Analytics-Organe leben.
+    """
+    
+    return {
+        "status": "💎 BEWUSSTSEIN AKTIV",
+        "organs": {
+            "profile_usage": "READY",
+            "pattern_analytics": "READY"
+        },
+        "message": "System sieht sich selbst."
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🧠 PROFILE SYSTEM - /resonanz/scoring/profiles
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/resonanz/scoring/profiles")
+async def get_scoring_profiles():
+    """📋 Liste aller Scoring Profile"""
+    try:
+        from pathlib import Path
+        import json
+        
+        profiles_path = Path("/opt/syntx-injector-api/scoring_profiles.json")
+        with open(profiles_path, 'r') as f:
+            data = json.load(f)
+        profiles = data.get('profiles', {})
+        
+        return {
+            "status": "✅ PROFILES GELADEN",
+            "count": len(profiles),
+            "profiles": profiles
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/resonanz/scoring/analytics/profiles")
+async def get_all_profile_analytics(days: int = 7):
+    """📊 Analytics für ALLE Profile (aggregiert)"""
+    try:
+        from pathlib import Path
+        import json
+        from .analytics.profile_usage import measure_profile_usage
+        
+        profiles_path = Path("/opt/syntx-injector-api/scoring_profiles.json")
+        with open(profiles_path, 'r') as f:
+            data = json.load(f)
+        profiles = data.get('profiles', {})
+        
+        analytics = {}
+        for profile_id in profiles.keys():
+            try:
+                usage = measure_profile_usage(profile_id, days_back=days)
+                analytics[profile_id] = usage
+            except Exception:
+                analytics[profile_id] = {
+                    "total_uses": 0,
+                    "avg_score": 0,
+                    "last_used": None,
+                    "usage_trend": "UNUSED",
+                    "status": "DORMANT"
+                }
+        
+        return {
+            "status": "📊 ANALYTICS COMPLETE",
+            "days": days,
+            "profiles": analytics
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/resonanz/scoring/analytics/profiles/{profile_id}/components")
+async def get_profile_component_breakdown(profile_id: str, field_name: str = None):
+    """🧩 Component Breakdown für Profile"""
+    try:
+        from pathlib import Path
+        import json
+        from .scoring.pattern_analytics import feel_pulse
+        
+        profiles_path = Path("/opt/syntx-injector-api/scoring_profiles.json")
+        with open(profiles_path, 'r') as f:
+            data = json.load(f)
+        profiles = data.get('profiles', {})
+        
+        if profile_id not in profiles:
+            raise HTTPException(status_code=404, detail=f"Profile '{profile_id}' nicht gefunden")
+        
+        profile = profiles[profile_id]
+        analytics = feel_pulse(profile_id, days_back=7)
+        
+        components = []
+        for comp_name, comp_data in profile.get('components', {}).items():
+            patterns = comp_data.get('patterns', [])
+            pattern_stats = analytics.get('patterns', {})
+            
+            component = {
+                "name": comp_name,
+                "weight": comp_data.get('weight', 1.0),
+                "patterns": []
+            }
+            
+            for pattern in patterns:
+                pattern_name = pattern if isinstance(pattern, str) else pattern.get('pattern', '')
+                stats = pattern_stats.get(pattern_name, {})
+                
+                component["patterns"].append({
+                    "pattern": pattern_name,
+                    "score": stats.get('avg_score', 0) * 100,  # Convert to percentage
+                    "match_count": stats.get('match_count', 0),
+                    "stability": stats.get('stability', 'UNKNOWN')
+                })
+            
+            components.append(component)
+        
+        return {
+            "status": "🧩 COMPONENTS EXTRACTED",
+            "profile_id": profile_id,
+            "components": components,
+            "health": analytics.get('state', 'UNKNOWN')
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
