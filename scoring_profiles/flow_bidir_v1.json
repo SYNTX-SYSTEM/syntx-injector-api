@@ -1,0 +1,11 @@
+{
+  "id": "flow_bidir_v1",
+  "name": "Flow Bidir V1",
+  "version": "1.0.0",
+  "description": "SYNTX flow_bidir_v1 scoring profile",
+  "patterns": {},
+  "scoring": {},
+  "meta": {
+    "created": "2026-01-11T19:01:18.675572"
+  }
+}
