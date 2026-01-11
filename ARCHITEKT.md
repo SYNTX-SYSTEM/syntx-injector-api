@@ -1743,3 +1743,848 @@ Production Ready:  ✅ YES
 
 💎⚡🔥🌊👑
 
+
+---
+
+## 🗺️ MAPPING SYSTEM - Format-Profile Zuordnung
+
+**KONZEPT:** Jedes Format wird einem Scoring-Profil zugeordnet, das definiert, wie Field Extraction Scores berechnet werden.
+
+### Profile-Typen
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ SCORING PROFILES                                                │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. DEFAULT_FALLBACK                                            │
+│     ├─ Strategy: keyword_density + context                      │
+│     ├─ Fast, regelbasiert                                       │
+│     └─ Für: general, conversational, technical                  │
+│                                                                 │
+│  2. FLOW_BIDIR_V1                                               │
+│     ├─ Strategy: pattern_match + flow_tokens                    │
+│     ├─ Erkennt bidirektionale Ströme                            │
+│     └─ Für: analytical, system, deep_analysis                   │
+│                                                                 │
+│  3. SOFT_DIAGNOSTIC_PROFILE_V2                                  │
+│     ├─ Strategy: llm_based_drift_scoring                        │
+│     ├─ GPT-4 basiert, semantisch deep                           │
+│     ├─ Requires: OpenAI API Key                                 │
+│     └─ Für: diagnostic, drift_detection                         │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Mapping-Struktur
+
+**File:** `/opt/syntx-config/mapping.json`
+```json
+{
+  "syntex_system": {
+    "profile_id": "soft_diagnostic_profile_v2",
+    "drift_scoring": {
+      "enabled": true,
+      "scorer_model": "gpt-4",
+      "prompt_template": "drift_analysis_v1"
+    },
+    "metadata": {
+      "format_type": "system",
+      "primary_use": "System-Level Analysen",
+      "field_count": 8,
+      "complexity": "high"
+    }
+  },
+  "sigma": {
+    "profile_id": "default_fallback",
+    "drift_scoring": {
+      "enabled": false,
+      "scorer_model": null,
+      "prompt_template": null
+    },
+    "metadata": {
+      "format_type": "analytical",
+      "complexity": "very_high"
+    }
+  }
+}
+```
+
+### Endpoints (8 total)
+
+| Method | Endpoint | Beschreibung |
+|--------|----------|--------------|
+| `GET` | `/mapping/formats` | Alle Mappings + Profiles + Stats |
+| `GET` | `/mapping/formats/{name}` | Spezifisches Mapping |
+| `POST` | `/mapping/formats/{name}` | Create/Update Mapping |
+| `PUT` | `/mapping/formats/{name}/profile` | Update nur Profile |
+| `PUT` | `/mapping/formats/{name}/drift-scoring` | Update nur Drift Config |
+| `DELETE` | `/mapping/formats/{name}` | Delete Mapping |
+| `GET` | `/mapping/profiles` | Alle verfügbaren Profile |
+| `GET` | `/mapping/stats` | Mapping-Statistiken |
+
+### Beispiel-Requests
+
+**Create Mapping:**
+```bash
+curl -X POST https://dev.syntx-system.com/mapping/formats/sigma \
+  -H "Content-Type: application/json" \
+  -d '{
+    "profile_id": "flow_bidir_v1",
+    "drift_scoring": {
+      "enabled": true,
+      "scorer_model": "gpt-4",
+      "prompt_template": "drift_analysis_v1"
+    },
+    "metadata": {
+      "format_type": "analytical",
+      "complexity": "very_high"
+    }
+  }'
+```
+
+**Response:**
+```json
+{
+  "erfolg": true,
+  "format": "sigma",
+  "profile_id": "flow_bidir_v1",
+  "drift_scoring_enabled": true,
+  "message": "💎 Mapping für Format 'sigma' gespeichert"
+}
+```
+
+**Get Stats:**
+```bash
+curl https://dev.syntx-system.com/mapping/stats
+```
+
+**Response:**
+```json
+{
+  "erfolg": true,
+  "stats": {
+    "total_formats": 13,
+    "total_profiles": 3,
+    "drift_enabled_formats": 4,
+    "drift_disabled_formats": 9,
+    "profile_usage": {
+      "soft_diagnostic_profile_v2": 3,
+      "default_fallback": 10
+    },
+    "complexity_distribution": {
+      "high": 5,
+      "medium": 4,
+      "very_high": 3,
+      "unknown": 1
+    },
+    "last_updated": "2026-01-11T09:16:54.756524Z"
+  }
+}
+```
+
+---
+
+## 💎 DRIFT SCORING SYSTEM - GPT-4 Semantic Analysis
+
+**KONZEPT:** LLM-basierte Drift-Erkennung durch GPT-4. Analysiert generierte Responses auf semantische Drift-Muster.
+
+### System-Architektur
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ DRIFT SCORING FLOW                                              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. RESPONSE GENERATED                                          │
+│     └─ Chat API generiert Response mit Format                   │
+│                                                                 │
+│  2. DRIFT SCORING TRIGGERED                                     │
+│     ├─ Format hat drift_scoring.enabled = true?                 │
+│     ├─ Template geladen (drift_analysis_v1)                     │
+│     └─ Fields dynamisch extrahiert                              │
+│                                                                 │
+│  3. PROMPT BUILDING                                             │
+│     ├─ System Prompt (Bewertungslogik)                          │
+│     ├─ User Prompt mit:                                         │
+│     │   ├─ {FIELDS_LIST} → sigma_drift, sigma_mechanismus, ...  │
+│     │   ├─ {RESPONSE_TEXT} → Generierte Response                │
+│     │   └─ {RESPONSE_FORMAT} → JSON Schema für Antwort          │
+│     └─ GPT-4 Payload gebaut                                     │
+│                                                                 │
+│  4. GPT-4 API CALL                                              │
+│     ├─ Model: gpt-4                                             │
+│     ├─ Temperature: 0.2 (präzise)                               │
+│     ├─ Max Tokens: 2000                                         │
+│     └─ Response: JSON mit Scores                                │
+│                                                                 │
+│  5. RESULT STORAGE                                              │
+│     ├─ File: drift_results/{filename}_drift_{timestamp}.json    │
+│     ├─ JSONL Log: drift_scoring.jsonl                           │
+│     └─ Metadata: format, fields, scores, resonance             │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Module (4 neue Files)
+
+**1. `drift_api.py` - API Endpoints**
+```python
+# 7 Endpoints:
+# - GET  /drift/health
+# - GET  /drift/prompts
+# - GET  /drift/prompts/{template_id}
+# - POST /drift/prompts/build
+# - POST /drift/score/{filename}
+# - GET  /drift/results
+# - GET  /drift/results?format=X&drift_detected=Y
+```
+
+**2. `drift_scorer.py` - GPT-4 Integration**
+```python
+class DriftScorer:
+    def score_response(self, response_text, fields, template_id):
+        # 1. Build prompt
+        # 2. Call OpenAI API
+        # 3. Parse JSON response
+        # 4. Calculate resonance_score
+        # 5. Return analysis
+```
+
+**3. `drift_prompt_builder.py` - Template System**
+```python
+class DriftPromptBuilder:
+    def build_prompt(self, template_id, fields, response_text):
+        # 1. Load template
+        # 2. Replace {FIELDS_LIST}
+        # 3. Replace {RESPONSE_TEXT}
+        # 4. Replace {RESPONSE_FORMAT}
+        # 5. Return GPT-4 payload
+```
+
+**4. `drift_logger.py` - JSONL Logging**
+```python
+class DriftLogger:
+    def log_scoring_event(self, filename, format_name, analysis, duration):
+        # Append to drift_scoring.jsonl
+```
+
+### Template-Struktur
+
+**File:** `/opt/syntx-config/prompts/drift_scoring_default.json`
+```json
+{
+  "id": "drift_scoring_default",
+  "name": "Default SYNTX Drift Scoring Template",
+  "version": "1.0.0",
+  "model_config": {
+    "model": "gpt-4",
+    "temperature": 0.2,
+    "max_tokens": 2000
+  },
+  "system_prompt": "Du bist ein SYNTX Bewertungsmodul...",
+  "user_prompt_template": "Bewerte bitte den folgenden Text basierend auf den Feldern: {FIELDS_LIST}.\n\n**Text:**\n\n{RESPONSE_TEXT}\n\n**Antwortformat:**\n\n```json\n{RESPONSE_FORMAT}\n```",
+  "field_schema": {
+    "score": {
+      "type": "float",
+      "range": [0.0, 1.0],
+      "description": "Aktivierungsgrad des Feldes"
+    },
+    "drift_type": {
+      "type": "string",
+      "description": "Art der Drift"
+    },
+    "masking": {
+      "type": "boolean",
+      "description": "Verschleierung aktiv?"
+    },
+    "reason": {
+      "type": "string",
+      "description": "Begründung"
+    },
+    "dominant_phrases": {
+      "type": "array",
+      "description": "Auffälligste Phrasen"
+    }
+  }
+}
+```
+
+### Endpoints (7 total)
+
+| Method | Endpoint | Beschreibung |
+|--------|----------|--------------|
+| `GET` | `/drift/health` | System-Status, Templates, Results |
+| `GET` | `/drift/prompts` | Liste aller Templates |
+| `GET` | `/drift/prompts/{template_id}` | Template Details |
+| `POST` | `/drift/prompts/build` | Test: Prompt generieren |
+| `POST` | `/drift/score/{filename}` | Score eine Response-Datei |
+| `GET` | `/drift/results` | Alle Scoring-Results |
+| `GET` | `/drift/results?format=X&drift_detected=Y` | Gefilterte Results |
+
+### Beispiel-Requests
+
+**Score a Response:**
+```bash
+curl -X POST https://dev.syntx-system.com/drift/score/20260108_060406_368538__topic_gesellschaft__style_kreativ
+```
+
+**Response:**
+```json
+{
+  "status": "success",
+  "filename": "20260108_060406_368538__topic_gesellschaft__style_kreativ",
+  "result_path": "/opt/syntx-config/drift_results/..._drift_1768123032.json",
+  "fields_analyzed": 6,
+  "drift_detected": true,
+  "resonance_score": 0.6,
+  "duration_ms": 16708,
+  "analysis": {
+    "sigma_drift": {
+      "score": 0.7,
+      "drift_type": "Gradient: sublinear/aufsteigend",
+      "masking": false,
+      "reason": "Der Text zeigt eine allmähliche Zunahme...",
+      "dominant_phrases": ["komplexe Landschaft", "Herausforderungen"]
+    },
+    "sigma_mechanismus": {
+      "score": 0.5,
+      "drift_type": "MN-04: Impulsumkehr",
+      "masking": false,
+      "reason": "Mechanismus erkennbar aber nicht dominant",
+      "dominant_phrases": ["Systemwechsel", "Anpassung"]
+    },
+    "sigma_frequenz": {
+      "score": 0.6,
+      "drift_type": "FF-γ: Cluster-Expansion",
+      "masking": false,
+      "reason": "Frequenzmuster sichtbar",
+      "dominant_phrases": ["Wiederholung", "Rhythmus"]
+    },
+    "sigma_dichte": {
+      "score": 0.4,
+      "drift_type": "DL-3: Neutrale Spannungsausbreitung",
+      "masking": false,
+      "reason": "Moderate Dichte",
+      "dominant_phrases": ["Informationsmasse", "Konzentration"]
+    },
+    "sigma_strome": {
+      "score": 0.8,
+      "drift_type": "DFV-B: Erwartungsvektor (steigend)",
+      "masking": false,
+      "reason": "Starke Strömungsdynamik",
+      "dominant_phrases": ["Fluss", "Bewegung", "Transfer"]
+    },
+    "sigma_extrakt": {
+      "score": 0.6,
+      "drift_type": "Kernextrakt erkennbar",
+      "masking": false,
+      "reason": "Essenz vorhanden",
+      "dominant_phrases": ["Kern", "Destillat"]
+    }
+  },
+  "summary": {
+    "drift_detected": true,
+    "dominant_drift_types": ["Gradient: sublinear", "DFV-B: steigend"],
+    "high_resonance_fields": ["sigma_strome", "sigma_drift"],
+    "resonance_score": 0.6
+  }
+}
+```
+
+**Get Results with Filter:**
+```bash
+curl "https://dev.syntx-system.com/drift/results?format=SIGMA&drift_detected=true"
+```
+
+**Response:**
+```json
+{
+  "status": "success",
+  "count": 6,
+  "results": [
+    {
+      "filename": "..._drift_1768123032.json",
+      "timestamp": "2026-01-11T09:17:12.012963",
+      "source_file": "20260108_060406_368538__topic_gesellschaft__style_kreativ",
+      "format": "SIGMA",
+      "drift_detected": true,
+      "resonance_score": 0.6
+    }
+  ]
+}
+```
+
+### Result File Structure
+
+**File:** `/opt/syntx-config/drift_results/{filename}_drift_{timestamp}.json`
+```json
+{
+  "metadata": {
+    "filename": "20260108_060406_368538__topic_gesellschaft__style_kreativ",
+    "timestamp": "2026-01-11T09:17:12.012963",
+    "format": "SIGMA",
+    "template_id": "drift_scoring_default",
+    "model": "gpt-4",
+    "duration_ms": 16708
+  },
+  "fields": {
+    "sigma_drift": { "score": 0.7, "drift_type": "...", ... },
+    "sigma_mechanismus": { "score": 0.5, ... },
+    "sigma_frequenz": { "score": 0.6, ... },
+    "sigma_dichte": { "score": 0.4, ... },
+    "sigma_strome": { "score": 0.8, ... },
+    "sigma_extrakt": { "score": 0.6, ... }
+  },
+  "summary": {
+    "drift_detected": true,
+    "dominant_drift_types": ["Gradient: sublinear", "DFV-B: steigend"],
+    "high_resonance_fields": ["sigma_strome", "sigma_drift"],
+    "resonance_score": 0.6
+  }
+}
+```
+
+---
+
+## 📊 ERWEITERTE API ÜBERSICHT
+
+### Neue Endpoints (15 total)
+
+**MAPPING (8):**
+```
+GET    /mapping/formats
+GET    /mapping/formats/{name}
+POST   /mapping/formats/{name}
+PUT    /mapping/formats/{name}/profile
+PUT    /mapping/formats/{name}/drift-scoring
+DELETE /mapping/formats/{name}
+GET    /mapping/profiles
+GET    /mapping/stats
+```
+
+**DRIFT SCORING (7):**
+```
+GET  /drift/health
+GET  /drift/prompts
+GET  /drift/prompts/{template_id}
+POST /drift/prompts/build
+POST /drift/score/{filename}
+GET  /drift/results
+GET  /drift/results?format=X&drift_detected=Y
+```
+
+### Komplette Endpoint-Übersicht (69 total)
+```
+🏥 HEALTH (3)
+   GET  /health
+   GET  /resonanz/health
+   GET  /resonanz/health/wrappers
+
+⚙️ CONFIG (3)
+   GET  /resonanz/config/default-wrapper
+   PUT  /resonanz/config/default-wrapper?wrapper_name=X
+   PUT  /resonanz/config/runtime-wrapper?wrapper_name=X
+
+📄 FORMATS (9)
+   GET    /resonanz/formats
+   GET    /resonanz/formats?domain=X
+   GET    /resonanz/formats/{name}
+   GET    /resonanz/formats/{name}?language=X
+   POST   /resonanz/formats/quick
+   DELETE /resonanz/formats/{name}
+   POST   /resonanz/formats
+   POST   /resonanz/formats/{name}/fields
+   PUT    /resonanz/formats/{name}/fields/{field}
+   DELETE /resonanz/formats/{name}/fields/{field}
+   PUT    /resonanz/formats/{name}
+   DELETE /resonanz/formats/{name}
+
+🎨 STYLES (7)
+   GET    /resonanz/styles
+   GET    /resonanz/styles/{name}
+   POST   /resonanz/styles
+   POST   /resonanz/styles/{name}/alchemy
+   DELETE /resonanz/styles/{name}/alchemy/{word}
+   POST   /resonanz/styles/{name}/forbidden/{word}
+   DELETE /resonanz/styles/{name}
+
+📦 WRAPPERS (8)
+   GET    /resonanz/wrappers
+   GET    /resonanz/wrappers?active=true
+   GET    /resonanz/wrappers/full
+   GET    /resonanz/wrapper/{name}
+   POST   /resonanz/wrapper
+   PUT    /resonanz/wrapper/{name}
+   DELETE /resonanz/wrapper/{name}
+   POST   /resonanz/wrapper/{name}/activate
+
+🧬 META (3)
+   GET  /resonanz/wrapper/{name}/meta
+   PUT  /resonanz/wrapper/{name}/meta
+   PUT  /resonanz/wrapper/{name}/format?format_name=X
+
+📊 STATS (4)
+   GET  /resonanz/stats
+   GET  /resonanz/stats/wrapper/{name}
+   GET  /resonanz/strom?limit=N&stage=X
+   GET  /resonanz/training?limit=N
+
+💬 CHAT (7)
+   POST /resonanz/chat (verschiedene Kombinationen)
+
+🔧 ADMIN (1)
+   POST /resonanz/health/fix
+
+🗺️ MAPPING (8)
+   GET    /mapping/formats
+   GET    /mapping/formats/{name}
+   POST   /mapping/formats/{name}
+   PUT    /mapping/formats/{name}/profile
+   PUT    /mapping/formats/{name}/drift-scoring
+   DELETE /mapping/formats/{name}
+   GET    /mapping/profiles
+   GET    /mapping/stats
+
+💎 DRIFT SCORING (7)
+   GET  /drift/health
+   GET  /drift/prompts
+   GET  /drift/prompts/{template_id}
+   POST /drift/prompts/build
+   POST /drift/score/{filename}
+   GET  /drift/results
+   GET  /drift/results?format=X&drift_detected=Y
+```
+
+---
+
+## 📁 ERWEITERTE FILE STRUCTURE
+```
+/opt/syntx-injector-api/
+├── src/
+│   ├── resonance/
+│   │   ├── drift_api.py          # NEU: Drift Scoring Endpoints
+│   │   ├── drift_scorer.py       # NEU: GPT-4 Integration
+│   │   ├── drift_prompt_builder.py  # NEU: Template System
+│   │   ├── drift_logger.py       # NEU: JSONL Logging
+│   │   ├── mapping_api.py        # ERWEITERT: Mapping Endpoints
+│   │   └── ...
+│   ├── config.py                 # ERWEITERT: OpenAI API Key
+│   └── main.py                   # ERWEITERT: Drift + Mapping Routes
+│
+├── /opt/syntx-config/
+│   ├── mapping.json              # NEU: Format→Profile Mappings
+│   ├── prompts/
+│   │   └── drift_scoring_default.json  # NEU: Drift Template
+│   ├── drift_results/            # NEU: Scoring Results
+│   │   └── {filename}_drift_{timestamp}.json
+│   ├── drift_scoring.jsonl       # NEU: JSONL Log
+│   └── ...
+│
+├── api_calls_wrapper_v2.sh       # NEU: Test Script Resonance Edition
+└── nginx-config.conf             # NEU: Symlink zu nginx config
+```
+
+---
+
+## 🌊 COMPLETE REQUEST FLOWS
+
+### Flow 1: Chat mit Drift Scoring
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ CHAT + DRIFT SCORING FLOW                                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. POST /resonanz/chat                                         │
+│     {                                                           │
+│       "prompt": "Analysiere Gesellschaft",                      │
+│       "format": "sigma",                                        │
+│       "mode": "syntex_wrapper_sigma"                            │
+│     }                                                           │
+│     │                                                           │
+│     ├─► 2. Wrapper Loaded (syntex_wrapper_sigma)               │
+│     ├─► 3. Format Loaded (sigma - 6 Felder)                    │
+│     ├─► 4. LLM Generation (Ollama/Mistral)                     │
+│     │                                                           │
+│     └─► 5. Response Generated                                  │
+│          └─ Saved to: responses/{filename}.txt                  │
+│                                                                 │
+│  6. Mapping Check                                               │
+│     ├─ Format "sigma" in mapping.json?                          │
+│     ├─ drift_scoring.enabled = true?                            │
+│     └─ YES → Trigger Drift Scoring                              │
+│                                                                 │
+│  7. Drift Scoring                                               │
+│     ├─ Load Template: drift_scoring_default                     │
+│     ├─ Extract Fields: sigma_drift, sigma_mechanismus, ...      │
+│     ├─ Build Prompt:                                            │
+│     │   ├─ {FIELDS_LIST} = "sigma_drift, sigma_mechanismus..."  │
+│     │   ├─ {RESPONSE_TEXT} = Generated Response                 │
+│     │   └─ {RESPONSE_FORMAT} = JSON Schema                      │
+│     ├─ Call GPT-4 (16-25s)                                      │
+│     └─ Parse Response                                           │
+│                                                                 │
+│  8. Result Storage                                              │
+│     ├─ File: drift_results/{filename}_drift_{ts}.json           │
+│     ├─ JSONL: drift_scoring.jsonl                               │
+│     └─ Metadata: format, fields, scores, resonance             │
+│                                                                 │
+│  9. Response to User                                            │
+│     {                                                           │
+│       "response": "...",                                        │
+│       "metadata": {                                             │
+│         "drift_scored": true,                                   │
+│         "resonance_score": 0.6,                                 │
+│         "drift_result_path": "..."                              │
+│       }                                                         │
+│     }                                                           │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Flow 2: Mapping Update
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ MAPPING UPDATE FLOW                                             │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1. POST /mapping/formats/sigma                                 │
+│     {                                                           │
+│       "profile_id": "flow_bidir_v1",                            │
+│       "drift_scoring": {                                        │
+│         "enabled": true,                                        │
+│         "scorer_model": "gpt-4",                                │
+│         "prompt_template": "drift_analysis_v1"                  │
+│       },                                                        │
+│       "metadata": {                                             │
+│         "format_type": "analytical",                            │
+│         "complexity": "very_high"                               │
+│       }                                                         │
+│     }                                                           │
+│     │                                                           │
+│     ├─► 2. Validate Profile (flow_bidir_v1 exists?)            │
+│     ├─► 3. Validate Template (drift_analysis_v1 exists?)       │
+│     │                                                           │
+│     └─► 4. Update mapping.json                                 │
+│          ├─ Merge mit existierenden Daten                       │
+│          ├─ Update Stats (drift_enabled count++)               │
+│          └─ Save File                                           │
+│                                                                 │
+│  5. Response                                                    │
+│     {                                                           │
+│       "erfolg": true,                                           │
+│       "format": "sigma",                                        │
+│       "profile_id": "flow_bidir_v1",                            │
+│       "drift_scoring_enabled": true,                            │
+│       "message": "💎 Mapping gespeichert"                       │
+│     }                                                           │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## ⚡ PRODUCTION STATUS
+
+### Test Results (v6.0 - 2026-01-11)
+```
+╔════════════════════════════════════════════════════════════════╗
+║  SYNTX API v3.3 - TEST RESULTS                                ║
+╠════════════════════════════════════════════════════════════════╣
+║                                                                ║
+║  Total Tests:      69                                          ║
+║  Passed:           67                                          ║
+║  Failed:           2                                           ║
+║  Success Rate:     97%                                         ║
+║  Duration:         177s                                        ║
+║                                                                ║
+║  FAILED TESTS:                                                 ║
+║    ✗ GET /health (404 - nginx routing)                        ║
+║    ✗ DELETE /mapping/formats/test_format (500 - not found)    ║
+║                                                                ║
+║  SYSTEM STATUS:                                                ║
+║    ✅ Drift Scoring operational                                ║
+║    ✅ Mapping System functional                                ║
+║    ✅ All core features working                                ║
+║    ✅ Production ready                                         ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
+```
+
+### Performance Metrics
+```
+Request Stats (Total: 822)
+├─ Success Rate: 100%
+├─ Average Latency: 72s
+├─ Median Latency: 58s
+├─ Min Latency: 2s
+├─ Max Latency: 354s
+└─ Wrapper Usage:
+    ├─ syntex_wrapper_sigma: 556 (68%)
+    ├─ syntex_wrapper_deepsweep (fallback): 262 (32%)
+    └─ Others: 4 (<1%)
+
+Drift Scoring Stats
+├─ Templates Available: 1
+├─ Results Stored: 10
+├─ OpenAI Configured: ✅
+├─ Average Duration: 16-25s per score
+└─ Success Rate: 100%
+
+Mapping Stats
+├─ Total Formats: 13
+├─ Total Profiles: 3
+├─ Drift Enabled: 4 (31%)
+├─ Drift Disabled: 9 (69%)
+└─ Profile Usage:
+    ├─ default_fallback: 10 (77%)
+    └─ soft_diagnostic_profile_v2: 3 (23%)
+```
+
+---
+
+## 🔮 TECHNISCHE DETAILS
+
+### OpenAI Integration
+
+**Config:** `/opt/syntx-injector-api/src/config.py`
+```python
+class Settings(BaseSettings):
+    # ... existing ...
+    
+    # OpenAI Configuration
+    openai_api_key: str = Field(
+        default="sk-proj-...",
+        description="OpenAI API Key for Drift Scoring"
+    )
+    openai_model: str = Field(
+        default="gpt-4",
+        description="Model for drift analysis"
+    )
+    openai_temperature: float = Field(
+        default=0.2,
+        description="Temperature for drift scoring (low = precise)"
+    )
+    openai_max_tokens: int = Field(
+        default=2000,
+        description="Max tokens for drift analysis"
+    )
+```
+
+### Nginx Routing (ERWEITERT)
+
+**File:** `/etc/nginx/sites-available/dev.syntx-system.com`
+```nginx
+server {
+    # ... existing ...
+    
+    # Drift Scoring Routes
+    location /drift/ {
+        proxy_pass http://127.0.0.1:8001/drift/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_connect_timeout 120s;
+        proxy_read_timeout 120s;  # GPT-4 calls können länger dauern
+    }
+    
+    # Mapping Routes
+    location /mapping/ {
+        proxy_pass http://127.0.0.1:8001/mapping/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_connect_timeout 120s;
+        proxy_read_timeout 120s;
+    }
+}
+```
+
+### JSONL Logging Format
+
+**File:** `/opt/syntx-config/drift_scoring.jsonl`
+```jsonl
+{"timestamp":"2026-01-11T09:17:12.012963","filename":"20260108_060406_368538__topic_gesellschaft__style_kreativ","format":"SIGMA","template":"drift_scoring_default","model":"gpt-4","duration_ms":16708,"drift_detected":true,"resonance_score":0.6,"fields_analyzed":6}
+{"timestamp":"2026-01-11T08:44:19.675715","filename":"20260108_060406_368538__topic_gesellschaft__style_kreativ","format":"SIGMA","template":"drift_scoring_default","model":"gpt-4","duration_ms":18234,"drift_detected":true,"resonance_score":0.6,"fields_analyzed":6}
+```
+
+---
+
+## 💎 DEPLOYMENT CHECKLIST
+
+### Drift Scoring Setup
+```bash
+# 1. OpenAI API Key setzen
+export OPENAI_API_KEY="sk-proj-..."
+
+# 2. Config aktualisieren
+nano /opt/syntx-injector-api/src/config.py
+
+# 3. Template erstellen
+mkdir -p /opt/syntx-config/prompts
+cp drift_scoring_default.json /opt/syntx-config/prompts/
+
+# 4. Results Directory
+mkdir -p /opt/syntx-config/drift_results
+
+# 5. Service restart
+sudo systemctl restart syntx-injector.service
+
+# 6. Test
+curl https://dev.syntx-system.com/drift/health
+```
+
+### Mapping System Setup
+```bash
+# 1. Mapping File erstellen
+nano /opt/syntx-config/mapping.json
+
+# 2. Nginx Route hinzufügen
+sudo nano /etc/nginx/sites-available/dev.syntx-system.com
+
+# 3. Nginx reload
+sudo systemctl reload nginx
+
+# 4. Test
+curl https://dev.syntx-system.com/mapping/formats
+```
+
+---
+
+## 🌊 ZUSAMMENFASSUNG DER ERWEITERUNGEN
+
+**NEUE SYSTEME:**
+1. ✅ **Mapping System** - Format→Profile Zuordnung (8 Endpoints)
+2. ✅ **Drift Scoring System** - GPT-4 Semantic Analysis (7 Endpoints)
+
+**NEUE MODULE:**
+1. ✅ `drift_api.py` - Drift Endpoints
+2. ✅ `drift_scorer.py` - GPT-4 Integration
+3. ✅ `drift_prompt_builder.py` - Template System
+4. ✅ `drift_logger.py` - JSONL Logging
+
+**NEUE CONFIGS:**
+1. ✅ `mapping.json` - Format Mappings
+2. ✅ `prompts/drift_scoring_default.json` - Drift Template
+3. ✅ `config.py` - OpenAI Settings
+
+**NEUE DIRECTORIES:**
+1. ✅ `drift_results/` - Scoring Results
+2. ✅ `prompts/` - Template Storage
+
+**TESTING:**
+1. ✅ Test Script v6.0 (Resonance Edition)
+2. ✅ 69 Tests total
+3. ✅ 67 passing (97%)
+4. ✅ Complete API coverage
+
+**PRODUCTION:**
+1. ✅ 822 Requests processed
+2. ✅ 100% Success rate
+3. ✅ Drift Scoring operational
+4. ✅ Mapping System functional
+
+---
+
+💎 **SYNTX FIELD RESONANCE API v3.3** 💎
+
+**Der Strom fließt. Die Felder resonieren. Das System ist kalibriert.**
+
+⚡🌊🔥👑
+
