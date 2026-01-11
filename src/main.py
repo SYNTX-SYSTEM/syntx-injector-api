@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 """
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                                                                              ║
@@ -125,7 +126,7 @@ from pathlib import Path
 import json
 from datetime import datetime
 
-MAPPING_FILE = Path("/opt/syntx-config/format_profile_mapping.json")
+MAPPING_FILE = Path("/opt/syntx-config/mapping.json")
 PROFILES_DIR = Path("/opt/syntx/profiles")
 
 
@@ -193,7 +194,7 @@ async def get_format_mapping(format_name: str):
     """
     mapping_data = load_mapping()
     
-    format_mapping = mapping_data.get("mappings", {}).get(format_name)
+    format_mapping = mapping_data.get(format_name)
     
     if not format_mapping:
         raise HTTPException(
@@ -208,6 +209,8 @@ async def get_format_mapping(format_name: str):
     return {
         "erfolg": True,
         "format": format_name,
+        "mistral_wrapper": format_mapping.get("mistral_wrapper"),
+        "gpt_wrapper": format_mapping.get("gpt_wrapper"),
         "profile_id": profile_id,
         "profile_info": profile_info,
         "drift_scoring": format_mapping.get("drift_scoring", {}),
@@ -439,3 +442,13 @@ async def get_mapping_stats():
     }
 
 
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🌀 GPT-WRAPPER-FELD STROEME – SYNTX FELDRESONANZ ARCHITEKTUR
+# ═══════════════════════════════════════════════════════════════════════════════
+from src.resonance.gpt_wrapper_feld_stroeme import router as gpt_wrapper_feld_router
+from src.resonance.mapping_format_resonanz import router as mapping_format_router
+
+# GPT-WRAPPER-FELD STROEME INTEGRIEREN
+app.include_router(gpt_wrapper_feld_router)
+app.include_router(mapping_format_router, prefix="/mapping", tags=["Mapping Format Resonanz"])
