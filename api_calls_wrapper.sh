@@ -939,4 +939,95 @@ echo -e "${GRAY}═════════════════════�
 echo ""
 
 
-exit $FAILED_TESTS
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🗺️ MAPPING ENDPOINTS - Format-Profile Zuordnung
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+#  ARCHITEKTUR:
+#    Mapping verbindet Formats (WAS) mit Profiles (WIE scored).
+#    Jedes Format kann einem Scoring Profile zugeordnet werden.
+#    Drift Scoring Config wird pro Format gespeichert.
+#
+#    MAPPING = {
+#      format_name: {
+#        profile_id: "soft_diagnostic_profile_v2",
+#        drift_scoring: {
+#          enabled: true,
+#          scorer_model: "gpt-4",
+#          prompt_template: "drift_analysis_v1"
+#        },
+#        metadata: {
+#          format_type: "diagnostic",
+#          complexity: "high"
+#        }
+#      }
+#    }
+#
+#  STRÖME:
+#    GET    /mapping/formats           → Alle Mappings
+#    GET    /mapping/formats/{name}    → Specific Mapping
+#    POST   /mapping/formats/{name}    → Create/Update
+#    PUT    /mapping/formats/{name}/profile → Update Profile only
+#    PUT    /mapping/formats/{name}/drift-scoring → Update Drift Config
+#    DELETE /mapping/formats/{name}    → Delete Mapping
+#    GET    /mapping/profiles          → Available Profiles
+#    GET    /mapping/stats             → Statistics
+#
+# ═══════════════════════════════════════════════════════════════════════════════
+
+section "🗺️ MAPPING - Format-Profile Zuordnung" \
+        "Profile Binding, Drift Scoring Config, Stats" \
+        "8"
+
+test_endpoint "GET" "/mapping/formats" "" \
+    "Get All Mappings - Alle Format-Profile Zuordnungen" \
+    "200" \
+    "Keine (Read-Only)" \
+    "Liefert: mappings{}, available_profiles{}, stats{}"
+
+test_endpoint "GET" "/mapping/formats/true_raw" "" \
+    "Get Specific Mapping - true_raw Format Details" \
+    "200" \
+    "Keine (Read-Only)" \
+    "Zeigt: profile_id, drift_scoring, metadata mit format_type"
+
+test_endpoint "POST" "/mapping/formats/sigma" \
+    "{\"profile_id\": \"flow_bidir_v1\", \"drift_scoring\": {\"enabled\": true, \"scorer_model\": \"gpt-4\", \"prompt_template\": \"drift_analysis_v1\"}, \"metadata\": {\"format_type\": \"analytical\", \"complexity\": \"very_high\"}}" \
+    "Create/Update Mapping - sigma Format mit Profile + Drift" \
+    "200" \
+    "Schreibt: /opt/syntx-config/format_profile_mapping.json" \
+    "Mapping wird in JSON file persistiert, Stats auto-updated"
+
+test_endpoint "PUT" "/mapping/formats/sigma/profile" \
+    "{\"profile_id\": \"default_fallback\"}" \
+    "Update Profile Only - Nur Profile ID ändern" \
+    "200" \
+    "Merged: nur profile_id" \
+    "Drift scoring + metadata bleiben unverändert"
+
+test_endpoint "PUT" "/mapping/formats/sigma/drift-scoring" \
+    "{\"enabled\": false, \"scorer_model\": null, \"prompt_template\": null}" \
+    "Update Drift Scoring - Drift deaktivieren" \
+    "200" \
+    "Merged: nur drift_scoring" \
+    "Profile + metadata bleiben unverändert"
+
+test_endpoint "GET" "/mapping/profiles" "" \
+    "Get Available Profiles - Alle verfügbaren Scoring Profiles" \
+    "200" \
+    "Keine (Read-Only)" \
+    "Liefert: default_fallback, flow_bidir_v1, soft_diagnostic_profile_v2"
+
+test_endpoint "GET" "/mapping/stats" "" \
+    "Get Mapping Stats - Statistiken über alle Mappings" \
+    "200" \
+    "Keine (Read-Only)" \
+    "Zeigt: total_formats, drift_enabled_formats, profile_usage{}, complexity_distribution{}"
+
+test_endpoint "DELETE" "/mapping/formats/test_format" "" \
+    "Delete Mapping - Mapping entfernen" \
+    "200" \
+    "Entfernt aus mapping.json" \
+    "Stats werden auto-updated, 404 wenn nicht vorhanden"
+
