@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     backend_url: str
     backend_timeout: int
     backend_bearer_token: Optional[str] = None
-    model_name: str  # For Ollama model selection
+    model_name: str  # NEW: For Ollama model selection
     
     # Wrapper
     wrapper_dir: Path
@@ -27,9 +27,6 @@ class Settings(BaseSettings):
     log_dir: Path
     log_to_console: bool
     profiles_dir: str = "/opt/syntx-config/profiles"
-    
-    # OpenAI (for Drift Scoring)
-    openai_api_key: str  # 💎 DRIFT SCORING
     
     class Config:
         env_file = ".env"
