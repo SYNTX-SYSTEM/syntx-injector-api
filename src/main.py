@@ -28,6 +28,7 @@ from .streams import FORMAT_LOADER_AVAILABLE
 # ═══════════════════════════════════════════════════════════════════════════════
 
 from .resonance.drift_api import router as drift_router
+from .resonance.wrapper_feld_resonanz import router as wrapper_feld_resonanz_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -452,3 +453,4 @@ from src.resonance.mapping_format_resonanz import router as mapping_format_route
 # GPT-WRAPPER-FELD STROEME INTEGRIEREN
 app.include_router(gpt_wrapper_feld_router)
 app.include_router(mapping_format_router, prefix="/mapping", tags=["Mapping Format Resonanz"])
+app.include_router(wrapper_feld_resonanz_router)
