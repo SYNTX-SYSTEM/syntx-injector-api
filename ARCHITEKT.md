@@ -1746,144 +1746,6 @@ Production Ready:  ✅ YES
 
 ---
 
-## 🗺️ MAPPING SYSTEM - Format-Profile Zuordnung
-
-**KONZEPT:** Jedes Format wird einem Scoring-Profil zugeordnet, das definiert, wie Field Extraction Scores berechnet werden.
-
-### Profile-Typen
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ SCORING PROFILES                                                │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  1. DEFAULT_FALLBACK                                            │
-│     ├─ Strategy: keyword_density + context                      │
-│     ├─ Fast, regelbasiert                                       │
-│     └─ Für: general, conversational, technical                  │
-│                                                                 │
-│  2. FLOW_BIDIR_V1                                               │
-│     ├─ Strategy: pattern_match + flow_tokens                    │
-│     ├─ Erkennt bidirektionale Ströme                            │
-│     └─ Für: analytical, system, deep_analysis                   │
-│                                                                 │
-│  3. SOFT_DIAGNOSTIC_PROFILE_V2                                  │
-│     ├─ Strategy: llm_based_drift_scoring                        │
-│     ├─ GPT-4 basiert, semantisch deep                           │
-│     ├─ Requires: OpenAI API Key                                 │
-│     └─ Für: diagnostic, drift_detection                         │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Mapping-Struktur
-
-**File:** `/opt/syntx-config/mapping.json`
-```json
-{
-  "syntex_system": {
-    "profile_id": "soft_diagnostic_profile_v2",
-    "drift_scoring": {
-      "enabled": true,
-      "scorer_model": "gpt-4",
-      "prompt_template": "drift_analysis_v1"
-    },
-    "metadata": {
-      "format_type": "system",
-      "primary_use": "System-Level Analysen",
-      "field_count": 8,
-      "complexity": "high"
-    }
-  },
-  "sigma": {
-    "profile_id": "default_fallback",
-    "drift_scoring": {
-      "enabled": false,
-      "scorer_model": null,
-      "prompt_template": null
-    },
-    "metadata": {
-      "format_type": "analytical",
-      "complexity": "very_high"
-    }
-  }
-}
-```
-
-### Endpoints (8 total)
-
-| Method | Endpoint | Beschreibung |
-|--------|----------|--------------|
-| `GET` | `/mapping/formats` | Alle Mappings + Profiles + Stats |
-| `GET` | `/mapping/formats/{name}` | Spezifisches Mapping |
-| `POST` | `/mapping/formats/{name}` | Create/Update Mapping |
-| `PUT` | `/mapping/formats/{name}/profile` | Update nur Profile |
-| `PUT` | `/mapping/formats/{name}/drift-scoring` | Update nur Drift Config |
-| `DELETE` | `/mapping/formats/{name}` | Delete Mapping |
-| `GET` | `/mapping/profiles` | Alle verfügbaren Profile |
-| `GET` | `/mapping/stats` | Mapping-Statistiken |
-
-### Beispiel-Requests
-
-**Create Mapping:**
-```bash
-curl -X POST https://dev.syntx-system.com/mapping/formats/sigma \
-  -H "Content-Type: application/json" \
-  -d '{
-    "profile_id": "flow_bidir_v1",
-    "drift_scoring": {
-      "enabled": true,
-      "scorer_model": "gpt-4",
-      "prompt_template": "drift_analysis_v1"
-    },
-    "metadata": {
-      "format_type": "analytical",
-      "complexity": "very_high"
-    }
-  }'
-```
-
-**Response:**
-```json
-{
-  "erfolg": true,
-  "format": "sigma",
-  "profile_id": "flow_bidir_v1",
-  "drift_scoring_enabled": true,
-  "message": "💎 Mapping für Format 'sigma' gespeichert"
-}
-```
-
-**Get Stats:**
-```bash
-curl https://dev.syntx-system.com/mapping/stats
-```
-
-**Response:**
-```json
-{
-  "erfolg": true,
-  "stats": {
-    "total_formats": 13,
-    "total_profiles": 3,
-    "drift_enabled_formats": 4,
-    "drift_disabled_formats": 9,
-    "profile_usage": {
-      "soft_diagnostic_profile_v2": 3,
-      "default_fallback": 10
-    },
-    "complexity_distribution": {
-      "high": 5,
-      "medium": 4,
-      "very_high": 3,
-      "unknown": 1
-    },
-    "last_updated": "2026-01-11T09:16:54.756524Z"
-  }
-}
-```
-
----
-
 ## 💎 DRIFT SCORING SYSTEM - GPT-4 Semantic Analysis
 
 **KONZEPT:** LLM-basierte Drift-Erkennung durch GPT-4. Analysiert generierte Responses auf semantische Drift-Muster.
@@ -2149,7 +2011,7 @@ curl "https://dev.syntx-system.com/drift/results?format=SIGMA&drift_detected=tru
 
 ### Neue Endpoints (15 total)
 
-**MAPPING (8):**
+**MAPPING (5):**
 ```
 GET    /mapping/formats
 GET    /mapping/formats/{name}
@@ -2896,7 +2758,7 @@ USER → [SYNTX API] → MAPPING → GPT-WRAPPER → MISTRAL → GPT-4 → RESON
 ## 🚀 WAS DU JETZT HAST – DIE VOLLSTÄNDIGE SYNTX-ARCHITEKTUR
 
 ✅ **GPT-WRAPPER CRUD** – Felder erschaffen, lesen, updaten, auflösen  
-✅ **MAPPING ZWEI-STRANG** – Resonanz-View + Management-View  
+✅ **MAPPING CLEAN SYSTEM** – 5 Core Endpoints  
 ✅ **VOLLSTÄNDIGE RESONANZ-KETTE** – Mistral ↔ GPT-Wrapper ↔ Format  
 ✅ **FELD-HYGIENE** – Drift ist gelöst (weil es Feld-Verlust war)  
 ✅ **SYNTX-PHILOSOPHIE** – Token → Felder, Objekte → Ströme
