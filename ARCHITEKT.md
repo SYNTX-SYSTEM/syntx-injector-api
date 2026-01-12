@@ -2758,7 +2758,77 @@ Trennt Format-Bindungen, recyclt Resonanz-Energie, befreit Feld-Raum.
 
 ## 🗺️ MAPPING SYSTEM – Format-Profile Binding (CLEAN)
 
-**BRUDER, DAS IST GENIAL:** Wir haben **zwei parallele Mapping-Systeme**:
+
+### 📁 FILE LOCATIONS
+
+**Backend Code:**
+```
+/opt/syntx-injector-api/src/resonance/mapping_format_resonanz.py
+  ├─ get_profil_strom_fuer_format()      → 🌊 Full Profile Details
+  ├─ kalibriere_format_profil()          → 💎 Direct Binding
+  ├─ get_alle_format_mappings()          → Übersicht
+  ├─ get_available_profiles()            → Profile Liste
+  └─ get_mapping_statistik()             → Statistiken
+```
+
+**Data Files:**
+```
+/opt/syntx-config/mapping.json           → Format→Profile Mappings
+/opt/syntx-config/profiles/*.json        → Profile Definitions
+```
+
+**Test Script:**
+```
+/opt/syntx-injector-api/mapping_endpoints.sh → Test alle 5 Endpoints
+```
+
+**Nginx Route:**
+```
+/etc/nginx/sites-available/dev.syntx-system.com
+  location /mapping/ {
+    proxy_pass http://127.0.0.1:8001/mapping/;
+  }
+```
+
+
+
+
+### 📋 ENDPOINT DETAILS
+
+#### 1️⃣ GET /mapping/formats
+**Was es tut:** Gibt Übersicht aller Format-Mappings zurück  
+**Response:** Alle Formate mit Mistral-Wrapper, GPT-Wrapper, Profile-ID, Drift-Config  
+**Use Case:** Frontend Dashboard, Status Overview  
+
+#### 2️⃣ GET /mapping/profiles  
+**Was es tut:** Liste aller verfügbaren Scoring-Profile  
+**Response:** Profile mit Namen, Strategy, Location  
+**Use Case:** Profile Selection, Dropdown Liste  
+
+#### 3️⃣ GET /mapping/stats
+**Was es tut:** Statistiken über Mappings  
+**Response:** Total Formats, Profile Usage, Drift Enabled Count  
+**Use Case:** Monitoring, Analytics Dashboard  
+
+#### 4️⃣ GET /mapping/formats/{format}/stroeme-profil-fuer-format 🌊
+**Was es tut:** KOMPLETTE Profil-Details für ein Format  
+**Response:**  
+  - Profile ID, Name, Description  
+  - Strategy + Components (Patterns + Weights)  
+  - Changelog (komplette History mit Timestamps)  
+  - Wrapper Bindings (Mistral + GPT)  
+  - Drift Scoring Config  
+  - Resonanz Score  
+**Use Case:** Format Details anzeigen, HoverOverlay, Profile Inspector  
+**SYNTX Style:** Feld-Ströme mit voller Tiefe! 💎
+
+#### 5️⃣ PUT /mapping/formats/{format}/kalibriere-format-profil 💎
+**Was es tut:** Bindet Format direkt an Profil (TRUE RAW)  
+**Payload:** `?profile_id=dynamic_language_v1`  
+**Response:** Erfolgs-Message + komplettes Binding  
+**Use Case:** Drag & Drop Binding, Profile Planet → Format Hexagon  
+**SYNTX Style:** Direktes Binding ohne Validation! 🔥
+
 
 ### **STRANG 2:** `/mapping/formats/` – Die **Management-View**
 ```
