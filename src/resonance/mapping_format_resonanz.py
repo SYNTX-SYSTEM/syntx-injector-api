@@ -5,95 +5,96 @@ from pathlib import Path
 router = APIRouter()
 MAPPING_FILE = Path("/opt/syntx-config/mapping.json")
 
-@router.get("/format-resonanz/alle")
-async def get_alle_format_mappings():
+# 🔥 DIRECT BINDING ENDPOINT - NO VALIDATION
+@router.put("/formats/{format_name}/kalibriere-format-profil")
+async def kalibriere_format_profil(format_name: str, profile_id: str):
+    """
+    💎 KALIBRIERE FORMAT → PROFIL
+    Bindet Profile direkt an Format - OHNE available_profiles Validation
+    
+    Args:
+        format_name: Format name (z.B. 'sigma', 'human')
+        profile_id: Profile ID (z.B. 'claude_test_v1')
+    
+    Returns:
+        Success message mit binding details
+    """
     if not MAPPING_FILE.exists():
-        raise HTTPException(status_code=404, detail="Mapping-Datei nicht gefunden")
+        raise HTTPException(status_code=404, detail="❌ Mapping file not found")
     
-    with open(MAPPING_FILE, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-    
-    mappings = []
-    for format_name, mapping in data.get("mappings", {}).items():
-        mappings.append({
-            "format_name": format_name,
-            "mistral_wrapper": mapping.get("mistral_wrapper"),
-            "gpt_wrapper": mapping.get("gpt_wrapper"),
-            "drift_scoring_enabled": mapping.get("drift_scoring", {}).get("enabled", False),
-            "resonanz_score": mapping.get("resonanz_score", 0.0)
-        })
-    
-    return {
-        "system": "SYNTX Mapping Format Resonanz",
-        "total_formats": len(mappings),
-        "mappings": mappings,
-        "stats": {
-            "mit_drift_scoring": sum(1 for m in mappings if m["drift_scoring_enabled"]),
-            "ohne_drift_scoring": sum(1 for m in mappings if not m["drift_scoring_enabled"])
-        }
-    }
-
-@router.get("/format-resonanz/statistik")
-async def get_mapping_statistik():
-    if not MAPPING_FILE.exists():
-        raise HTTPException(status_code=404, detail="Mapping-Datei nicht gefunden")
-    
+    # LOAD MAPPING
     with open(MAPPING_FILE, 'r', encoding='utf-8') as f:
         data = json.load(f)
     
     mappings = data.get("mappings", {})
     
-    mistral_wrappers = set()
-    gpt_wrappers = set()
-    formate_mit_drift = 0
-    resonanz_sum = 0.0
+    # CHECK FORMAT EXISTS
+    if format_name not in mappings:
+        raise HTTPException(status_code=404, detail=f"❌ Format '{format_name}' not in mappings")
     
-    for mapping in mappings.values():
-        mistral = mapping.get("mistral_wrapper")
-        gpt = mapping.get("gpt_wrapper")
-        drift_enabled = mapping.get("drift_scoring", {}).get("enabled", False)
-        resonanz = mapping.get("resonanz_score", 0.0)
-        
-        if mistral:
-            mistral_wrappers.add(mistral)
-        if gpt:
-            gpt_wrappers.add(gpt)
-        if drift_enabled:
-            formate_mit_drift += 1
-        
-        resonanz_sum += float(resonanz)
+    # UPDATE PROFILE_ID
+    mappings[format_name]["profile_id"] = profile_id
     
-    total_formats = len(mappings)
+    # SAVE
+    with open(MAPPING_FILE, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
     
     return {
-        "total_formats": total_formats,
-        "formate_mit_drift": formate_mit_drift,
-        "formate_ohne_drift": total_formats - formate_mit_drift,
-        "wrapper_typen": {
-            "mistral_wrappers": len(mistral_wrappers),
-            "gpt_wrappers": len(gpt_wrappers)
-        },
-        "resonanz_durchschnitt": round(resonanz_sum / total_formats, 2) if total_formats > 0 else 0.0
+        "erfolg": True,
+        "format": format_name,
+        "profile_id": profile_id,
+        "message": f"✅ Profile '{profile_id}' bound to '{format_name}'",
+        "binding": mappings[format_name]
     }
 
-@router.get("/format-resonanz/{format_name}")
-async def get_format_mapping_detail(format_name: str):
-    if not MAPPING_FILE.exists():
-        raise HTTPException(status_code=404, detail="Mapping-Datei nicht gefunden")
+# 🌊 GET PROFIL-STROM FÜR FORMAT
+@router.get("/formats/{format_name}/stroeme-profil-fuer-format")
+async def get_profil_strom_fuer_format(format_name: str):
+    """
+    🌊 PROFIL-STRÖME FÜR FORMAT
+    Gibt alle Binding-Details für ein spezifisches Format zurück
     
+    Args:
+        format_name: Format name (z.B. 'sigma', 'human')
+    
+    Returns:
+        Format mit allen Binding-Details inkl. Profile info
+    """
+    if not MAPPING_FILE.exists():
+        raise HTTPException(status_code=404, detail="❌ Mapping file not found")
+    
+    # LOAD MAPPING
     with open(MAPPING_FILE, 'r', encoding='utf-8') as f:
         data = json.load(f)
     
-    mapping = data.get("mappings", {}).get(format_name)
-    if not mapping:
-        raise HTTPException(status_code=404, detail=f"Format '{format_name}' nicht gefunden")
+    mappings = data.get("mappings", {})
+    
+    # CHECK FORMAT EXISTS
+    if format_name not in mappings:
+        raise HTTPException(status_code=404, detail=f"❌ Format '{format_name}' not in mappings")
+    
+    mapping = mappings[format_name]
+    profile_id = mapping.get("profile_id")
+    
+    # LOAD PROFILE DETAILS IF EXISTS
+    profile_details = None
+    if profile_id:
+        profile_path = Path(f"/opt/syntx-config/profiles/{profile_id}.json")
+        if profile_path.exists():
+            with open(profile_path, 'r', encoding='utf-8') as f:
+                profile_details = json.load(f)
     
     return {
+        "erfolg": True,
         "format_name": format_name,
-        "mistral_wrapper": mapping.get("mistral_wrapper"),
-        "gpt_wrapper": mapping.get("gpt_wrapper"),
-        "drift_scoring": mapping.get("drift_scoring", {}),
-        "metadata": {
+        "binding": {
+            "profile_id": profile_id,
+            "profile_exists": profile_details is not None,
+            "profile_details": profile_details,
+            "mistral_wrapper": mapping.get("mistral_wrapper"),
+            "gpt_wrapper": mapping.get("gpt_wrapper"),
+            "drift_scoring": mapping.get("drift_scoring", {}),
             "resonanz_score": mapping.get("resonanz_score", 0.0)
-        }
+        },
+        "message": f"🌊 Profil-Strom für Format '{format_name}'"
     }

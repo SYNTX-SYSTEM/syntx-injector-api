@@ -2172,7 +2172,7 @@ GET  /drift/results
 GET  /drift/results?format=X&drift_detected=Y
 ```
 
-### Komplette Endpoint-Übersicht (69 total)
+### Komplette Endpoint-Übersicht (66 total)
 ```
 🏥 HEALTH (3)
    GET  /health
@@ -2234,7 +2234,7 @@ GET  /drift/results?format=X&drift_detected=Y
 🔧 ADMIN (1)
    POST /resonanz/health/fix
 
-🗺️ MAPPING (8)
+🗺️ MAPPING (5)
    GET    /mapping/formats
    GET    /mapping/formats/{name}
    POST   /mapping/formats/{name}
@@ -2756,19 +2756,9 @@ Trennt Format-Bindungen, recyclt Resonanz-Energie, befreit Feld-Raum.
 
 ---
 
-## 🗺️ MAPPING-FORMAT-RESONANZ – DIE ZWEI-STRANG-ARCHITEKTUR
+## 🗺️ MAPPING SYSTEM – Format-Profile Binding (CLEAN)
 
 **BRUDER, DAS IST GENIAL:** Wir haben **zwei parallele Mapping-Systeme**:
-
-### **STRANG 1:** `/mapping/format-resonanz/` – Die **Resonanz-View**
-```
-GET /mapping/format-resonanz/alle          # Alle Format-Mappings (Mistral + GPT-4)
-GET /mapping/format-resonanz/{format_name} # Einzelnes Mapping mit Details
-GET /mapping/format-resonanz/statistik     # Mapping-Statistik (mit/ohne Drift)
-```
-
-**Location:** `/src/resonance/mapping_format_resonanz.py`  
-**Philosophie:** Zeigt **nur die Resonanz** – welche Formate sind mit welchen Wrappern verbunden, welche haben Drift-Scoring aktiv.
 
 ### **STRANG 2:** `/mapping/formats/` – Die **Management-View**
 ```

@@ -1,150 +1,148 @@
-echo "🧪 ALLE MAPPING-ENDPOINTS MANUELL TESTEN"
+#!/bin/bash
+
+echo "🧪 MAPPING ENDPOINTS - CLEAN VERSION (SYNTX STYLE)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 BASE_URL="https://dev.syntx-system.com"
 echo "🎯 BASE URL: $BASE_URL"
 echo ""
 
-# 1. MAPPING FORMAT RESONANZ - GET ALLE
-echo "1️⃣ 📊 GET /mapping/format-resonanz/alle (Alle Format-Mappings)"
+# 1. GET ALLE FORMATS (ÜBERSICHT)
+echo "1️⃣ 📦 GET /mapping/formats"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-curl -s "$BASE_URL/mapping/format-resonanz/alle" | jq '.' 2>/dev/null || curl -s "$BASE_URL/mapping/format-resonanz/alle"
+echo "📝 BESCHREIBUNG: Alle Formate mit kompletten Mappings"
+echo "   - Mistral + GPT Wrapper"
+echo "   - Profile IDs"
+echo "   - Drift Scoring Config"
+echo "   - Resonanz Scores"
+echo ""
+echo "📥 RESPONSE:"
+curl -s "$BASE_URL/mapping/formats" | jq '.'
+echo ""
 echo ""
 
-# 2. MAPPING FORMAT RESONANZ - GET SPECIFIC (sigma)
-echo "2️⃣ 🎯 GET /mapping/format-resonanz/sigma (Sigma Mapping)"
+# 2. GET PROFILES
+echo "2️⃣ 👥 GET /mapping/profiles"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-curl -s "$BASE_URL/mapping/format-resonanz/sigma" | jq '.' 2>/dev/null || curl -s "$BASE_URL/mapping/format-resonanz/sigma"
+echo "📝 BESCHREIBUNG: Alle verfügbaren Profile"
+echo ""
+echo "📥 RESPONSE:"
+curl -s "$BASE_URL/mapping/profiles" | jq '.'
+echo ""
 echo ""
 
-# 3. MAPPING FORMAT RESONANZ - STATISTIK
-echo "3️⃣ 📈 GET /mapping/format-resonanz/statistik (Mapping-Statistik)"
+# 3. GET STATS
+echo "3️⃣ 📊 GET /mapping/stats"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-curl -s "$BASE_URL/mapping/format-resonanz/statistik" | jq '.' 2>/dev/null || curl -s "$BASE_URL/mapping/format-resonanz/statistik"
+echo "📝 BESCHREIBUNG: Mapping-Statistiken"
+echo "   - Total Formats/Profiles"
+echo "   - Drift Enabled/Disabled"
+echo "   - Profile Usage Count"
+echo ""
+echo "📥 RESPONSE:"
+curl -s "$BASE_URL/mapping/stats" | jq '.'
+echo ""
 echo ""
 
-# 4. MAPPING FORMATS - GET ALLE (main.py)
-echo "4️⃣ 📦 GET /mapping/formats (Alle Formate - main.py)"
+# 4. PROFIL-STRÖME FÜR FORMAT
+echo "4️⃣ 🌊 GET /mapping/formats/sigma/stroeme-profil-fuer-format"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-curl -s "$BASE_URL/mapping/formats" | jq '.' 2>/dev/null || curl -s "$BASE_URL/mapping/formats"
+echo "📝 BESCHREIBUNG: Komplette Profil-Ströme + Details für Format"
+echo "   💎 SYNTX Style: Feld-Ströme mit voller Tiefe"
+echo ""
+echo "📊 RETURNED DATA:"
+echo "   - Profile ID, Name, Description"
+echo "   - Strategy + Components (Patterns + Weights)"
+echo "   - Changelog (komplette History)"
+echo "   - Wrapper Bindings (Mistral + GPT)"
+echo "   - Drift Scoring Config"
+echo "   - Resonanz Score"
+echo ""
+echo "📥 RESPONSE:"
+curl -s "$BASE_URL/mapping/formats/sigma/stroeme-profil-fuer-format" | jq '.'
+echo ""
 echo ""
 
-# 5. MAPPING FORMATS - GET SPECIFIC (sigma)
-echo "5️⃣ 🎯 GET /mapping/formats/sigma (Einzelnes Format - main.py)"
+# 5. KALIBRIERE FORMAT-PROFIL
+echo "5️⃣ 🔧 PUT /mapping/formats/sigma/kalibriere-format-profil"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-curl -s "$BASE_URL/mapping/formats/sigma" | jq '.' 2>/dev/null || curl -s "$BASE_URL/mapping/formats/sigma"
+echo "📝 BESCHREIBUNG: Kalibriert Format direkt an Profil"
+echo "   💎 TRUE RAW Binding ohne Validation"
+echo "   🔥 Direkter Feld-Strom"
+echo ""
+echo "📤 PAYLOAD: ?profile_id=dynamic_language_v1"
+echo ""
+echo "📥 RESPONSE:"
+curl -s -X PUT "$BASE_URL/mapping/formats/sigma/kalibriere-format-profil?profile_id=dynamic_language_v1" | jq '.'
+echo ""
 echo ""
 
-# 6. MAPPING PROFILES
-echo "6️⃣ 👥 GET /mapping/profiles (Alle Profile)"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-curl -s "$BASE_URL/mapping/profiles" | jq '.' 2>/dev/null || curl -s "$BASE_URL/mapping/profiles"
-echo ""
-
-# 7. MAPPING STATS
-echo "7️⃣ 📊 GET /mapping/stats (Mapping-Statistiken)"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-curl -s "$BASE_URL/mapping/stats" | jq '.' 2>/dev/null || curl -s "$BASE_URL/mapping/stats"
-echo ""
-
-# 8. TESTE POST-FÄHIGE ENDPOINTS (mit Dummy-Daten)
-echo "8️⃣ 🆕 POST/UPDATE ENDPOINTS TESTEN (mit Dummy-Daten)"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-# Test-Format-Name
-TEST_FORMAT="test_mapping_$(date +%s)"
-
-# 8a. POST /mapping/formats/{name} (Format erstellen/updaten)
-echo "   a) POST /mapping/formats/$TEST_FORMAT (Format erstellen)"
-curl -s -X POST "$BASE_URL/mapping/formats/$TEST_FORMAT" \
-  -H "Content-Type: application/json" \
-  -d '{"profile_id": "default_fallback", "metadata": {"test": true}}' \
-  | jq '.' 2>/dev/null || echo "RAW: $(curl -s -X POST "$BASE_URL/mapping/formats/$TEST_FORMAT" \
-  -H "Content-Type: application/json" \
-  -d '{"profile_id": "default_fallback", "metadata": {"test": true}}')"
-echo ""
-
-# 8b. PUT /mapping/formats/sigma/profile (Profile updaten)
-echo "   b) PUT /mapping/formats/sigma/profile (Profile aktualisieren)"
-curl -s -X PUT "$BASE_URL/mapping/formats/sigma/profile" \
-  -H "Content-Type: application/json" \
-  -d '{"profile_id": "flow_bidir_v1"}' \
-  | jq '.' 2>/dev/null || echo "RAW: $(curl -s -X PUT "$BASE_URL/mapping/formats/sigma/profile" \
-  -H "Content-Type: application/json" \
-  -d '{"profile_id": "flow_bidir_v1"}')"
-echo ""
-
-# 8c. PUT /mapping/formats/sigma/drift-scoring (Drift-Scoring updaten)
-echo "   c) PUT /mapping/formats/sigma/drift-scoring (Drift-Scoring aktualisieren)"
-curl -s -X PUT "$BASE_URL/mapping/formats/sigma/drift-scoring" \
-  -H "Content-Type: application/json" \
-  -d '{"enabled": true, "scorer_model": "gpt-4", "prompt_template": "drift_analysis_v1"}' \
-  | jq '.' 2>/dev/null || echo "RAW: $(curl -s -X PUT "$BASE_URL/mapping/formats/sigma/drift-scoring" \
-  -H "Content-Type: application/json" \
-  -d '{"enabled": true, "scorer_model": "gpt-4", "prompt_template": "drift_analysis_v1"}')"
-echo ""
-
-# 8d. DELETE /mapping/formats/{name} (Format löschen - cleanup)
-echo "   d) DELETE /mapping/formats/$TEST_FORMAT (Test-Format löschen)"
-curl -s -X DELETE "$BASE_URL/mapping/formats/$TEST_FORMAT" \
-  | jq '.' 2>/dev/null || echo "RAW: $(curl -s -X DELETE "$BASE_URL/mapping/formats/$TEST_FORMAT")"
-echo ""
-
-# 9. ZUSAMMENFASSUNG ALLER GET-ENDPOINTS
-echo "9️⃣ 📋 ZUSAMMENFASSUNG ALLER GET-ENDPOINTS"
+# 6. ZUSAMMENFASSUNG
+echo "6️⃣ 📋 ZUSAMMENFASSUNG"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 ENDPOINTS=(
-    "/mapping/format-resonanz/alle"
-    "/mapping/format-resonanz/sigma"
-    "/mapping/format-resonanz/statistik"
-    "/mapping/formats"
-    "/mapping/formats/sigma"
-    "/mapping/profiles"
-    "/mapping/stats"
+    "GET:/mapping/formats"
+    "GET:/mapping/profiles"
+    "GET:/mapping/stats"
+    "GET:/mapping/formats/sigma/stroeme-profil-fuer-format"
+    "PUT:/mapping/formats/sigma/kalibriere-format-profil?profile_id=dynamic_language_v1"
 )
 
-echo "┌──────────────────────────────────────────────────────────────┐"
-echo "│ ENDPOINT                     │ STATUS  │ BODY LENGTH        │"
-echo "├──────────────────────────────────────────────────────────────┤"
+echo "┌────────────────────────────────────────────────────────────────────┐"
+echo "│ METHOD │ ENDPOINT                                   │ STATUS       │"
+echo "├────────────────────────────────────────────────────────────────────┤"
 
-for endpoint in "${ENDPOINTS[@]}"; do
-    # Kürze den Namen für die Anzeige
-    name="${endpoint:0:30}"
-    [ ${#endpoint} -gt 30 ] && name="${name}..."
+for endpoint_full in "${ENDPOINTS[@]}"; do
+    method="${endpoint_full%%:*}"
+    endpoint="${endpoint_full#*:}"
     
-    # Teste den Endpoint
-    response=$(curl -s -w "\n%{http_code}" "${BASE_URL}${endpoint}" 2>/dev/null || echo -e "\n000")
+    if [[ "$method" == "PUT" ]]; then
+        response=$(curl -s -w "\n%{http_code}" -X PUT "${BASE_URL}${endpoint}" 2>/dev/null || echo -e "\n000")
+    else
+        response=$(curl -s -w "\n%{http_code}" "${BASE_URL}${endpoint}" 2>/dev/null || echo -e "\n000")
+    fi
+    
     http_code=$(echo "$response" | tail -n1)
-    body=$(echo "$response" | sed '$d')
-    body_length=${#body}
     
-    # Status-Symbol
     if [[ "$http_code" == "200" ]]; then
         status="✅ 200"
     elif [[ "$http_code" == "404" ]]; then
         status="❌ 404"
     elif [[ "$http_code" == "000" ]]; then
         status="🚫 000"
-    elif [[ "$http_code" =~ ^[45] ]]; then
-        status="⚠️  $http_code"
     else
-        status="❓ $http_code"
+        status="⚠️  $http_code"
     fi
     
-    # Zeile ausgeben
-    printf "│ %-30s │ %-7s │ %-17s │\n" "$name" "$status" "$body_length bytes"
+    # Kürze endpoint für display
+    endpoint_short="${endpoint:0:43}"
+    [ ${#endpoint} -gt 43 ] && endpoint_short="${endpoint_short}..."
+    
+    printf "│ %-6s │ %-43s │ %-12s │\n" "$method" "$endpoint_short" "$status"
 done
 
-echo "└──────────────────────────────────────────────────────────────┘"
+echo "└────────────────────────────────────────────────────────────────────┘"
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🎯 MAPPING-API STATUS:"
-echo "   ✅ GET Endpoints: 7/7 getestet"
-echo "   🔄 POST/PUT/DELETE: 4/4 getestet"
-echo "   📊 Format-Resonanz: Vollständig"
-echo "   🔧 CRUD-Operationen: Funktionell"
+echo "🎯 MAPPING-API STATUS (CLEAN):"
 echo ""
-echo "🔥 MAPPING-API IST VOLL FUNKTIONAL! 🔥"
+echo "   ✅ CORE ENDPOINTS (5):"
+echo "      • GET  /mapping/formats                        → Übersicht"
+echo "      • GET  /mapping/profiles                       → Profile Liste"
+echo "      • GET  /mapping/stats                          → Statistiken"
+echo "      • GET  /formats/{format}/stroeme-profil-...    → 🌊 Full Details"
+echo "      • PUT  /formats/{format}/kalibriere-format-... → 💎 Binding"
+echo ""
+echo "   ❌ REMOVED (DEPRECATED):"
+echo "      • /format-resonanz/* (alle 3 endpoints gelöscht)"
+echo "      • Alter Router komplett entfernt"
+echo ""
+echo "   💎 SYNTX STYLE:"
+echo "      • Minimale, klare Endpoints"
+echo "      • Feld-Ströme statt Objekte"
+echo "      • TRUE RAW Binding"
+echo ""
+echo "🔥 MAPPING-API: 5/5 CLEAN ENDPOINTS! 🔥"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

@@ -19,3 +19,12 @@ logs/*.jsonl
 .backup
 *.backup*
 *backup*
+
+# Backups & Old Versions
+*.bak
+*.backup
+*.pre_*
+*.OLD*
+*.old
+*_backup
+api_calls_wrapper.sh.v*.bak
