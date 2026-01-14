@@ -811,3 +811,85 @@ echo -e "${CYAN}${BOLD}💎 SYNTX RESONANCE EDITION v6.0 - COMPLETE 💎${NC}"
 echo -e "${GRAY}Der Strom fließt. Die Felder resonieren. Das System ist kalibriert.${NC}"
 echo ""
 
+# ═══════════════════════════════════════════════════════════════════════════════
+#  📊 SCORING API v3.0 - Unified Sources
+# ═══════════════════════════════════════════════════════════════════════════════
+
+section "📊 SCORING API v3.0 - ONE SOURCE OF TRUTH" \
+        "Formats, Profiles, Bindings, Entities" "18"
+
+# Single Resources (6)
+test_endpoint "GET" "/scoring/formats/sigma" "" \
+    "Get Format - Sigma" "200" \
+    "Read-Only" "Fields + field weights"
+
+test_endpoint "GET" "/scoring/profiles/default_fallback_profile" "" \
+    "Get Profile - Default" "200" \
+    "Read-Only" "Entity weights + thresholds + methods"
+
+test_endpoint "GET" "/scoring/bindings/sigma_binding" "" \
+    "Get Binding - Sigma" "200" \
+    "Read-Only" "Format + Profile + Entities + Wrapper ref"
+
+test_endpoint "GET" "/scoring/entities/gpt4_semantic_entity" "" \
+    "Get Entity - GPT-4" "200" \
+    "Read-Only" "Model config + prompt templates"
+
+test_endpoint "GET" "/scoring/bindings/get_binding_by_format/sigma" "" \
+    "Get Binding by Format - Main Workflow" "200" \
+    "⭐ Primary" "Binding + Profile + Entities complete"
+
+test_endpoint "GET" "/scoring/formats/sigma/binding" "" \
+    "Get Format Binding - REST style" "200" \
+    "Alternative URL" "Same as get_binding_by_format"
+
+# Lists (4)
+test_endpoint "GET" "/scoring/formats-list" "" \
+    "List All Formats" "200" \
+    "Read-Only" "15 formats total"
+
+test_endpoint "GET" "/scoring/profiles-list" "" \
+    "List All Profiles" "200" \
+    "Read-Only" "3 profiles total"
+
+test_endpoint "GET" "/scoring/bindings-list" "" \
+    "List All Bindings" "200" \
+    "Read-Only" "4 bindings total"
+
+test_endpoint "GET" "/scoring/entities-list" "" \
+    "List All Entities" "200" \
+    "Read-Only" "3 entities total"
+
+# System (3)
+test_endpoint "GET" "/scoring/system/get_complete_scoring_universe" "" \
+    "Complete Scoring Universe" "200" \
+    "Read-Only" "All profiles + bindings + entities + relationships"
+
+test_endpoint "GET" "/scoring/system/get_complete_architecture_overview" "" \
+    "Architecture Overview" "200" \
+    "Read-Only" "System stats + file counts"
+
+test_endpoint "GET" "/scoring/system/validate_complete_configuration" "" \
+    "Validate Configuration" "200" \
+    "Read-Only" "Errors + warnings + orphans"
+
+# Special (3)
+test_endpoint "GET" "/scoring/format/get_complete_format_configuration/sigma" "" \
+    "👑 HOLY GRAIL - Complete Format Config" "200" \
+    "Everything" "Format + Binding + Profile + Entities + Wrappers"
+
+test_endpoint "GET" "/scoring/profiles/default_fallback_profile/bindings" "" \
+    "Profile Usage - Which bindings use this profile" "200" \
+    "Read-Only" "Bindings using this profile"
+
+# CRUD (2)
+test_endpoint "PUT" "/scoring/formats/sigma/field_weights" \
+    "{\"sigma_drift\": 18, \"sigma_mechanismus\": 18}" \
+    "Update Field Weights" "200" \
+    "CRUD" "Update field importance"
+
+test_endpoint "PUT" "/scoring/profiles/default_fallback_profile/weights" \
+    "{\"entity_weights\": {\"gpt4_semantic_entity\": 0.6, \"claude_semantic_entity\": 0.3, \"pattern_algorithmic_entity\": 0.1}}" \
+    "Update Profile Weights" "200" \
+    "CRUD" "Entity weights + thresholds"
+
