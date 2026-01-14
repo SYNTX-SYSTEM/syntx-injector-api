@@ -33,8 +33,7 @@ except ImportError:
 
 # 🔥 MISTRAL PROMPT BUILDER - DAS HERZSTÜCK!
 try:
-    from .resonance.mistral_prompt_builder import (
-    save_mistral_response,
+    from .mistral_prompt_builder import (
         build_mistral_prompt,
         save_mistral_prompt
     )
@@ -196,106 +195,62 @@ def build_format_section(format_name: str, language: str = "de") -> Tuple[str, D
 def wrap_input_stream(
     wrapper_text: str, 
     user_input: str,
-    format_section: str = "",
-    wrapper_name: str = None,
-    format_name: str = None
+    format_section: str = ""
 ) -> str:
     """
-    🎯 PROMPT KALIBRIERUNG - Das Herzstück (ERWEITERT!)
+    🎯 PROMPT KALIBRIERUNG - Alles wird eins
     
-    NEU: Wenn format_section leer UND format_name gegeben:
-    → Lädt Format JSON dynamisch
-    → Baut format_section aus Feld-Definitionen
-    → Speichert finalen Prompt mit Referenz
+    Nicht "String Concatenation" - FELD-FUSION.
     
-    Args:
-        wrapper_text: Wrapper Content
-        user_input: User Prompt
-        format_section: Vorgefertigte Format-Section (Optional)
-        wrapper_name: Wrapper Name für Meta (NEU!)
-        format_name: Format Name für dynamisches Laden (NEU!)
+    ════════════════════════════════════════════════════════════════════════════
     
-    Returns:
-        Final calibrated prompt
+    AUFBAU DES KALIBRIERTEN PROMPTS:
+    
+        ┌─────────────────────────────────────────────────────────────────┐
+        │  [WRAPPER]                                                      │
+        │  Der Wrapper definiert WIE das Modell denkt.                   │
+        │  Stil, Tonalität, Persönlichkeit.                              │
+        │                                                                 │
+        │  [FORMAT SECTION]  ← NEU!                                       │
+        │  ### Driftkörperanalyse:                                        │
+        │  WAS ist das analysierte Objekt?...                             │
+        │                                                                 │
+        │  ### Kalibrierung:                                              │
+        │  WIE verändert sich das System?...                              │
+        │                                                                 │
+        │  [USER PROMPT]                                                  │
+        │  Die eigentliche Frage des Users.                              │
+        │                                                                 │
+        │  [INSTRUCTION]                                                  │
+        │  "Bitte fülle die obigen Felder aus für: {topic}"              │
+        └─────────────────────────────────────────────────────────────────┘
+    
+    ════════════════════════════════════════════════════════════════════════════
     """
-    # 🔥 DYNAMISCHER FORMAT-LOAD (wenn nötig)
-    final_format_section = format_section
-    format_data = None
-    
-    if not final_format_section and format_name and MISTRAL_PROMPT_BUILDER_AVAILABLE:
-        try:
-            # Lade Format via format_crud
-            from .crud import format_crud
-            format_data = format_crud.get(format_name)
-            
-            if format_data:
-                print(f"🔥 Format '{format_name}' dynamisch geladen!")
-                
-                # Baue Format-Section aus Feldern
-                format_lines = []
-                for field in format_data.get("fields", []):
-                    field_name = field.get("name", "")
-                    field_desc = field.get("description", {})
-                    desc_text = field_desc.get("de", field_desc.get("en", ""))
-                    
-                    if field_name and desc_text:
-                        format_lines.append(f"### {field_name}:")
-                        format_lines.append(desc_text)
-                        format_lines.append("")
-                
-                final_format_section = "\n".join(format_lines)
-        except Exception as e:
-            print(f"⚠️ Format-Load Error: {e}")
-    
-    # 🔨 BAUE PROMPT (wie vorher, aber mit final_format_section)
     parts = []
     
     # 1. Wrapper (WIE)
     if wrapper_text:
         parts.append(wrapper_text)
     
-    # 2. Format Section (WAS)
-    if final_format_section:
-        parts.append("\n" + "═" * 80)
+    # 2. Format Section (WAS) - NEU!
+    if format_section:
+        parts.append("\n" + "═" * 60)
         parts.append("📋 ANALYSE-FORMAT - Bitte fülle folgende Felder aus:")
-        parts.append("═" * 80 + "\n")
-        parts.append(final_format_section)
-        parts.append("\n" + "═" * 80)
+        parts.append("═" * 60 + "\n")
+        parts.append(format_section)
+        parts.append("\n" + "═" * 60)
         parts.append(f"🎯 THEMA ZUR ANALYSE: {user_input}")
-        parts.append("═" * 80 + "\n")
+        parts.append("═" * 60 + "\n")
         parts.append("Bitte analysiere das obige Thema und fülle ALLE Felder vollständig aus.")
     else:
         # Kein Format = einfach User Input anhängen
         parts.append(user_input)
     
-    final_prompt = "\n\n".join(parts)
-    
-    # 💾 SPEICHERE MIT REFERENZ (wenn Mistral Prompt Builder verfügbar)
-    if MISTRAL_PROMPT_BUILDER_AVAILABLE and wrapper_name:
-        try:
-            _, metadata = build_mistral_prompt(
-                wrapper_text=wrapper_text,
-                user_input=user_input,
-                wrapper_name=wrapper_name,
-                format_name=format_name,
-                format_data=format_data
-            )
-            
-            saved_files = save_mistral_prompt(
-                prompt=final_prompt,
-                metadata=metadata,
-                wrapper_name=wrapper_name,
-                format_name=format_name
-            )
-            
-            print(f"💾 Prompt gespeichert: {saved_files['filename_base']}")
-        except Exception as e:
-            print(f"⚠️ Prompt-Save Error: {e}")
-    
-    filename_base = saved_files.get("filename_base") if "saved_files" in locals() else None
-    return final_prompt, filename_base
+    return "\n\n".join(parts)
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
 #  ⚡ BACKEND FORWARD - Ab zum Modell
 # ═══════════════════════════════════════════════════════════════════════════════
 

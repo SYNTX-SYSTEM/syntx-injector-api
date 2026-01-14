@@ -20,7 +20,8 @@ from .streams import (
     generate_request_id,
     get_timestamp,
     build_format_section,
-    FORMAT_LOADER_AVAILABLE
+    FORMAT_LOADER_AVAILABLE,
+    save_mistral_response
 )
 
 router = APIRouter(tags=["chat"])
@@ -91,7 +92,7 @@ async def chat(request: ChatRequest):
             })
         
         # STAGE 3: CALIBRATE
-        wrapped_prompt = wrap_input_stream(wrapper_text, request.prompt, format_section)
+        wrapped_prompt, filename_base = wrap_input_stream(wrapper_text, request.prompt, format_section, wrapper_name=request.mode, format_name=request.format)
         log_stage("3_FIELD_CALIBRATED", {
             "request_id": request_id,
             "total_length": len(wrapped_prompt)
@@ -111,6 +112,14 @@ async def chat(request: ChatRequest):
         })
         
         response_text = await forward_stream(wrapped_prompt, backend_params)
+        
+        # 💎 SAVE RESPONSE
+        if filename_base and response_text:
+            try:
+                response_file = save_mistral_response(response_text, filename_base)
+                print(f"💎 Response gespeichert: {filename_base}.response.txt")
+            except Exception as e:
+                print(f"⚠️ Response Save Error: {e}")
         
         # STAGE 5: RESPONSE
         latency_ms = int((time.time() - start_time) * 1000)
