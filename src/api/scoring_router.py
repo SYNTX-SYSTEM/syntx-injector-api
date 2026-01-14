@@ -250,10 +250,13 @@ async def get_complete_format_configuration(format: str):
     - Debugging
     - Complete system understanding
     """
-    # Get format
-    format_data = get_format(format)
-    if not format_data:
+    # Get format (load directly, don't call async function)
+    format_file = FORMATS_DIR / f"{format}.json"
+    if not format_file.exists():
         raise HTTPException(status_code=404, detail=f"Format not found: {format}")
+    
+    with open(format_file, 'r') as f:
+        format_data = json.load(f)
     
     # Get binding
     bindings = get_all_bindings()
@@ -764,6 +767,270 @@ async def get_binding(binding_id: str):
         "timestamp": datetime.now().isoformat(),
         "binding_id": binding_id,
         "binding": binding
+    }
+
+
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 🎯 ENDPOINT 9: List All Formats
+# ═══════════════════════════════════════════════════════════════════════════
+
+@router.get("/formats-list")
+async def list_all_formats():
+    """List all available formats"""
+    formats = []
+    
+    if FORMATS_DIR.exists():
+        for file in FORMATS_DIR.glob("*.json"):
+            with open(file, 'r') as f:
+                format_data = json.load(f)
+                formats.append({
+                    "name": format_data.get("name"),
+                    "version": format_data.get("version"),
+                    "description": format_data.get("description"),
+                    "field_count": len(format_data.get("fields", []))
+                })
+    
+    return {
+        "timestamp": datetime.now().isoformat(),
+        "total": len(formats),
+        "formats": formats
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 🎯 ENDPOINT 10: List All Profiles
+# ═══════════════════════════════════════════════════════════════════════════
+
+@router.get("/profiles-list")
+async def list_all_profiles():
+    """List all available profiles"""
+    profiles = []
+    
+    if SCORING_PROFILES_DIR.exists():
+        for file in SCORING_PROFILES_DIR.glob("*.json"):
+            with open(file, 'r') as f:
+                profile_data = json.load(f)
+                profiles.append({
+                    "profile_id": profile_data.get("profile_id"),
+                    "profile_name": profile_data.get("profile_name"),
+                    "version": profile_data.get("profile_version"),
+                    "has_entity_weights": "entity_weights" in profile_data,
+                    "has_thresholds": "thresholds" in profile_data
+                })
+    
+    return {
+        "timestamp": datetime.now().isoformat(),
+        "total": len(profiles),
+        "profiles": profiles
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 🎯 ENDPOINT 11: List All Bindings
+# ═══════════════════════════════════════════════════════════════════════════
+
+@router.get("/bindings-list")
+async def list_all_bindings():
+    """List all available bindings"""
+    bindings = []
+    
+    if SCORING_BINDINGS_DIR.exists():
+        for file in SCORING_BINDINGS_DIR.glob("*.json"):
+            with open(file, 'r') as f:
+                binding_data = json.load(f)
+                bindings.append({
+                    "binding_id": binding_data.get("binding_id"),
+                    "binding_format": binding_data.get("binding_format"),
+                    "profile_id": binding_data.get("profile_id"),
+                    "entity_count": len(binding_data.get("scoring_entities", {}))
+                })
+    
+    return {
+        "timestamp": datetime.now().isoformat(),
+        "total": len(bindings),
+        "bindings": bindings
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 🎯 ENDPOINT 12: List All Entities
+# ═══════════════════════════════════════════════════════════════════════════
+
+@router.get("/entities-list")
+async def list_all_entities():
+    """List all available entities"""
+    entities = []
+    
+    if SCORING_ENTITIES_DIR.exists():
+        for file in SCORING_ENTITIES_DIR.glob("*.json"):
+            with open(file, 'r') as f:
+                entity_data = json.load(f)
+                entities.append({
+                    "entity_id": entity_data.get("entity_id"),
+                    "entity_name": entity_data.get("entity_name"),
+                    "entity_type": entity_data.get("entity_type"),
+                    "version": entity_data.get("entity_version")
+                })
+    
+    return {
+        "timestamp": datetime.now().isoformat(),
+        "total": len(entities),
+        "entities": entities
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 🎯 ENDPOINT 13: Get Single Entity
+# ═══════════════════════════════════════════════════════════════════════════
+
+@router.get("/entities/{entity_id}")
+async def get_entity(entity_id: str):
+    """Get single entity by ID"""
+    entity = get_entity_by_id(entity_id)
+    
+    if not entity:
+        raise HTTPException(status_code=404, detail=f"Entity not found: {entity_id}")
+    
+    return {
+        "timestamp": datetime.now().isoformat(),
+        "entity_id": entity_id,
+        "entity": entity
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 🎯 ENDPOINT 14: Get Complete Format Configuration (HOLY GRAIL!)
+# ═══════════════════════════════════════════════════════════════════════════
+
+@router.get("/format/get_complete_format_configuration/{format_name}")
+async def get_complete_format_configuration(format_name: str):
+    """
+    THE HOLY GRAIL ENDPOINT
+    
+    Returns EVERYTHING about a format in ONE call:
+    - Format definition with fields
+    - Binding (if exists)
+    - Profile (with ALL weights)
+    - Entities (complete definitions)
+    - Wrappers (Mistral + GPT)
+    
+    This is the most comprehensive endpoint!
+    """
+    # Load format
+    format_file = FORMATS_DIR / f"{format_name}.json"
+    if not format_file.exists():
+        raise HTTPException(status_code=404, detail=f"Format not found: {format_name}")
+    
+    with open(format_file, 'r') as f:
+        format_data = json.load(f)
+    
+    # Try to find binding for this format
+    binding = None
+    profile_complete = None
+    entities_complete = []
+    wrappers = {}
+    
+    for binding_file in SCORING_BINDINGS_DIR.glob("*.json"):
+        with open(binding_file, 'r') as f:
+            binding_data = json.load(f)
+            if binding_data.get("binding_format") == format_name:
+                binding = binding_data
+                
+                # Load profile
+                profile_id = binding.get("profile_id")
+                if profile_id:
+                    profile_complete = get_profile_by_id(profile_id)
+                
+                # Load entities
+                entities_complete = parse_scoring_entities(binding.get("scoring_entities", {}))
+                
+                # Load wrappers
+                mistral_wrapper = binding.get("mistral_wrapper_name")
+                gpt_wrapper = binding.get("gpt_wrapper_name")
+                
+                if mistral_wrapper:
+                    wrappers["mistral"] = get_wrapper_content(mistral_wrapper)
+                if gpt_wrapper:
+                    wrappers["gpt"] = get_wrapper_content(gpt_wrapper)
+                
+                break
+    
+    return {
+        "timestamp": datetime.now().isoformat(),
+        "format": format_data,
+        "binding": binding,
+        "profile_complete": profile_complete,
+        "entities_complete": entities_complete,
+        "wrappers": wrappers,
+        "has_complete_config": binding is not None
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 🎯 ENDPOINT 15: Get Binding for Format (Clean URL)
+# ═══════════════════════════════════════════════════════════════════════════
+
+@router.get("/formats/{format_name}/binding")
+async def get_format_binding(format_name: str):
+    """
+    Get binding for a format (cleaner URL alternative)
+    
+    Same as get_binding_by_format but with REST-style URL
+    """
+    # Find binding for this format
+    for binding_file in SCORING_BINDINGS_DIR.glob("*.json"):
+        with open(binding_file, 'r') as f:
+            binding = json.load(f)
+            if binding.get("binding_format") == format_name:
+                # Load profile
+                profile_id = binding.get("profile_id")
+                profile = get_profile_by_id(profile_id) if profile_id else None
+                
+                # Load entities
+                entities_complete = parse_scoring_entities(binding.get("scoring_entities", {}))
+                
+                return {
+                    "timestamp": datetime.now().isoformat(),
+                    "format_name": format_name,
+                    "binding": binding,
+                    "profile_complete": profile,
+                    "entities_complete": entities_complete
+                }
+    
+    raise HTTPException(status_code=404, detail=f"No binding found for format: {format_name}")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 🎯 ENDPOINT 16: Get Bindings Using Profile
+# ═══════════════════════════════════════════════════════════════════════════
+
+@router.get("/profiles/{profile_id}/bindings")
+async def get_profile_bindings(profile_id: str):
+    """
+    List all bindings that use a specific profile
+    
+    Useful for understanding profile usage and dependencies
+    """
+    bindings = []
+    
+    if SCORING_BINDINGS_DIR.exists():
+        for binding_file in SCORING_BINDINGS_DIR.glob("*.json"):
+            with open(binding_file, 'r') as f:
+                binding = json.load(f)
+                if binding.get("profile_id") == profile_id:
+                    bindings.append({
+                        "binding_id": binding.get("binding_id"),
+                        "binding_format": binding.get("binding_format"),
+                        "entity_count": len(binding.get("scoring_entities", {}))
+                    })
+    
+    return {
+        "timestamp": datetime.now().isoformat(),
+        "profile_id": profile_id,
+        "binding_count": len(bindings),
+        "bindings": bindings
     }
 
 
