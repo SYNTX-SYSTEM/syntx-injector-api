@@ -573,3 +573,197 @@ async def validate_complete_configuration():
 # ═══════════════════════════════════════════════════════════════════════════
 # 🔥💎 SYNTX SCORING API v2.0-MINIMAL - 5 ENDPOINTS - PRODUCTION READY 💎🔥
 # ═══════════════════════════════════════════════════════════════════════════
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 🎯 ENDPOINT 4: Get Format
+# ═══════════════════════════════════════════════════════════════════════════
+
+@router.get("/formats/{format_name}")
+async def get_format(format_name: str):
+    """
+    Get format definition with field weights
+    
+    Returns format with fields and field-specific weights (NOT scoring method weights!)
+    """
+    format_file = FORMATS_DIR / f"{format_name}.json"
+    
+    if not format_file.exists():
+        raise HTTPException(status_code=404, detail=f"Format not found: {format_name}")
+    
+    with open(format_file, 'r') as f:
+        format_data = json.load(f)
+    
+    return {
+        "timestamp": datetime.now().isoformat(),
+        "format_name": format_name,
+        "format": format_data
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 🎯 ENDPOINT 5: Update Format Field Weights
+# ═══════════════════════════════════════════════════════════════════════════
+
+@router.put("/formats/{format_name}/field_weights")
+async def update_format_field_weights(format_name: str, field_weights: dict):
+    """
+    Update ONLY field weights in a format
+    
+    Body: {"field_name": weight, ...}
+    Example: {"sigma_drift": 17, "sigma_mechanismus": 18, ...}
+    
+    This updates the "weight" property of each field in the format.
+    Does NOT affect method weights (those are in Profile!)
+    """
+    format_file = FORMATS_DIR / f"{format_name}.json"
+    
+    if not format_file.exists():
+        raise HTTPException(status_code=404, detail=f"Format not found: {format_name}")
+    
+    # Read format
+    with open(format_file, 'r') as f:
+        format_data = json.load(f)
+    
+    # Update field weights
+    fields = format_data.get("fields", [])
+    updated_fields = []
+    
+    for field in fields:
+        field_name = field.get("name")
+        if field_name in field_weights:
+            field["weight"] = field_weights[field_name]
+            updated_fields.append(field_name)
+    
+    # Write back
+    with open(format_file, 'w') as f:
+        json.dump(format_data, f, indent=2, ensure_ascii=False)
+    
+    return {
+        "timestamp": datetime.now().isoformat(),
+        "format_name": format_name,
+        "updated_fields": updated_fields,
+        "new_weights": field_weights,
+        "message": f"Updated {len(updated_fields)} field weights"
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 🎯 ENDPOINT 6: Get Profile
+# ═══════════════════════════════════════════════════════════════════════════
+
+@router.get("/profiles/{profile_id}")
+async def get_profile(profile_id: str):
+    """
+    Get profile with ALL weights (method + entity + thresholds)
+    
+    This is the ONE SOURCE OF TRUTH for HOW to score!
+    """
+    profile = get_profile_by_id(profile_id)
+    
+    if not profile:
+        raise HTTPException(status_code=404, detail=f"Profile not found: {profile_id}")
+    
+    return {
+        "timestamp": datetime.now().isoformat(),
+        "profile_id": profile_id,
+        "profile": profile
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 🎯 ENDPOINT 7: Update Profile Weights
+# ═══════════════════════════════════════════════════════════════════════════
+
+@router.put("/profiles/{profile_id}/weights")
+async def update_profile_weights(
+    profile_id: str, 
+    method_weights: dict = None,
+    entity_weights: dict = None,
+    thresholds: dict = None
+):
+    """
+    Update ALL weights in a profile (method + entity + thresholds)
+    
+    Body can contain any/all of:
+    - method_weights: {"presence_check": 0.25, "keyword_coverage": 0.30, ...}
+    - entity_weights: {"gpt4_semantic_entity": 0.5, "claude_semantic_entity": 0.3, ...}
+    - thresholds: {"pass": 60, "excellent": 85, "good": 75}
+    
+    This is the SINGLE ENDPOINT to manage all scoring weights!
+    """
+    profile_file = PROFILES_DIR / f"{profile_id}.json"
+    
+    if not profile_file.exists():
+        raise HTTPException(status_code=404, detail=f"Profile not found: {profile_id}")
+    
+    # Read profile
+    with open(profile_file, 'r') as f:
+        profile = json.load(f)
+    
+    updated = []
+    
+    # Update method weights
+    if method_weights:
+        if "field_scoring_methods" not in profile:
+            profile["field_scoring_methods"] = {}
+        
+        for method_name, weight in method_weights.items():
+            if method_name in profile["field_scoring_methods"]:
+                profile["field_scoring_methods"][method_name]["weight"] = weight
+                updated.append(f"method:{method_name}")
+    
+    # Update entity weights
+    if entity_weights:
+        profile["entity_weights"] = entity_weights
+        updated.append("entity_weights")
+    
+    # Update thresholds
+    if thresholds:
+        profile["thresholds"] = thresholds
+        updated.append("thresholds")
+    
+    # Write back
+    with open(profile_file, 'w') as f:
+        json.dump(profile, f, indent=2, ensure_ascii=False)
+    
+    return {
+        "timestamp": datetime.now().isoformat(),
+        "profile_id": profile_id,
+        "updated": updated,
+        "new_weights": {
+            "method_weights": method_weights,
+            "entity_weights": entity_weights,
+            "thresholds": thresholds
+        },
+        "message": f"Updated {len(updated)} weight categories"
+    }
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 🎯 ENDPOINT 8: Get Binding
+# ═══════════════════════════════════════════════════════════════════════════
+
+@router.get("/bindings/{binding_id}")
+async def get_binding(binding_id: str):
+    """
+    Get binding by ID (not by format!)
+    
+    Returns binding with format reference, profile reference, and entity list.
+    For complete data including profile & entities, use get_binding_by_format instead.
+    """
+    binding_file = SCORING_BINDINGS_DIR / f"{binding_id}.json"
+    
+    if not binding_file.exists():
+        raise HTTPException(status_code=404, detail=f"Binding not found: {binding_id}")
+    
+    with open(binding_file, 'r') as f:
+        binding = json.load(f)
+    
+    return {
+        "timestamp": datetime.now().isoformat(),
+        "binding_id": binding_id,
+        "binding": binding
+    }
+
+
