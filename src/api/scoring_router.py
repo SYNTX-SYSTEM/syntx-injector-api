@@ -14,7 +14,7 @@ Date: 2026-01-14
 Version: 2.0-minimal
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request, Request
 from pathlib import Path
 import json
 from datetime import datetime
@@ -679,12 +679,7 @@ async def get_profile(profile_id: str):
 # ═══════════════════════════════════════════════════════════════════════════
 
 @router.put("/profiles/{profile_id}/weights")
-async def update_profile_weights(
-    profile_id: str, 
-    method_weights: dict = None,
-    entity_weights: dict = None,
-    thresholds: dict = None
-):
+async def update_profile_weights(profile_id: str, request: Request):
     """
     Update ALL weights in a profile (method + entity + thresholds)
     
@@ -695,10 +690,16 @@ async def update_profile_weights(
     
     This is the SINGLE ENDPOINT to manage all scoring weights!
     """
-    profile_file = PROFILES_DIR / f"{profile_id}.json"
+    profile_file = SCORING_PROFILES_DIR / f"{profile_id}.json"
     
     if not profile_file.exists():
         raise HTTPException(status_code=404, detail=f"Profile not found: {profile_id}")
+    
+    # Get request body
+    body = await request.json()
+    method_weights = body.get("method_weights")
+    entity_weights = body.get("entity_weights")
+    thresholds = body.get("thresholds")
     
     # Read profile
     with open(profile_file, 'r') as f:
