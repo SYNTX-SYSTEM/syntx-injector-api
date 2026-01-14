@@ -95,10 +95,17 @@ from .resonance.diff import router as diff_router
 from .resonance.sessions import router as sessions_router
 from .resonance.alchemy import router as alchemy_router
 from .resonance.scoring import router as scoring_router
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  🔥💎 SYNTX SCORING API v2.0 - Revolutionary Architecture
+# ═══════════════════════════════════════════════════════════════════════════
+from .api.scoring_router import router as scoring_v2_router
 from api.profiles_crud import router as profiles_crud_router
 from .resonance.scoring import router as scoring_router
 
-# Include all routers
+# ═══════════════════════════════════════════════════════════════════════════
+#  🔥💎 SYNTX SCORING API v2.0 - Revolutionary Architecture
+# ═══════════════════════════════════════════════════════════════════════════
 app.include_router(health_router)
 app.include_router(chat_router)
 app.include_router(endpoints_router)
@@ -112,6 +119,17 @@ app.include_router(diff_router)
 app.include_router(sessions_router)
 app.include_router(alchemy_router)
 app.include_router(scoring_router)
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  🔥💎 SYNTX SCORING API v2.0 Router
+#  
+#  Revolutionary scoring architecture with:
+#  - Clean separation: Profiles / Bindings / Entities
+#  - Complete CRUD operations
+#  - Magic endpoints for complete data retrieval
+#  - SYNTX volltext naming
+# ═══════════════════════════════════════════════════════════════════════════
+app.include_router(scoring_v2_router)
 app.include_router(drift_router)
 app.include_router(scoring_router)
 app.include_router(profiles_crud_router)
