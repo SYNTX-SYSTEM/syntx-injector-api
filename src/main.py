@@ -101,6 +101,7 @@ from .resonance.scoring import router as scoring_router
 # ═══════════════════════════════════════════════════════════════════════════
 from .api.scoring_router import router as scoring_v2_router
 from .api.mapping_router import router as mapping_router
+from .api.gpt_wrapper_router import router as gpt_wrapper_router
 from api.profiles_crud import router as profiles_crud_router
 from .resonance.scoring import router as scoring_router
 
@@ -178,4 +179,5 @@ def save_mapping(data: dict):
 
 
 app.include_router(mapping_router, prefix="/mapping", tags=["🗺️ Mapping"])
+app.include_router(gpt_wrapper_router, tags=["🤖 GPT-Wrapper"])
 app.include_router(wrapper_feld_resonanz_router)
