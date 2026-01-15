@@ -50,7 +50,8 @@ def create_default_meta(wrapper_name: str) -> Dict:
             "max_tokens": 500,
             "temperature": 0.7
         },
-        "auto_generated": True
+        "auto_generated": True,
+        "scoring_profile_id": None
     }
 
 
