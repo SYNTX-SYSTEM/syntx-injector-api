@@ -147,3 +147,86 @@ def delete_template(template_id: str) -> bool:
         return True
     
     return False
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🔥 GPT AUTO-TRIGGER EXTENSION - LIVE DATA MODE
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def build_prompt_from_data(
+    template_id: str,
+    format_name: str,
+    fields: List[str],
+    response_text: str
+) -> Dict:
+    """
+    ╔═══════════════════════════════════════════════════════════════════════════╗
+    ║                                                                           ║
+    ║          🔥 BUILD GPT PROMPT FROM LIVE DATA (AUTO-TRIGGER) 🔥            ║
+    ║                                                                           ║
+    ╚═══════════════════════════════════════════════════════════════════════════╝
+    
+    ZWECK:
+        Baut GPT-4 Scoring Prompt DIREKT aus Live-Daten
+        Kein File-Loading - Pure Field Resonanz
+        
+    VERWENDUNG:
+        Nach Mistral Response für Auto-Trigger
+        
+    PARAMETER:
+        template_id: Entity Config ID (z.B. "gpt4_semantic_entity")
+        format_name: Format Name (z.B. "sigma")
+        fields: Liste der Field Names aus format.json
+        response_text: Mistral's generierter Response Text
+        
+    RÜCKGABE:
+        OpenAI API Payload (Dict mit model, temperature, messages)
+        
+    FELD-KALIBRIERUNG:
+        - System Prompt aus Entity Config
+        - User Prompt Template mit Platzhaltern
+        - Field Definitions dynamisch generiert
+        - Response Text eingebettet
+        
+    STROM-FLUSS:
+        Entity Config → Template Extraction → Field Injection → API Payload
+    """
+    # Load Entity Configuration
+    entity_path = Path(f"/opt/syntx-config/scoring_entities/{template_id}.json")
+    
+    if not entity_path.exists():
+        raise FileNotFoundError(f"❌ Entity config nicht gefunden: {template_id}")
+    
+    with open(entity_path, 'r', encoding='utf-8') as f:
+        entity = json.load(f)
+    
+    # Extract Prompt Templates
+    system_prompt = entity["prompt_templates"]["system_prompt"]
+    user_template = entity["prompt_templates"]["user_prompt_template"]
+    
+    # Build Field Definitions String
+    field_definitions = "\n".join([f"- {field}" for field in fields])
+    
+    # Replace Placeholders in User Prompt
+    user_prompt = user_template.replace("{FORMAT_NAME}", format_name)
+    user_prompt = user_prompt.replace("{FIELD_DEFINITIONS}", field_definitions)
+    user_prompt = user_prompt.replace("{RESPONSE_TEXT}", response_text)
+    
+    # Build OpenAI API Payload
+    payload = {
+        "model": entity["llm_configuration"]["model"],
+        "temperature": entity["llm_configuration"]["temperature"],
+        "max_tokens": entity["llm_configuration"]["max_tokens"],
+        "messages": [
+            {
+                "role": "system",
+                "content": system_prompt
+            },
+            {
+                "role": "user",
+                "content": user_prompt
+            }
+        ]
+    }
+    
+    return payload

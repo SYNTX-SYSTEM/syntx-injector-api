@@ -1,3 +1,4 @@
+import os
 from fastapi import HTTPException
 """
 ╔══════════════════════════════════════════════════════════════════════════════╗
@@ -44,6 +45,34 @@ async def lifespan(app: FastAPI):
     print(f"Logs:         {settings.log_dir}")
     print(f"Format Loader: {'🔥 AKTIV' if FORMAT_LOADER_AVAILABLE else '❌ NICHT VERFÜGBAR'}")
     print("=" * 80)
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    #  🔥 GPT AUTO-TRIGGER SYSTEM VALIDATION
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    # Check OpenAI API Key
+    if os.getenv("OPENAI_API_KEY"):
+        print("✅ OPENAI_API_KEY konfiguriert - GPT Auto-Trigger verfügbar")
+    else:
+        print("⚠️  OPENAI_API_KEY nicht gesetzt - GPT Auto-Trigger deaktiviert!")
+    
+    # Check Bindings with Auto-Trigger
+    bindings_dir = Path("/opt/syntx-config/scoring_bindings")
+    if bindings_dir.exists():
+        bindings = list(bindings_dir.glob("*.json"))
+        auto_trigger_count = 0
+        
+        for binding_file in bindings:
+            try:
+                with open(binding_file, 'r', encoding='utf-8') as f:
+                    binding = json.load(f)
+                if binding.get("binding_metadata", {}).get("auto_trigger_after_mistral"):
+                    auto_trigger_count += 1
+            except Exception:
+                pass
+        
+        print(f"📊 Scoring Bindings: {len(bindings)} total, {auto_trigger_count} mit Auto-Trigger aktiviert")
+    
     print("🆕 NEUE STRÖME:")
     print("  /resonanz/chat/diff       → Wrapper-Vergleich")
     print("  /resonanz/sessions        → Session-Replay")

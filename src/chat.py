@@ -7,9 +7,12 @@
 ╚══════════════════════════════════════════════════════════════════════════════╝
 """
 from fastapi import APIRouter, HTTPException
+import os
+from datetime import datetime
 from pathlib import Path
 import time
 import json
+from typing import Dict, Optional, List
 
 from .config import settings
 from .models import ChatRequest, ChatResponse
@@ -44,6 +47,176 @@ def log_stage(stage: str, data: dict):
 
 
 @router.post("/api/chat", response_model=ChatResponse)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+#  🔥💎 GPT AUTO-TRIGGER SYSTEM 💎🔥
+# ═══════════════════════════════════════════════════════════════════════════════
+
+async def trigger_gpt_auto_scoring(
+    filename_base: str,
+    format_name: str,
+    response_text: str,
+    format_data: Dict
+) -> Optional[Dict]:
+    """
+    ╔═══════════════════════════════════════════════════════════════════════════╗
+    ║                                                                           ║
+    ║              🔥 GPT AUTO-TRIGGER - POST-MISTRAL SCORING 🔥               ║
+    ║                                                                           ║
+    ║                    DER STROM BEWERTET DEN STROM                          ║
+    ║                                                                           ║
+    ╚═══════════════════════════════════════════════════════════════════════════╝
+    
+    ZWECK:
+        Automatisches GPT-4 Scoring nach Mistral Response
+        Wenn Binding es aktiviert hat: auto_trigger_after_mistral = true
+        
+    PARAMETER:
+        filename_base: Base Filename ohne Extension
+                      (z.B. "20260115_155513_859410_wrapper_syntex_wrapper_sigma_format_sigma")
+        format_name: Format Identifier (z.B. "sigma")
+        response_text: Mistral's generierter Response
+        format_data: Vollständiges Format JSON mit Field Definitions
+        
+    RÜCKGABE:
+        Dict mit GPT Scoring Results oder None (wenn disabled/failed)
+        
+    PROZESS:
+        1. Load Binding Config für Format
+        2. Check auto_trigger_after_mistral Flag
+        3. Wenn enabled:
+           - Build GPT Prompt mit Field Definitions
+           - Call GPT-4 API
+           - Parse JSON Response
+           - Save to drift_results/
+           - Return Scores
+           
+    FELD-KOHÄRENZ:
+        Filename Base wird unverändert verwendet
+        Drift File: {filename_base}_drift_{unix_timestamp}.json
+        
+    FEHLER-BEHANDLUNG:
+        Graceful Degradation - Mistral Response kehrt trotzdem zurück
+        Alle Errors werden geloggt aber nicht geworfen
+        
+    RESONANZ-FLUSS:
+        Binding Check → GPT Prompt Build → API Call → Parse → Save → Return
+    """
+    try:
+        # ─────────────────────────────────────────────────────────────────────
+        #  STAGE 1: BINDING CONFIGURATION LOADING
+        # ─────────────────────────────────────────────────────────────────────
+        
+        binding_path = Path(f"/opt/syntx-config/scoring_bindings/{format_name}_binding.json")
+        
+        if not binding_path.exists():
+            print(f"⚠️  Auto-Trigger: Kein Binding für Format '{format_name}'")
+            return None
+        
+        with open(binding_path, 'r', encoding='utf-8') as f:
+            binding = json.load(f)
+        
+        # ─────────────────────────────────────────────────────────────────────
+        #  STAGE 2: AUTO-TRIGGER FLAG CHECK
+        # ─────────────────────────────────────────────────────────────────────
+        
+        auto_trigger = binding.get("binding_metadata", {}).get("auto_trigger_after_mistral", False)
+        
+        if not auto_trigger:
+            print(f"ℹ️  Auto-Trigger deaktiviert für Format '{format_name}'")
+            return None
+        
+        print(f"🔥 AUTO-TRIGGER ENABLED! Starting GPT-4 Field Scoring...")
+        
+        # ─────────────────────────────────────────────────────────────────────
+        #  STAGE 3: API KEY VALIDATION
+        # ─────────────────────────────────────────────────────────────────────
+        
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            print("❌ OPENAI_API_KEY nicht gesetzt! GPT Auto-Trigger abgebrochen.")
+            return None
+        
+        # ─────────────────────────────────────────────────────────────────────
+        #  STAGE 4: FIELD EXTRACTION & FORMAT LOADING
+        # ─────────────────────────────────────────────────────────────────────
+        
+        # Load format JSON directly (format_data might be a string from build_format_section)
+        format_json_path = Path(f"/opt/syntx-config/formats/{format_name}.json")
+        
+        if not format_json_path.exists():
+            print(f"⚠️  Format JSON nicht gefunden: {format_name}")
+            return None
+        
+        with open(format_json_path, 'r', encoding='utf-8') as f:
+            format_json = json.load(f)
+        
+        field_names = [field["name"] for field in format_json.get("fields", [])]
+        
+        if not field_names:
+            print(f"⚠️  Keine Fields in Format '{format_name}' gefunden")
+            return None
+        
+        print(f"📊 Scoring {len(field_names)} Fields: {', '.join(field_names)}")
+        
+        # ─────────────────────────────────────────────────────────────────────
+        #  STAGE 5: GPT PROMPT BUILD
+        # ─────────────────────────────────────────────────────────────────────
+        
+        from .resonance.drift_prompt_builder import build_prompt_from_data
+        
+        gpt_payload = build_prompt_from_data(
+            template_id="gpt4_semantic_entity",
+            format_name=format_name,
+            fields=field_names,
+            response_text=response_text
+        )
+        
+        # ─────────────────────────────────────────────────────────────────────
+        #  STAGE 6: GPT-4 API CALL
+        # ─────────────────────────────────────────────────────────────────────
+        
+        print(f"⚡ Calling GPT-4 API for semantic field analysis...")
+        
+        from .resonance.drift_scorer import call_gpt, parse_gpt_response
+        
+        gpt_response = call_gpt(gpt_payload, api_key)
+        drift_scores = parse_gpt_response(gpt_response)
+        
+        # ─────────────────────────────────────────────────────────────────────
+        #  STAGE 7: RESULT PERSISTENCE
+        # ─────────────────────────────────────────────────────────────────────
+        
+        timestamp = int(time.time())
+        drift_filename = f"{filename_base}_drift_{timestamp}.json"
+        drift_path = Path(f"/opt/syntx-config/drift_results/{drift_filename}")
+        
+        drift_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Build Complete Drift Result
+        drift_result = {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "source_file": filename_base,
+            "format": format_name,
+            "auto_triggered": True,
+            "drift_analysis": drift_scores
+        }
+        
+        with open(drift_path, 'w', encoding='utf-8') as f:
+            json.dump(drift_result, f, indent=2, ensure_ascii=False)
+        
+        print(f"💎 GPT Scores gespeichert: {drift_filename}")
+        print(f"✅ Auto-Trigger erfolgreich abgeschlossen!")
+        
+        return drift_scores
+        
+    except Exception as e:
+        print(f"❌ GPT Auto-Trigger Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
 async def chat(request: ChatRequest):
     """
     💬 CHAT - Das Herzstück
@@ -118,6 +291,26 @@ async def chat(request: ChatRequest):
             try:
                 response_file = save_mistral_response(response_text, filename_base)
                 print(f"💎 Response gespeichert: {filename_base}.response.txt")
+
+                # ═══════════════════════════════════════════════════════════
+                #  🔥 GPT AUTO-TRIGGER AFTER MISTRAL RESPONSE
+                # ═══════════════════════════════════════════════════════════
+                
+                if request.format and format_info:
+                    gpt_scores = await trigger_gpt_auto_scoring(
+                        filename_base=filename_base,
+                        format_name=request.format,
+                        response_text=response_text,
+                        format_data=format_info
+                    )
+                    
+                    if gpt_scores:
+                        print(f"✅ GPT Auto-Trigger erfolgreich!")
+                        # Add to metadata for frontend
+                        metadata["gpt_auto_scoring"] = {
+                            "triggered": True,
+                            "scores": gpt_scores
+                        }
             except Exception as e:
                 print(f"⚠️ Response Save Error: {e}")
         
