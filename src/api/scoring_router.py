@@ -701,6 +701,7 @@ async def update_profile_weights(profile_id: str, request: Request):
     entity_weights = body.get("entity_weights")
     thresholds = body.get("thresholds")
     
+    drift_thresholds = body.get("drift_thresholds")
     # Read profile
     with open(profile_file, 'r') as f:
         profile = json.load(f)
@@ -722,10 +723,16 @@ async def update_profile_weights(profile_id: str, request: Request):
         profile["entity_weights"] = entity_weights
         updated.append("entity_weights")
     
+    
     # Update thresholds
     if thresholds:
         profile["thresholds"] = thresholds
         updated.append("thresholds")
+    
+    # Update drift thresholds
+    if drift_thresholds:
+        profile["drift_thresholds"] = drift_thresholds
+        updated.append("drift_thresholds")
     
     # Write back
     with open(profile_file, 'w') as f:
@@ -738,7 +745,8 @@ async def update_profile_weights(profile_id: str, request: Request):
         "new_weights": {
             "method_weights": method_weights,
             "entity_weights": entity_weights,
-            "thresholds": thresholds
+            "thresholds": thresholds,
+            "drift_thresholds": drift_thresholds
         },
         "message": f"Updated {len(updated)} weight categories"
     }

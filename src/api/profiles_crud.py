@@ -27,11 +27,23 @@ class ProfileCreate(BaseModel):
     tags: Optional[List[str]] = []
     patterns: Optional[List[str]] = []
     strategy: Optional[str] = None
+    entity_weights: Optional[Dict[str, float]] = None
+    thresholds: Optional[Dict[str, float]] = None
+    drift_thresholds: Optional[Dict[str, float]] = None
+    field_scoring_methods: Optional[Dict[str, Any]] = None
     components: Optional[Dict[str, Any]] = None
+    entity_weights: Optional[Dict[str, float]] = None
+    thresholds: Optional[Dict[str, float]] = None
+    drift_thresholds: Optional[Dict[str, float]] = None
+    field_scoring_methods: Optional[Dict[str, Any]] = None
 
 class ProfileUpdate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     label: str = Field(..., min_length=1, max_length=100)
+    entity_weights: Optional[Dict[str, float]] = None
+    thresholds: Optional[Dict[str, float]] = None
+    drift_thresholds: Optional[Dict[str, float]] = None
+    field_scoring_methods: Optional[Dict[str, Any]] = None
     description: str = Field(..., min_length=1)
     active: bool
     weight: float = Field(..., ge=0, le=100)
@@ -107,6 +119,16 @@ async def create_profile(data: ProfileCreate):
         "patterns": data.patterns or []
     }
     
+    # Oracle Fields
+    if data.entity_weights is not None:
+        profile["entity_weights"] = data.entity_weights
+    if data.thresholds is not None:
+        profile["thresholds"] = data.thresholds
+    if data.drift_thresholds is not None:
+        profile["drift_thresholds"] = data.drift_thresholds
+    if data.field_scoring_methods is not None:
+        profile["field_scoring_methods"] = data.field_scoring_methods
+    
     save_profile(profile_id, profile)
     
     return {
@@ -138,6 +160,16 @@ async def update_profile(profile_id: str, data: ProfileUpdate):
         updated["strategy"] = data.strategy
     if data.components is not None:
         updated["components"] = data.components
+    
+    # Oracle Fields
+    if data.entity_weights is not None:
+        updated["entity_weights"] = data.entity_weights
+    if data.thresholds is not None:
+        updated["thresholds"] = data.thresholds
+    if data.drift_thresholds is not None:
+        updated["drift_thresholds"] = data.drift_thresholds
+    if data.field_scoring_methods is not None:
+        updated["field_scoring_methods"] = data.field_scoring_methods
     
     if "changelog" not in updated:
         updated["changelog"] = []

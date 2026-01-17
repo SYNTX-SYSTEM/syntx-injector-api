@@ -1045,6 +1045,10 @@ test_endpoint "PUT" "/scoring/formats/sigma/field_weights" \
 test_endpoint "PUT" "/scoring/profiles/default_fallback_profile/weights" \
     "{\"entity_weights\": {\"gpt4_semantic_entity\": 0.6, \"claude_semantic_entity\": 0.3, \"pattern_algorithmic_entity\": 0.1}}" \
     "Update Profile Weights" "200" \
+test_endpoint "PUT" "/scoring/profiles/default_fallback_profile/weights" \
+    "{"drift_thresholds": {"no_drift": 0.90, "minor_drift": 0.70, "moderate_drift": 0.50, "major_drift": 0.30}}" \
+    "Update Drift Thresholds" "200" \
+    "CRUD" "Drift detection levels"
     "CRUD" "Entity weights + thresholds"
 
 
