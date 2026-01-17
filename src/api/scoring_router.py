@@ -26,7 +26,7 @@ router = APIRouter(prefix="/scoring", tags=["scoring_v2_minimal"])
 # 📁 CONFIGURATION PATHS
 # ═══════════════════════════════════════════════════════════════════════════
 
-SCORING_PROFILES_DIR = Path("/opt/syntx-config/scoring_profiles")
+SCORING_PROFILES_DIR = Path("/opt/syntx-config/profiles")
 SCORING_BINDINGS_DIR = Path("/opt/syntx-config/scoring_bindings")
 SCORING_ENTITIES_DIR = Path("/opt/syntx-config/scoring_entities")
 FORMATS_DIR = Path("/opt/syntx-config/formats")
@@ -75,11 +75,23 @@ def get_all_entities() -> List[Dict]:
     return entities
 
 def get_profile_by_id(profile_id: str) -> Optional[Dict]:
-    """Get specific profile by ID"""
+    """Get specific profile by ID - checks both profile_id field and filename"""
+    # Try loading directly by filename first (new CRUD system)
+    profile_file = SCORING_PROFILES_DIR / f"{profile_id}.json"
+    if profile_file.exists():
+        profile = load_json_file(profile_file)
+        if profile:
+            # Add profile_id if missing (for backwards compatibility)
+            if "profile_id" not in profile:
+                profile["profile_id"] = profile_id
+            return profile
+    
+    # Fallback: search by profile_id field in JSON (old system)
     profiles = get_all_profiles()
     for profile in profiles:
         if profile.get("profile_id") == profile_id:
             return profile
+    
     return None
 
 def get_entity_by_id(entity_id: str) -> Optional[Dict]:
