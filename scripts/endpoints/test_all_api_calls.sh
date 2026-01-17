@@ -1050,16 +1050,8 @@ test_endpoint "PUT" "/scoring/profiles/default_fallback_profile/weights" \
 # Test drift_thresholds in binding
 test_endpoint "GET" "/scoring/bindings/get_binding_by_format/sigma" \
     "" \
-    "Sigma Binding with Drift Thresholds" "200" \
-    "Bindings" "Verify 4 drift thresholds loaded"
-    "{"drift_thresholds": {"no_drift": 0.90, "minor_drift": 0.70, "moderate_drift": 0.50, "major_drift": 0.30}}" \
-    "Update Drift Thresholds" "200" \
-    "CRUD" "Drift detection levels"
-    "CRUD" "Entity weights + thresholds"
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  📋 COMPLETE ENDPOINT STATUS - ALL 87 ENDPOINTS VISUALIZED
+    "Sigma Binding - Drift Thresholds" "200" \
+    "Scoring" "Verify 4 drift thresholds: no_drift, minor_drift, moderate_drift, major_drift"
 # ═══════════════════════════════════════════════════════════════════════════════
 
 banner "📋 COMPLETE ENDPOINT STATUS MAP - ALL 87 ENDPOINTS"
