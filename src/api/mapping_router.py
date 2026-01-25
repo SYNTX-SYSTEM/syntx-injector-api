@@ -26,6 +26,56 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 import logging
 
+# ════════════════════════════════════════════════════════════════════════════
+# 📋 PYDANTIC MODELS FÜR MAPPING ROUTER
+# ════════════════════════════════════════════════════════════════════════════
+
+from pydantic import BaseModel, Field, validator
+from typing import Optional, Dict, Any
+
+class DriftScoringConfig(BaseModel):
+    """
+    Drift-Scoring Configuration
+    
+    Wie TÜV für AI-Outputs - checkt ob Output noch im Format ist!
+    """
+    enabled: bool = Field(..., description="Drift-Scoring an oder aus?")
+    threshold: float = Field(default=0.8, ge=0.0, le=1.0, description="Drift-Schwelle (0.0 = kein Drift, 1.0 = total Drift)")
+    scorer_model: Optional[str] = Field(default=None, description="Welches Model zum Scoren?")
+    prompt_template: Optional[str] = Field(default=None, description="Welches Prompt-Template?")
+
+
+class MappingCreate(BaseModel):
+    """
+    Format-Mapping erstellen/updaten
+    
+    Das ist wie Telefonnummer neu eintragen!
+    """
+    profile_id: Optional[str] = Field(default=None, description="Scoring-Profile ID")
+    mistral_wrapper: Optional[str] = Field(default=None, description="Mistral Wrapper für Generation")
+    gpt_wrapper: Optional[str] = Field(default=None, description="GPT Wrapper für Drift-Scoring")
+    drift_scoring: Optional[DriftScoringConfig] = Field(default=None, description="Drift-Scoring Config")
+    resonanz_score: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Quality Score 0-1")
+    metadata: Optional[Dict[str, Any]] = Field(default=None, description="Zusätzliche Metadaten")
+    
+    @validator('resonanz_score')
+    def validate_resonanz_score(cls, v):
+        if v is not None and (v < 0 or v > 1):
+            raise ValueError('Resonanz Score muss zwischen 0 und 1 liegen!')
+        return v
+
+
+class DriftScoringUpdate(BaseModel):
+    """
+    Nur Drift-Scoring updaten
+    """
+    enabled: bool = Field(..., description="Drift-Scoring an oder aus?")
+    threshold: Optional[float] = Field(default=0.8, ge=0.0, le=1.0)
+    scorer_model: Optional[str] = None
+    prompt_template: Optional[str] = None
+
+
+
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
@@ -436,10 +486,7 @@ async def update_mapping_profile(format_name: str, profile_id: str):
 @router.put("/formats/{format_name}/drift-scoring")
 async def update_drift_scoring(
     format_name: str,
-    enabled: bool,
-    threshold: Optional[float] = 0.8,
-    scorer_model: Optional[str] = None,
-    prompt_template: Optional[str] = None
+    drift_config: DriftScoringUpdate
 ):
     """
     ⚙️ Updated Drift-Scoring Einstellungen für ein Format
@@ -449,16 +496,14 @@ async def update_drift_scoring(
     
     Args:
         format_name: Format zum Konfigurieren
-        enabled: Drift-Scoring an oder aus?
-        threshold: Ab welchem Score gilt's als Drift? (0.0 = alles OK, 1.0 = total Drift)
-        scorer_model: Welches Model zum Scoren? (optional)
-        prompt_template: Welches Prompt-Template? (optional)
+        drift_config: Drift-Scoring Configuration (Pydantic Model)
     
     Returns:
         Bestätigung mit neuer Drift-Config
     
     Errors:
         404: Format hat kein Mapping
+        422: Validation Error (threshold nicht 0-1, etc.)
         500: Speichern fehlgeschlagen
     """
     try:
@@ -467,33 +512,26 @@ async def update_drift_scoring(
         
         # Check ob Format existiert
         if format_name not in alle_mappings:
+            logger.warning(f"⚠️ Format '{format_name}' hat kein Mapping")
             raise HTTPException(
                 status_code=404,
                 detail=f"❌ Format '{format_name}' hat kein Mapping!"
             )
         
-        # Baue neue Drift-Config
-        drift_config = {
-            "enabled": enabled,
-            "threshold": threshold
-        }
-        
-        if scorer_model:
-            drift_config["scorer_model"] = scorer_model
-        if prompt_template:
-            drift_config["prompt_template"] = prompt_template
+        # Pydantic Model → Dict (nur non-None Werte)
+        drift_config_dict = drift_config.model_dump(exclude_none=True)
         
         # Update Mapping
-        alle_mappings[format_name]["drift_scoring"] = drift_config
+        alle_mappings[format_name]["drift_scoring"] = drift_config_dict
         mapping_daten["mappings"] = alle_mappings
         speichere_mapping_feld(mapping_daten)
         
-        logger.info(f"✅ Drift-Scoring für '{format_name}' updated: enabled={enabled}, threshold={threshold}")
+        logger.info(f"✅ Drift-Scoring für '{format_name}' updated: {drift_config_dict}")
         
         return {
             "erfolg": True,
             "format": format_name,
-            "drift_scoring": drift_config,
+            "drift_scoring": drift_config_dict,
             "message": "✅ Drift scoring config updated!",
             "timestamp": datetime.now().isoformat()
         }
