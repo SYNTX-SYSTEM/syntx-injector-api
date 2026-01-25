@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from collections import Counter, defaultdict
 
 
-LOG_DIR = Path("/opt/syntx-config/logs/scoring")
+SCORING_ANALYSIS_LOGS = Path("/opt/syntx-config/logs/scoring")
 
 
 def analyze_low_scores(
@@ -44,14 +44,14 @@ def analyze_low_scores(
     })
     
     # Scan log files
-    if not LOG_DIR.exists():
-        return {"error": "Log directory not found", "path": str(LOG_DIR)}
+    if not SCORING_ANALYSIS_LOGS.exists():
+        return {"error": "Log directory not found", "path": str(SCORING_ANALYSIS_LOGS)}
     
-    log_files = list(LOG_DIR.glob("scores_*.jsonl"))
+    log_files = list(SCORING_ANALYSIS_LOGS.glob("scores_*.jsonl"))
     if not log_files:
         return {
             "error": "No log files found",
-            "path": str(LOG_DIR),
+            "path": str(SCORING_ANALYSIS_LOGS),
             "pattern": "scores_*.jsonl"
         }
     
@@ -120,7 +120,7 @@ def get_field_trends(field_name: str, days: int = 30) -> Dict:
     
     daily_scores = defaultdict(list)
     
-    for log_file in sorted(LOG_DIR.glob("scores_*.jsonl")):
+    for log_file in sorted(SCORING_ANALYSIS_LOGS.glob("scores_*.jsonl")):
         try:
             with open(log_file) as f:
                 for line in f:

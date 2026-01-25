@@ -16,8 +16,8 @@ import json
 
 router = APIRouter(prefix="/resonanz", tags=["resonance-sessions"])
 
-LOG_DIR = Path("/opt/syntx-config/logs")
-FLOW_LOG = LOG_DIR / "field_flow.jsonl"
+FIELD_FLOW_LOGS = Path("/opt/syntx-config/logs")
+FLOW_LOG = FIELD_FLOW_LOGS / "field_flow.jsonl"
 
 
 @router.get("/sessions")

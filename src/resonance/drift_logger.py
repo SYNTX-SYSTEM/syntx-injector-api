@@ -7,8 +7,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
 
-LOG_DIR = Path("/opt/syntx-config/logs")
-DRIFT_LOG = LOG_DIR / "drift_scoring.jsonl"
+DRIFT_SCORING_LOGS = Path("/opt/syntx-config/logs")
+DRIFT_LOG = DRIFT_SCORING_LOGS / "drift_scoring.jsonl"
 
 
 class DriftStrom:
