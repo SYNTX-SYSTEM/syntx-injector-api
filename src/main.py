@@ -131,7 +131,6 @@ from .resonance.scoring import router as scoring_router
 from .api.scoring_router import router as scoring_v2_router
 from .api.mapping_router import router as mapping_router
 from api.profiles_crud import router as profiles_crud_router
-from .resonance.scoring import router as scoring_router
 
 # ═══════════════════════════════════════════════════════════════════════════
 #  🔥💎 SYNTX SCORING API v2.0 - Revolutionary Architecture
@@ -161,8 +160,6 @@ app.include_router(scoring_router)
 # ═══════════════════════════════════════════════════════════════════════════
 app.include_router(scoring_v2_router)
 app.include_router(drift_router)
-app.include_router(scoring_router)
-app.include_router(profiles_crud_router)
 
 print("✅ 14 Router geladen - DER STROM FLIESST!")
 

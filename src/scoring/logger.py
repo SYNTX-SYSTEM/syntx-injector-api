@@ -18,7 +18,7 @@ from typing import Dict, List, Any, Optional
 #  📁 LOG LOCATION
 # ═══════════════════════════════════════════════════════════════════════════════
 
-LOGS_DIR = Path("/opt/syntx-config/logs")
+LOGS_DIR = Path("/opt/syntx-config/logs/scoring")
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
 
