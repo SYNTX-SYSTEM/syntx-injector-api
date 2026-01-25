@@ -15,6 +15,32 @@ Version: 2.0-minimal
 """
 
 from fastapi import APIRouter, HTTPException, Request, Request
+from pydantic import BaseModel, Field, validator
+
+# Pydantic Model für Field Weights Update
+from pydantic import BaseModel, Field, validator
+from typing import Dict
+
+class FieldWeightsUpdate(BaseModel):
+    """
+    Field Weights updaten
+    
+    Das ist wie Schieberegler für Wichtigkeit!
+    Jedes Feld kriegt ein Gewicht 0-100.
+    """
+    field_weights: Dict[str, int] = Field(..., description="Field-Name → Weight (0-100)")
+    
+    @validator('field_weights')
+    def validate_weights(cls, v):
+        """Check dass alle Weights zwischen 0 und 100 sind"""
+        for field_name, weight in v.items():
+            if not isinstance(weight, int):
+                raise ValueError(f"Weight für '{field_name}' muss Integer sein!")
+            if weight < 0 or weight > 100:
+                raise ValueError(f"Weight für '{field_name}' muss zwischen 0 und 100 liegen! Got: {weight}")
+        return v
+
+
 from pathlib import Path
 import json
 from datetime import datetime
@@ -621,15 +647,28 @@ async def get_format(format_name: str):
 # ═══════════════════════════════════════════════════════════════════════════
 
 @router.put("/formats/{format_name}/field_weights")
-async def update_format_field_weights(format_name: str, field_weights: dict):
+async def update_format_field_weights(format_name: str, weights_update: FieldWeightsUpdate):
     """
-    Update ONLY field weights in a format
+    🔄 Update ONLY field weights in a format
     
-    Body: {"field_name": weight, ...}
-    Example: {"sigma_drift": 17, "sigma_mechanismus": 18, ...}
+    Das ist wie Schieberegler verstellen - ändert nur die Gewichtungen!
     
-    This updates the "weight" property of each field in the format.
-    Does NOT affect method weights (those are in Profile!)
+    Args:
+        format_name: Format zum Updaten
+        weights_update: Field Weights (Pydantic Model mit Validation)
+    
+    Body Example: 
+        {"field_weights": {"sigma_drift": 17, "sigma_mechanismus": 18}}
+    
+    Returns:
+        Bestätigung mit aktualisierten Weights
+    
+    Errors:
+        404: Format nicht gefunden
+        422: Validation Error (weight nicht 0-100, nicht Integer, etc.)
+        500: Speichern fehlgeschlagen
+    
+    NOTE: Updates nur field weights, NICHT method weights (die sind im Profile!)
     """
     format_file = FORMATS_DIR / f"{format_name}.json"
     
