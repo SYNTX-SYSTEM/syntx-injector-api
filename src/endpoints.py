@@ -3,11 +3,41 @@
 ║    🔌 SYNTX ENDPOINTS - FORMAT, STYLE, META BINDINGS                        ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 """
+from pydantic import BaseModel, Field, validator
 from fastapi import APIRouter, HTTPException
 from typing import Optional
 from pathlib import Path
 
 from .streams import FORMAT_LOADER_AVAILABLE
+
+
+class WrapperMetaUpdate(BaseModel):
+    """
+    Wrapper Metadata updaten
+    
+    Das ist wie Visitenkarte updaten - Name, Beschreibung, Tags, etc.
+    NICHT: created/updated (die werden automatisch gesetzt)
+    """
+    name: Optional[str] = Field(default=None, description="Wrapper Name")
+    description: Optional[str] = Field(default=None, description="Was macht der Wrapper?")
+    format: Optional[str] = Field(default=None, description="Welches Format nutzt er?")
+    model: Optional[str] = Field(default=None, description="Welches LLM Model?")
+    tags: Optional[List[str]] = Field(default=None, description="Tags für Suche")
+    version: Optional[str] = Field(default=None, description="Version String")
+    author: Optional[str] = Field(default=None, description="Wer hat's erstellt?")
+    
+    @validator('*', pre=True)
+    def reject_system_fields(cls, v, field):
+        """Verhindere Update von System-Feldern"""
+        if field.name in ['created', 'updated']:
+            raise ValueError(f"System-Feld '{field.name}' kann nicht manuell gesetzt werden!")
+        return v
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# PROMPT TEMPLATE MODELS (drift_api.py)
+# ═══════════════════════════════════════════════════════════════════════════
+
 
 router = APIRouter(tags=["endpoints"])
 
@@ -71,7 +101,7 @@ async def get_wrapper_meta(name: str):
 
 
 @router.put("/resonanz/wrapper/{name}/meta")
-async def update_wrapper_meta(name: str, meta_update: dict):
+async def update_wrapper_meta(name: str, meta_update: WrapperMetaUpdate):
     """💾 Wrapper Meta updaten"""
     from .resonance.wrapper_meta import load_meta_or_default, save_meta
     
@@ -80,7 +110,7 @@ async def update_wrapper_meta(name: str, meta_update: dict):
         raise HTTPException(status_code=404, detail=f"Wrapper '{name}' nicht gefunden")
     
     meta = load_meta_or_default(name)
-    for key, value in meta_update.items():
+    for key, value in meta_update.model_dump(exclude_none=True).items():
         if key not in ["created", "updated"]:
             meta[key] = value
     meta["auto_generated"] = False
