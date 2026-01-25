@@ -313,3 +313,60 @@ async def gpt_wrapper_feld_resonanz_aktualisieren(
                 "fehler": f"GPT-WRAPPER-Feld-Resonanzaktualisierung fehlgeschlagen: {str(e)}"
             }
         )
+
+@router.get("/wrapper/feld-laden/{gpt_wrapper_feld_name}", response_model=Dict)
+async def wrapper_feld_laden(gpt_wrapper_feld_name: str):
+    """
+    🔍 WRAPPER FELD LADEN
+    
+    LÄDT EIN SPEZIFISCHES GPT-WRAPPER-FELD MIT ALLEN DATEN
+    
+    → Gibt vollstaendige Feld-Daten zurueck (Inhalt + Meta)
+    """
+    txt_datei = GPT_WRAPPER_FELD_RAUM / f"{gpt_wrapper_feld_name}.txt"
+    meta_datei = GPT_WRAPPER_FELD_RAUM / f"{gpt_wrapper_feld_name}.meta.json"
+    
+    if not txt_datei.exists():
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "wrapper-feld-strom": "FELD_NICHT_GEFUNDEN",
+                "wrapper-feld-name": gpt_wrapper_feld_name
+            }
+        )
+    
+    with open(txt_datei, 'r', encoding='utf-8') as f:
+        wrapper_feld_inhalt = f.read()
+    
+    wrapper_feld_meta = {}
+    if meta_datei.exists():
+        with open(meta_datei, 'r', encoding='utf-8') as f:
+            wrapper_feld_meta = json.load(f)
+    
+    return {
+        "wrapper-feld-strom": "FELD-LADEN",
+        "wrapper_feld_name": gpt_wrapper_feld_name,
+        "wrapper_feld_inhalt": wrapper_feld_inhalt,
+        "wrapper_feld_meta": wrapper_feld_meta,
+        "wrapper_feld_groesse_bytes": txt_datei.stat().st_size
+    }
+
+
+@router.get("/wrapper/systemstatus", response_model=Dict)
+async def wrapper_systemstatus_pruefen():
+    """
+    💚 WRAPPER SYSTEMSTATUS
+    
+    PRÜFT GPT-WRAPPER-FELD-SYSTEM-GESUNDHEIT
+    
+    → System-Status + Anzahl aktiver Felder
+    """
+    wrapper_feld_anzahl = len(list(GPT_WRAPPER_FELD_RAUM.glob("*.txt")))
+    
+    return {
+        "wrapper-feld-strom": "SYSTEMSTATUS",
+        "system_status": "AKTIV" if GPT_WRAPPER_FELD_RAUM.exists() else "INAKTIV",
+        "wrapper_feld_anzahl": wrapper_feld_anzahl,
+        "wrapper_feld_raum_pfad": str(GPT_WRAPPER_FELD_RAUM),
+        "speicher_verfuegbar": GPT_WRAPPER_FELD_RAUM.exists()
+    }
