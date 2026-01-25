@@ -130,7 +130,6 @@ from .resonance.scoring import router as scoring_router
 # ═══════════════════════════════════════════════════════════════════════════
 from .api.scoring_router import router as scoring_v2_router
 from .api.mapping_router import router as mapping_router
-from api.profiles_crud import router as profiles_crud_router
 
 # ═══════════════════════════════════════════════════════════════════════════
 #  🔥💎 SYNTX SCORING API v2.0 - Revolutionary Architecture

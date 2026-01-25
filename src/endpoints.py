@@ -41,33 +41,6 @@ async def list_formats():
     return {"status": "🔥 FORMATE GELADEN", "count": len(formats), "formats": formats}
 
 
-@router.get("/resonanz/formats/{format_name}")
-async def get_format_info(format_name: str, language: str = "de"):
-    """📄 Format Details"""
-    if not FORMAT_LOADER_AVAILABLE:
-        raise HTTPException(status_code=503, detail="Format Loader nicht verfügbar")
-    
-    from .formats import load_format, get_format_fields
-    
-    fmt = load_format(format_name)
-    if not fmt:
-        raise HTTPException(status_code=404, detail=f"Format '{format_name}' nicht gefunden")
-    
-    return {
-        "status": "🔥 FORMAT GELADEN",
-        "format": {
-            "name": format_name,
-            "description": fmt.get("description", {}),
-            "languages": fmt.get("languages", ["de"]),
-            "fields": get_format_fields(format_name, language)
-        }
-    }
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  🎨 STYLE ENDPOINTS
-# ═══════════════════════════════════════════════════════════════════════════════
-
 @router.get("/resonanz/styles")
 async def list_styles():
     """🎨 Alle Styles im Grimoire"""
@@ -79,33 +52,6 @@ async def list_styles():
     except:
         return {"status": "❌ STYLE_ALCHEMIST_NICHT_VERFÜGBAR", "styles": []}
 
-
-@router.get("/resonanz/styles/{style_name}")
-async def get_style_details(style_name: str):
-    """🔮 Style Details"""
-    from .styles import summon_style
-    
-    style = summon_style(style_name)
-    if not style:
-        raise HTTPException(status_code=404, detail=f"Style '{style_name}' nicht im Grimoire")
-    
-    return {
-        "status": "🔮 STYLE BESCHWOREN",
-        "style": {
-            "name": style_name,
-            "vibe": style.get("vibe", ""),
-            "description": style.get("description", ""),
-            "word_alchemy": style.get("word_alchemy", {}),
-            "forbidden_words": style.get("forbidden_words", []),
-            "has_tone_injection": bool(style.get("tone_injection")),
-            "has_suffix": bool(style.get("suffix"))
-        }
-    }
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-#  🧬 META ENDPOINTS
-# ═══════════════════════════════════════════════════════════════════════════════
 
 @router.get("/resonanz/wrapper/{name}/meta")
 async def get_wrapper_meta(name: str):
@@ -258,69 +204,6 @@ async def analytics_health():
 # ═══════════════════════════════════════════════════════════════════════════════
 #  🧠 PROFILE SYSTEM - /resonanz/scoring/profiles
 # ═══════════════════════════════════════════════════════════════════════════════
-
-@router.get("/resonanz/scoring/profiles")
-async def get_scoring_profiles():
-    """📋 Liste aller Scoring Profile"""
-    try:
-        from pathlib import Path
-        import json
-        
-        profiles_dir = Path("/opt/syntx-config/profiles")
-        profiles = {}
-        if profiles_dir.exists():
-            for file in profiles_dir.iterdir():
-                if file.suffix == '.json':
-                    with open(file, 'r') as f:
-                        profiles[file.stem] = json.load(f)
-        
-        return {
-            "status": "✅ PROFILES GELADEN",
-            "count": len(profiles),
-            "profiles": profiles
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/resonanz/scoring/analytics/profiles")
-async def get_all_profile_analytics(days: int = 7):
-    """📊 Analytics für ALLE Profile (aggregiert)"""
-    try:
-        from pathlib import Path
-        import json
-        from .analytics.profile_usage import measure_profile_usage
-        
-        profiles_dir = Path("/opt/syntx-config/profiles")
-        profiles = {}
-        if profiles_dir.exists():
-            for file in profiles_dir.iterdir():
-                if file.suffix == '.json':
-                    with open(file, 'r') as f:
-                        profiles[file.stem] = json.load(f)
-        
-        analytics = {}
-        for profile_id in profiles.keys():
-            try:
-                usage = measure_profile_usage(profile_id, days_back=days)
-                analytics[profile_id] = usage
-            except Exception:
-                analytics[profile_id] = {
-                    "total_uses": 0,
-                    "avg_score": 0,
-                    "last_used": None,
-                    "usage_trend": "UNUSED",
-                    "status": "DORMANT"
-                }
-        
-        return {
-            "status": "📊 ANALYTICS COMPLETE",
-            "days": days,
-            "profiles": analytics
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.get("/resonanz/scoring/analytics/profiles/{profile_id}/components")
 async def get_profile_component_breakdown(profile_id: str, field_name: str = None):
