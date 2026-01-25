@@ -30,6 +30,9 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 import logging
+import json
+from pathlib import Path
+from datetime import datetime
 
 from .crud import format_crud
 
@@ -446,25 +449,28 @@ async def update_format(format_name: str, data: FormatUpdate):
 @router.delete("/{format_name}")
 async def delete_format(format_name: str):
     """
-    💀 FORMAT LÖSCHEN (Soft Delete)
+    💀 FORMAT LÖSCHEN (Soft Delete + Mapping Cleanup)
     
     Löscht Format ABER nicht wirklich - wird nur umbenannt zu .deleted!
-    Wie Papierkorb - kann wiederhergestellt werden falls Fehler.
+    WICHTIG: Cleaned auch alle Mappings die auf dieses Format zeigen!
+    
+    Das ist wie Wohnung kündigen - nicht nur Schlüssel abgeben,
+    sondern auch Name aus dem Klingelschild nehmen!
     
     Args:
         format_name: Format zum Löschen
     
     Returns:
-        Bestätigung
+        Bestätigung mit Info über gelöschte Mappings
     
     Errors:
         404: Format existiert nicht
         500: Löschen fehlgeschlagen
     """
     try:
-        logger.info(f"Lösche Format '{format_name}' (soft delete)")
+        logger.info(f"Lösche Format '{format_name}' (soft delete + mapping cleanup)")
         
-        # Soft Delete via CRUD
+        # 1. Soft Delete via CRUD
         erfolg, nachricht = format_crud.delete(format_name)
         
         if not erfolg:
@@ -473,9 +479,55 @@ async def delete_format(format_name: str):
         
         logger.info(f"💀 Format '{format_name}' gelöscht (→ .deleted)")
         
+        # 2. MAPPING CLEANUP - Entferne alle Mappings die auf dieses Format zeigen!
+        mapping_file = Path("/opt/syntx-config/mapping.json")
+        geloeschte_mappings = []
+        
+        try:
+            if mapping_file.exists():
+                logger.debug(f"Checke mapping.json für Format '{format_name}'")
+                
+                # Lade mapping.json
+                with open(mapping_file, 'r', encoding='utf-8') as f:
+                    mapping_daten = json.load(f)
+                
+                # Suche Mappings die auf dieses Format zeigen
+                alle_mappings = mapping_daten.get("mappings", {})
+                
+                # Checke jedes Mapping ob es das gelöschte Format referenziert
+                for mapping_name, mapping_config in list(alle_mappings.items()):
+                    # Wenn Mapping auf gelöschtes Format zeigt → raus damit!
+                    if mapping_name == format_name:
+                        geloeschte_mappings.append(mapping_name)
+                        del alle_mappings[mapping_name]
+                        logger.info(f"🗑️  Mapping '{mapping_name}' gelöscht (Format nicht mehr da)")
+                
+                # Speichere updated mapping.json
+                if geloeschte_mappings:
+                    mapping_daten["mappings"] = alle_mappings
+                    mapping_daten["updated"] = datetime.now().isoformat()
+                    
+                    with open(mapping_file, 'w', encoding='utf-8') as f:
+                        json.dump(mapping_daten, f, indent=2, ensure_ascii=False)
+                    
+                    logger.info(f"✅ {len(geloeschte_mappings)} Mappings aus mapping.json entfernt!")
+                else:
+                    logger.debug(f"Keine Mappings für Format '{format_name}' gefunden")
+            else:
+                logger.debug("mapping.json existiert nicht - kein Cleanup nötig")
+                
+        except Exception as mapping_error:
+            # Mapping-Cleanup failed? Loggen aber nicht crashen!
+            # Format ist ja schon gelöscht, Mapping-Cleanup ist nur Aufräumen.
+            logger.warning(f"⚠️ Mapping-Cleanup failed (Format trotzdem gelöscht): {mapping_error}")
+        
         return {
             "status": "💀 FORMAT FREIGEGEBEN",
-            "message": nachricht
+            "message": nachricht,
+            "mapping_cleanup": {
+                "deleted_mappings": geloeschte_mappings,
+                "count": len(geloeschte_mappings)
+            }
         }
         
     except HTTPException:
