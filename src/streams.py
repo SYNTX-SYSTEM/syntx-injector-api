@@ -225,7 +225,7 @@ def wrap_input_stream(
     if not final_format_section and format_name and MISTRAL_PROMPT_BUILDER_AVAILABLE:
         try:
             # Lade Format via format_crud
-            from .crud import format_crud
+            from .resonance.crud import format_crud
             format_data = format_crud.get(format_name)
             
             if format_data:

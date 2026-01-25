@@ -124,6 +124,8 @@ from .resonance.diff import router as diff_router
 from .resonance.sessions import router as sessions_router
 from .resonance.alchemy import router as alchemy_router
 from .resonance.scoring import router as scoring_router
+from .resonance.mapping_format_resonanz import router as mapping_format_resonanz_router
+from .resonance.gpt_wrapper_feld_stroeme import router as gpt_wrapper_feld_stroeme_router
 
 # ═══════════════════════════════════════════════════════════════════════════
 #  🔥💎 SYNTX SCORING API v2.0 - Revolutionary Architecture
@@ -204,3 +206,5 @@ def save_mapping(data: dict):
 
 app.include_router(mapping_router, prefix="/mapping", tags=["🗺️ Mapping"])
 app.include_router(wrapper_feld_resonanz_router)
+app.include_router(mapping_format_resonanz_router)
+app.include_router(gpt_wrapper_feld_stroeme_router)
