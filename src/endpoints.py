@@ -1,9 +1,10 @@
+from typing import List, Optional
 """
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║    🔌 SYNTX ENDPOINTS - FORMAT, STYLE, META BINDINGS                        ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 """
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from fastapi import APIRouter, HTTPException
 from typing import Optional
 from pathlib import Path
@@ -26,7 +27,8 @@ class WrapperMetaUpdate(BaseModel):
     version: Optional[str] = Field(default=None, description="Version String")
     author: Optional[str] = Field(default=None, description="Wer hat's erstellt?")
     
-    @validator('*', pre=True)
+    @classmethod
+    @field_validator('*', mode='before')
     def reject_system_fields(cls, v, field):
         """Verhindere Update von System-Feldern"""
         if field.name in ['created', 'updated']:

@@ -30,7 +30,7 @@ import logging
 # 📋 PYDANTIC MODELS FÜR MAPPING ROUTER
 # ════════════════════════════════════════════════════════════════════════════
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional, Dict, Any
 
 class DriftScoringConfig(BaseModel):
@@ -58,7 +58,8 @@ class MappingCreate(BaseModel):
     resonanz_score: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Quality Score 0-1")
     metadata: Optional[Dict[str, Any]] = Field(default=None, description="Zusätzliche Metadaten")
     
-    @validator('resonanz_score')
+    @classmethod
+    @field_validator('resonanz_score')
     def validate_resonanz_score(cls, v):
         if v is not None and (v < 0 or v > 1):
             raise ValueError('Resonanz Score muss zwischen 0 und 1 liegen!')

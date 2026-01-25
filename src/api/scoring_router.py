@@ -15,10 +15,10 @@ Version: 2.0-minimal
 """
 
 from fastapi import APIRouter, HTTPException, Request, Request
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 # Pydantic Model für Field Weights Update
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import Dict
 
 class FieldWeightsUpdate(BaseModel):
@@ -30,7 +30,8 @@ class FieldWeightsUpdate(BaseModel):
     """
     field_weights: Dict[str, int] = Field(..., description="Field-Name → Weight (0-100)")
     
-    @validator('field_weights')
+    @classmethod
+    @field_validator('field_weights')
     def validate_weights(cls, v):
         """Check dass alle Weights zwischen 0 und 100 sind"""
         for field_name, weight in v.items():

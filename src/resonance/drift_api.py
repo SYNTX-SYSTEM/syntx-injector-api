@@ -3,7 +3,7 @@ SYNTX Drift Scoring - FastAPI Endpoints
 Complete CRUD for prompt templates + drift scoring
 """
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Dict, List, Any, Optional
 from pathlib import Path
 
@@ -42,13 +42,14 @@ class PromptTemplateCreate(BaseModel):
     id: str = Field(..., min_length=1, description="Unique Template ID")
     name: str = Field(..., min_length=1, description="Template Name")
     version: str = Field(default="1.0", description="Template Version")
-    model_config: ModelConfig = Field(..., description="LLM Configuration")
+    llm_config: ModelConfig = Field(..., description="LLM Model Configuration")
     system_prompt: str = Field(..., min_length=1, description="System Prompt")
     user_prompt_template: str = Field(..., min_length=1, description="User Prompt Template mit Platzhaltern")
     description: Optional[str] = Field(default=None, description="Was macht dieses Template?")
     tags: Optional[List[str]] = Field(default=None, description="Tags für Kategorisierung")
     
-    @validator('user_prompt_template')
+    @field_validator('user_prompt_template', mode='after')
+    @classmethod
     def validate_template(cls, v):
         """Check ob Template Platzhalter hat"""
         if '{' not in v or '}' not in v:
@@ -65,13 +66,14 @@ class PromptTemplateUpdate(BaseModel):
     id: str = Field(..., description="Template ID (muss mit path parameter matchen!)")
     name: Optional[str] = None
     version: Optional[str] = None
-    model_config: Optional[ModelConfig] = None
+    llm_config: Optional[ModelConfig] = None
     system_prompt: Optional[str] = None
     user_prompt_template: Optional[str] = None
     description: Optional[str] = None
     tags: Optional[List[str]] = None
     
-    @validator('user_prompt_template')
+    @field_validator('user_prompt_template', mode='after')
+    @classmethod
     def validate_template(cls, v):
         """Check Platzhalter wenn template gesetzt"""
         if v and ('{' not in v or '}' not in v):

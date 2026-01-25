@@ -21,7 +21,7 @@ Date: 2026-01-25
 Version: 1.0-charlottenburg
 """
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Dict, Any, Optional, TypeVar, Generic
 from fastapi import Query
 from math import ceil
@@ -43,7 +43,8 @@ class PaginationParams(BaseModel):
     sort_by: Optional[str] = Field(default=None, description="Nach welchem Feld sortieren?")
     sort_order: str = Field(default="asc", description="Sortier-Reihenfolge: 'asc' oder 'desc'")
     
-    @validator('sort_order')
+    @classmethod
+    @field_validator('sort_order')
     def validate_sort_order(cls, v):
         if v not in ['asc', 'desc']:
             raise ValueError("sort_order muss 'asc' oder 'desc' sein!")
