@@ -8,9 +8,12 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 import json
 import os
+from pathlib import Path
+import logging
 import re
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 PROFILES_DIR = "/opt/syntx-config/profiles"
 
@@ -191,20 +194,110 @@ async def update_profile(profile_id: str, data: ProfileUpdate):
 
 @router.delete("/resonanz/profiles/crud/{profile_id}")
 async def delete_profile(profile_id: str):
-    """DELETE - Remove profile from system"""
+    """
+    💀 PROFILE LÖSCHEN (Soft Delete + Mapping Cleanup)
     
-    path = os.path.join(PROFILES_DIR, f"{profile_id}.json")
+    Löscht Profile ABER nicht wirklich - wird umbenannt zu .deleted!
+    WICHTIG: Updated auch alle Mappings die dieses Profile benutzen!
     
-    if not os.path.exists(path):
-        raise HTTPException(status_code=404, detail=f"Profile '{profile_id}' not found")
+    Das ist wie Mitarbeiter kündigen:
+    • Zugangskarte deaktivieren (Profile → .deleted)
+    • Aus allen Projekten austragen (Mapping cleanup)
+    • Nicht einfach verschwinden lassen!
     
-    os.remove(path)
+    Args:
+        profile_id: Profile zum Löschen
     
-    return {
-        "status": "✅ PROFILE DELETED",
-        "profile_id": profile_id,
-        "message": f"Profile removed from /opt/syntx-config/profiles/"
-    }
+    Returns:
+        Bestätigung mit Info über betroffene Mappings
+    
+    Errors:
+        404: Profile existiert nicht
+        500: Löschen fehlgeschlagen
+    """
+    try:
+        logger.info(f"Lösche Profile '{profile_id}' (soft delete + mapping cleanup)")
+        
+        # 1. Check ob Profile existiert
+        profile_pfad = Path(PROFILES_DIR) / f"{profile_id}.json"
+        
+        if not profile_pfad.exists():
+            logger.warning(f"⚠️ Profile '{profile_id}' nicht gefunden")
+            raise HTTPException(
+                status_code=404,
+                detail=f"Profile '{profile_id}' existiert nicht Bruder!"
+            )
+        
+        # 2. SOFT DELETE - Umbenennen statt Löschen!
+        deleted_pfad = Path(PROFILES_DIR) / f"{profile_id}.json.deleted"
+        
+        try:
+            profile_pfad.rename(deleted_pfad)
+            logger.info(f"💀 Profile '{profile_id}' → .deleted umbenannt")
+        except Exception as e:
+            logger.error(f"🔴 Soft-Delete failed: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Konnte Profile nicht umbenennen: {str(e)}"
+            )
+        
+        # 3. MAPPING CLEANUP - Warne über Mappings die dieses Profile nutzen!
+        mapping_file = Path("/opt/syntx-config/mapping.json")
+        betroffene_mappings = []
+        
+        try:
+            if mapping_file.exists():
+                logger.debug(f"Checke mapping.json für Profile '{profile_id}'")
+                
+                # Lade mapping.json
+                with open(mapping_file, 'r', encoding='utf-8') as f:
+                    mapping_daten = json.load(f)
+                
+                # Suche Mappings die dieses Profile nutzen
+                alle_mappings = mapping_daten.get("mappings", {})
+                
+                for format_name, mapping_config in alle_mappings.items():
+                    if mapping_config.get("profile_id") == profile_id:
+                        betroffene_mappings.append(format_name)
+                        # WICHTIG: Wir löschen die Mappings NICHT!
+                        # User muss sie manuell updaten auf neues Profile.
+                        # Sonst hätten Formate plötzlich kein Profile mehr!
+                        logger.warning(f"⚠️  Format '{format_name}' nutzt gelöschtes Profile '{profile_id}'!")
+                
+                if betroffene_mappings:
+                    logger.warning(
+                        f"⚠️  {len(betroffene_mappings)} Mappings nutzen gelöschtes Profile! "
+                        f"User muss diese manuell updaten!"
+                    )
+                    
+            else:
+                logger.debug("mapping.json existiert nicht - kein Check nötig")
+                
+        except Exception as mapping_error:
+            # Mapping-Check failed? Loggen aber nicht crashen!
+            logger.warning(f"⚠️ Mapping-Check failed: {mapping_error}")
+        
+        return {
+            "status": "💀 PROFILE FREIGEGEBEN",
+            "profile_id": profile_id,
+            "message": f"Profile → {profile_id}.json.deleted (kann wiederhergestellt werden)",
+            "warning": {
+                "affected_mappings": betroffene_mappings,
+                "count": len(betroffene_mappings),
+                "action_required": "Update diese Mappings auf ein neues Profile!" if betroffene_mappings else None
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"🔴 Fehler beim Profile-Löschen '{profile_id}': {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Konnte Profile nicht löschen: {str(e)}"
+        )
+
+
 
 @router.get("/resonanz/profiles/crud")
 async def list_profiles_crud():
