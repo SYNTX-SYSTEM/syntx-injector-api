@@ -142,7 +142,7 @@ app.include_router(endpoints_router)
 app.include_router(wrappers_router)
 app.include_router(streams_router)
 app.include_router(stats_router)
-app.include_router(config_router, prefix="/resonanz")
+app.include_router(config_router)
 app.include_router(formats_router)
 app.include_router(styles_router)
 app.include_router(diff_router)
@@ -204,7 +204,7 @@ def save_mapping(data: dict):
         json.dump(data, f, indent=2, ensure_ascii=False)
 
 
-app.include_router(mapping_router, prefix="/mapping", tags=["🗺️ Mapping"])
+app.include_router(mapping_router)
 app.include_router(wrapper_feld_resonanz_router)
 app.include_router(mapping_format_resonanz_router)
 app.include_router(gpt_wrapper_feld_stroeme_router)
