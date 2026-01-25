@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     backend_timeout: int = 1800
     
     # Wrappers
-    wrapper_dir: Path = Path("/opt/syntx/wrappers")
+    wrapper_dir: Path = Path("/opt/syntx-config/wrappers")
     fallback_mode: str = "syntex_wrapper_deepsweep"
     
     # Server

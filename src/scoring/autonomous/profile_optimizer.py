@@ -207,7 +207,7 @@ def generate_suggestions_from_analysis(analysis_result: Dict) -> List[Dict]:
 #  💾 SAVE/LOAD SUGGESTIONS
 # ═══════════════════════════════════════════════════════════════════════════════
 
-SUGGESTIONS_DIR = Path("/opt/syntx-logs/optimization_suggestions")
+SUGGESTIONS_DIR = Path("/opt/syntx-config/logs/optimization_suggestions")
 SUGGESTIONS_DIR.mkdir(parents=True, exist_ok=True)
 
 

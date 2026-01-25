@@ -19,7 +19,7 @@ from collections import defaultdict
 #  📁 LOG LOCATION
 # ═══════════════════════════════════════════════════════════════════════════════
 
-LOGS_DIR = Path("/opt/syntx-logs/scoring")
+LOGS_DIR = Path("/opt/syntx-config/logs/scoring")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

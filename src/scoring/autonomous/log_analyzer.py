@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from collections import Counter, defaultdict
 
 
-LOG_DIR = Path("/opt/syntx-logs/scoring")
+LOG_DIR = Path("/opt/syntx-config/logs/scoring")
 
 
 def analyze_low_scores(

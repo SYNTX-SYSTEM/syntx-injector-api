@@ -426,8 +426,8 @@ async def scoring_health():
     try:
         scorers = get_available_scorers()
         from pathlib import Path
-        logs_exist = Path("/opt/syntx-logs/scoring").exists()
-        changelog_exist = Path("/opt/syntx-logs/profile_changes").exists()
+        logs_exist = Path("/opt/syntx-config/logs/scoring").exists()
+        changelog_exist = Path("/opt/syntx-config/logs/profile_changes").exists()
         
         return {
             "status": "🟢 FIELDBRAIN AKTIV",
@@ -593,7 +593,7 @@ async def apply_suggestion(suggestion_id: str):
         
         # Mark suggestion as applied (delete file)
         from pathlib import Path
-        suggestion_file = Path("/opt/syntx-logs/optimization_suggestions") / f"{suggestion_id}.json"
+        suggestion_file = Path("/opt/syntx-config/logs/optimization_suggestions") / f"{suggestion_id}.json"
         if suggestion_file.exists():
             # Rename to .applied instead of deleting (keep history)
             suggestion_file.rename(suggestion_file.with_suffix('.applied'))
@@ -621,8 +621,8 @@ async def get_autonomous_status():
         from pathlib import Path
         
         suggestions = load_pending_suggestions()
-        log_dir = Path("/opt/syntx-logs/scoring")
-        suggestion_dir = Path("/opt/syntx-logs/optimization_suggestions")
+        log_dir = Path("/opt/syntx-config/logs/scoring")
+        suggestion_dir = Path("/opt/syntx-config/logs/optimization_suggestions")
         
         # Count files
         log_files = len(list(log_dir.glob("scoring_*.jsonl"))) if log_dir.exists() else 0

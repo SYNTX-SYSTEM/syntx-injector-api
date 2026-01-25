@@ -26,7 +26,7 @@ def score_response(format_data: Dict, response_text: str) -> Dict[str, Any]:
     🧠 Score LLM response based on format fields - FIELDBRAIN v0.1 + Logging
     
     **NEW: Score Logging**
-    - Jeder Score wird in /opt/syntx-logs/scoring/ geloggt
+    - Jeder Score wird in /opt/syntx-config/logs/scoring/ geloggt
     - JSONL Format für Analytics
     - Field, Score, Profile, Components
     

@@ -18,7 +18,7 @@ from datetime import datetime
 #  📁 CHANGELOG LOCATION
 # ═══════════════════════════════════════════════════════════════════════════════
 
-CHANGELOG_DIR = Path("/opt/syntx-logs/profile_changes")
+CHANGELOG_DIR = Path("/opt/syntx-config/logs/profile_changes")
 CHANGELOG_DIR.mkdir(parents=True, exist_ok=True)
 
 

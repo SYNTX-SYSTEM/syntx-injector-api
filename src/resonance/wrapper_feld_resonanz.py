@@ -19,8 +19,8 @@ WRAPPERS_DIR = Path("/opt/syntx-config/wrappers")
 FORMATS_DIR = Path("/opt/syntx-config/formats")
 MAPPING_FILE = Path("/opt/syntx-config/mapping.json")
 GPT_WRAPPERS_DIR = Path("/opt/syntx-config/gpt_wrappers")
-SCORING_PROFILES_DIR = Path("/opt/syntx-injector-api/scoring_profiles")
-SCORING_PROFILES_OLD = Path("/opt/syntx-injector-api/scoring_profiles.json.OLD")
+SCORING_PROFILES_DIR = Path("/opt/syntx-config/profiles")
+SCORING_PROFILES_OLD = Path("/opt/syntx-config/profiles.json.OLD")
 
 # 🌀 ENUMS FÜR SORTIERUNG
 class SortField(str, Enum):

@@ -177,7 +177,7 @@ import json
 from datetime import datetime
 
 MAPPING_FILE = Path("/opt/syntx-config/mapping.json")
-PROFILES_DIR = Path("/opt/syntx/profiles")
+PROFILES_DIR = Path("/opt/syntx-config/profiles")
 
 
 def load_mapping():
